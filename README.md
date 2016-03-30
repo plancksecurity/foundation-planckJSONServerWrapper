@@ -3,10 +3,11 @@
 
 Debian
 ------
-	* g++ 4.8 or 4.9
-	* GNU make
-	* libboost-filesystem-dev
-	* p≡p Engine (which needs gpgme-thread, a patched libetpan, libboost-system-dev)
+* g++ 4.8 or 4.9
+* GNU make
+* libboost-filesystem-dev
+* p≡p Engine
+  (which needs gpgme-thread, a patched libetpan, libboost-system-dev)
 
 It comes with libevent 2.20, that needs GNU autohell to build. :-/
 Maybe Debian Jessie's version 2.0 also works well, I never tried.
@@ -15,18 +16,26 @@ Maybe Debian Jessie's version 2.0 also works well, I never tried.
  2. Build
 ==========
 
-	* build p≡p Engine
-	* first build libevent, see libevent-2.0.22-stable/README
-	  (a user-install in $HOME/local/ is fine)
-	* edit the library and include paths server/Makefile so p≡p & libevent will be found
-	* run "make" in the server/ path
+* build p≡p Engine
+
+* first build libevent, see libevent-2.0.22-stable/README
+  (a user-install in $HOME/local/ is fine)
+
+* edit the library and include paths server/Makefile so p≡p & libevent will
+  be found
+
+* run "make" in the server/ path
 
 
  3. Running
 ============
-	* run ./mt-server
-	* visit http://127.0.0.1:4223/ in your javascript-enabled web browser to see the test JavaScript client
-	* call some functions ("version()" or "get_gpg_path()" should work just fine)
+
+* run ./mt-server
+
+* visit http://127.0.0.1:4223/ in your javascript-enabled web browser to see
+  the test JavaScript client
+
+* call some functions ("version()" or "get_gpg_path()" should work just fine)
 
 
  4. Extending / Customizing
@@ -57,11 +66,14 @@ Maybe Debian Jessie's version 2.0 also works well, I never tried.
 =========
 
 * Add unit tests (I'd suggest GoogleTest/gtest? Any complaints?)
+
 * Fix the bugs that are found by the Unit tests, if any.
+
 * Let's generate all the tedious boiler plate code
     * the content of pep-types.cc
     * perhaps the FunctionMap 'function' in mt-server.cc
     * perhaps the JavaScript side of the HTML test page to ensure to be
       consistent with the server side in pep-types.cc
+
 * Adapt the "p≡p Transport API", when it is final.
   (either manually or by code generator, if ready)
