@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="icon" href="/favicon.ico" type="image/vnd.microsoft.icon">
+<title>Send example calls via jQuery</title>
+<style type="text/css">
+        body  { font-family:Helvetica,Arial,Sans-serif;background-color:#cde; }
+        .bigtable { border-collapse:collapse; border:2px black solid; box-shadow:4px 4px 8px #666; background-color:#ffd; margin:1em;}
+         td, th { border:1px black solid; vertical-align:top; padding:0.5em;}
+        td.right { border:0px black solid; float:right; }
+        td.left  { border:0px black solid; align:left; }
+        input { white-space:pre }
+        .smalltable { border-collapse:collapse; border:2px black inset; margin-left:1em; padding:5px;}
+        .smalltable  td { border:none; vertical-align:top; padding:5px;}
+        pre.green {white-space:pre; background-color:#9d9; }
+        pre.red   {white-space:pre; background-color:#d99; }
+</style>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="pep_functions.js"></script>
+<script type="text/javascript" src="interactive.js"></script>
+</head>
+<body>
+
+<h1>Send example calls via jQuery – v132</h1>
+
+<form id="frm" name="frm">
+
+<table class="bigtable" id="bigtable">
+<tr><td>Server's Address</td><td> <input type="text" id="server" size="50" maxlength="200" value="http://10.0.0.88:4223/ja/0.1/" </td></tr>
+<tr><td></td><td><input type="button" id="crSess" value="Create Session!" onClick="createSession()"></tr></td>
+<tr><td>Open sessions:</td>
+	<td>
+		<div id="sessions"><i>(none, yet)</i></div>
+	</td></tr>
+<tr><td>Function name:</td><td>
+		<select name="fn_name" id="fn_name" size="1" onChange="on_select_change()">
+			<option>–––––</option>
+		</select>
+	</td></tr>
+<tr><td>Parameters:</td><td id="td_param"></td></tr>
+<tr><th colspan="2"> <input type="button" value="Call function!" onClick="button_click()"> </td></tr>
+<tr><td>Debug...</td><td id="deb"><pre id="debug">...</pre></td></tr>
+<tr><td>Result:</td><td id="result"><pre id="resultpre">Banana!</pre></td></tr>
+</table>
+
+</form>
+
+<script type="text/javascript">
+	init_pep_functions();
+	on_select_change();
+</script>
+
+</body>
+</html>

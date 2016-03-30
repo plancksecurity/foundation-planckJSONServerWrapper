@@ -1,0 +1,100 @@
+#include "json_rpc.hh"
+#include "json_spirit/json_spirit_utils.h"
+#include "json_spirit/json_spirit_writer.h"
+
+
+	js::Object make_result(const js::Value& result, int id)
+	{
+		js::Object ret;
+		ret.emplace_back( "jsonrpc", "2.0" );
+		ret.emplace_back( "result" , result );
+		ret.emplace_back( "id"     , id );
+		return ret;
+	}
+	
+	
+	js::Object make_error(JSON_RPC error_code, const std::string& error_message, const js::Value& data, int id)
+	{
+		js::Object err_obj;
+		err_obj.emplace_back( "code", int(error_code) );
+		err_obj.emplace_back( "message", error_message );
+		if( !data.is_null() )
+		{
+			err_obj.emplace_back( "data", data );
+		}
+		
+		js::Object ret;
+		ret.emplace_back( "jsonrpc", "2.0" );
+		ret.emplace_back( "error"  , err_obj );
+		ret.emplace_back( "id"     , id );
+		
+		return ret;
+	}
+
+
+using json_spirit::find_value;
+
+
+js::Object call(const FunctionMap& fm, const js::Object& request)
+{
+	int request_id = -1;
+	try
+	{
+		const auto rpc = find_value(request, "jsonrpc");
+		if(rpc.type()!=js::str_type || rpc.get_str() != "2.0")
+		{
+			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: no valid member \"jsonrpc\" found.", request, request_id);
+		}
+		
+		const auto method = find_value(request, "method");
+		if(method.type()!=js::str_type)
+		{
+			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: no valid member \"method\" found.", request, request_id);
+		}
+		
+		const std::string method_name = method.get_str();
+		const auto fn = fm.find(method_name);
+		if(fn == fm.end())
+		{
+			return make_error(JSON_RPC::METHOD_NOT_FOUND, "Method \"" + method_name + "\" is unknown to me.", request, request_id);
+		}
+		
+		const auto id = find_value(request, "id");
+		if(!id.is_null() && id.type()!=js::int_type)
+		{
+			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: no valid member \"id\" found.", request, request_id);
+		}
+		
+		if(id.type()==js::int_type)
+		{
+			request_id = id.get_int();
+		}
+		
+		const auto params = find_value(request, "params");
+		if(!params.is_null() && params.type()!=js::array_type)
+		{
+			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: no valid member \"params\" found.", request, request_id);
+		}
+		
+		const js::Array p = ( params.type()==js::array_type ? params.get_array() : js::Array{} );
+		
+		std::cerr << "=== Now I do the call!\n"
+			"\tmethod_name=\"" << method_name << "\","
+			"\tparams=" << js::write(params) << ". ===\n";
+		const js::Value result = fn->second->call(p);
+		std::cerr << "=== Result of call: " << js::write(result) << ". ===\n";
+		
+		return make_result(result, request_id);
+	}
+	catch(const std::exception& e)
+	{
+		// JSON-RPC "internal error"
+		return make_error(JSON_RPC::INTERNAL_ERROR, std::string("std::exception catched: \"") + e.what() + "\".", request, request_id );
+	}
+	catch(...)
+	{
+		// JSON-RPC "internal error"
+		return make_error(JSON_RPC::INTERNAL_ERROR, "Unknown exception occured. :-(", request, request_id );
+	}
+}
+
