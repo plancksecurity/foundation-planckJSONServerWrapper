@@ -60,7 +60,7 @@ var Param2Form =
 	{
 		Session : function(nr, pp, value)
 					{
-						return getSessions();
+						return getSessions(true);
 					},
 		String : function(nr, pp, value)
 					{
@@ -160,13 +160,13 @@ function sprintf(format)
 };
 
 
-function getSessions()
+function getSessions(with_radio)
 {
-	var content = "";
+	var content = '';
 	for(var i=0; i<openSessions.length; ++i)
 	{
 		var os = openSessions[i];
-		content += '<input type="radio" name="sessionRadio" value="' + os.session + '">&nbsp;<tt>' + os.session + '</tt><br>';
+		content += (with_radio ? '<input type="radio" name="sessionRadio" value="' + os.session + '">' : '') + '&nbsp;<tt>' + os.session + '</tt><br>';
 	}
 	
 	return content;
@@ -174,7 +174,7 @@ function getSessions()
 
 function showSessions()
 {
-	document.getElementById("sessions").innerHTML = getSessions();
+	document.getElementById("sessions").innerHTML = getSessions(false);
 }
 
 
@@ -232,6 +232,9 @@ function displayResult(response)
 		pre.innerHTML = JSON.stringify(response.error);
 		pre.className = "red";
 	}
+	
+	getAllSessions(); // to update the session lists
+	on_select_change(); // to update the function parameters
 }
 
 
@@ -277,8 +280,8 @@ function button_click()
 		})
 	;
 	
-	pre.innerHTML = "post request sent. request=[" + JSON.stringify(request) + "]";
-	deb.innerHTML = "url=[" + url + "], fn=[" + document.getElementById("fn_name").value + "]";
+	pre.innerHTML = "post request sent. request=" + JSON.stringify(request);
+	deb.innerHTML = "url=<" + url + ">, fn_name=“" + document.getElementById("fn_name").value + "” request=" + JSON.stringify(request);
 }
 
 
