@@ -49,7 +49,7 @@ function genStringList(nr, pp)
 			+ '<br>';
 	}
 	
-	document.getElementById('debug').innerHTML += "func_params = " + JSON.stringify(func_params) + '\n';
+	document.getElementById('debug').innerHTML += "\nfunc_params = " + JSON.stringify(func_params) + '\n';
 	
 	return ret + '<input type="button" value="Add String!" onClick="addString(' + nr + ')">';
 }
@@ -225,11 +225,11 @@ function displayResult(response)
 	
 	if (response.result)
 	{
-		pre.innerHTML = JSON.stringify(response.result);
+		pre.innerHTML = JSON.stringify(response.result, null, 2);
 		pre.className = "green";
 	}else if (response.error)
 	{
-		pre.innerHTML = JSON.stringify(response.error);
+		pre.innerHTML = JSON.stringify(response.error, null, 2);
 		pre.className = "red";
 	}
 	
@@ -280,8 +280,8 @@ function button_click()
 		})
 	;
 	
-	pre.innerHTML = "post request sent. request=" + JSON.stringify(request);
-	deb.innerHTML = "url=<" + url + ">, fn_name=“" + document.getElementById("fn_name").value + "” request=" + JSON.stringify(request);
+	pre.innerHTML = "post request sent. request=" + JSON.stringify(request, null, 2);
+	deb.innerHTML = "url=«" + url + "»,\nfn_name=“" + document.getElementById("fn_name").value + "”\nrequest=" + JSON.stringify(request, null, 2);
 }
 
 
