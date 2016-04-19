@@ -177,7 +177,7 @@ void OnOtherRequest(evhttp_request* req, void*)
 	static const std::map<std::string, FileRequest > files =
 		{
 			{ "/"                , {"text/html"      , "../html/index.html"       } },
-			{ "/jquery.js"       , {"text/javascript", "../html/jquery-2.2.0.js"  } },
+			{ "/jquery.js"       , {"text/javascript", "../html/jquery-2.2.0.min.js"  } },
 	//		{ "/pep_functions.js", {"text/javascript", "../html/pep_functions.js" } },
 			{ "/interactive.js"  , {"text/javascript", "../html/interactive.js"   } },
 			{ "/favicon.ico"     , {"image/vnd.microsoft.icon", "../html/json-test.ico"} },
