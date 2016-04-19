@@ -66,12 +66,27 @@ std::string registerSession()
 	return base57(idx);
 }
 
+
+PEP_STATUS releaseSession(const js::Value& session_handle)
+{
+	try{
+		const std::string s = session_handle.get_str();
+		session_registry.erase(s);
+		return PEP_STATUS_OK;
+	}
+	catch(...)
+	{
+		return PEP_ILLEGAL_VALUE; // There is no "PEP_INVALID_SESSION" or the like. :-(
+	}
+}
+
+
 PEP_STATUS get_gpg_path(const char** path)
 {
 	return get_binary_path( PEP_crypt_OpenPGP, path);
 }
 
-std::string getVersion() { return "0.1"; }
+std::string getVersion() { return "0.2"; }
 
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
@@ -83,7 +98,10 @@ const FunctionMap functions = {
 		FP( "identity_color" , new Func<PEP_STATUS, In<PEP_SESSION>, In<pEp_identity*>, Out<PEP_color>>( &identity_color) ),
 		
 		FP( "get_gpg_path", new Func<PEP_STATUS, Out<const char*>>(&get_gpg_path) ),
-		FP( "version", new Func<std::string>( &getVersion ) )
+		
+		// my own example function that does something useful. :-)
+		FP( "version", new Func<std::string>( &getVersion ) ),
+		FP( "releaseSession", new Func<PEP_STATUS, InRaw<PEP_SESSION>>(&releaseSession) ),
 	};
 
 
@@ -355,12 +373,16 @@ try
 	// initialize the pEp engine
 	registerSession();
 	
+	std::cout << "I have " << session_registry.size() << " registered session(s).\n";
+	
 	std::exception_ptr initExcept;
 	evutil_socket_t s = -1;
 	auto ThreadFunc = [&] ()
 	{
 		try
 		{
+			std::cerr << " +++ Thread starts: isRun=" << isRun << ", id=" << std::this_thread::get_id() << ". +++\n";
+			
 			std::unique_ptr<event_base, decltype(&event_base_free)> eventBase(event_base_new(), &event_base_free);
 			if (!eventBase)
 				throw std::runtime_error("Failed to create new base_event.");
@@ -399,10 +421,10 @@ try
 		}
 		catch (...)
 		{
-			std::cerr << " +++ EXCEPTION +++ ";
+			std::cerr << " +++ EXCEPTION in ThreadFunc +++ ";
 			initExcept = std::current_exception();
 		}
-		std::cerr << " +++ Thread exit? isRun=" << isRun << " +++ ";
+		std::cerr << " +++ Thread exit? isRun=" << isRun << ", id=" << std::this_thread::get_id() << ". +++\n";
 	};
 	
 	

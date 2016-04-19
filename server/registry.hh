@@ -44,10 +44,7 @@ public:
 	
 	~Registry()
 	{
-		for(auto elem : m)
-		{
-			d(elem.second);
-		}
+		clear();
 	}
 	
 	bool has( std::uint64_t index ) const;
@@ -93,12 +90,12 @@ public:
 			m.erase(it);
 		}
 	}
-	
+
 	void erase( const std::string& handle )
 	{
 		erase(unbase57(handle));
 	}
-	
+
 	std::vector<std::uint64_t> keys() const
 	{
 		std::vector<std::uint64_t> k;
@@ -108,6 +105,19 @@ public:
 			k.push_back(e.first);
 		}
 		return k;
+	}
+
+	void clear()
+	{
+		for(auto elem : m)
+		{
+			d(elem.second);
+		}
+	}
+	
+	std::size_t size() const
+	{
+		return m.size();
 	}
 
 private:

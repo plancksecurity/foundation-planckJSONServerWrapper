@@ -45,6 +45,33 @@ struct In
 	T value;
 };
 
+
+// to call functions that operate directly on the JSON data type
+template<class T>
+struct InRaw
+{
+	typedef js::Value c_type; // do not unwrap JSON data type
+	
+	template<class... Args>
+	using pack = std::tuple<Args...>;
+	
+	explicit InRaw(const js::Value& t) : value(t) {}
+	~InRaw() = default;
+	
+	InRaw(const InRaw<T>& other) = default;
+	InRaw(InRaw<T>&& victim) = default;
+	
+	// default implementation:
+	static InRaw<T> from_json(const js::Value& v, const js::Array& params, unsigned position)
+	{
+		return InRaw<T>{v};
+	}
+	
+	js::Value value;
+};
+
+
+
 template<class T>
 struct Out
 {
@@ -88,6 +115,12 @@ struct Concat
 {
 	template<class T, class... Args>
 	std::tuple<Args...> operator()(const In<T>& in, const std::tuple<Args...>& rest) const
+	{
+		return rest;
+	}
+
+	template<class T, class... Args>
+	std::tuple<Args...> operator()(const InRaw<T>& in, const std::tuple<Args...>& rest) const
 	{
 		return rest;
 	}
@@ -193,6 +226,12 @@ struct Type2String
 
 template<class T>
 struct Type2String<In<T>>
+{
+	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
+};
+
+template<class T>
+struct Type2String<InRaw<T>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
