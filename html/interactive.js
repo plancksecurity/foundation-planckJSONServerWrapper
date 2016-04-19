@@ -145,7 +145,7 @@ var Form2Param =
 					},
 		PEP_enc_format : function(nr, pp, value)
 					{
-						return $('input[name=inp_rad_' + nr + ']:checked', '#frm').val();
+						return parseInt( $('input[name=inp_rad_' + nr + ']:checked', '#frm').val() );
 					}
 	};
 
