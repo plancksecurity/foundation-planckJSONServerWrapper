@@ -1,7 +1,7 @@
 .PHONY: all clear
 
-CXXFLAGS = -Wall -O3 -std=c++11 -g -I/home/deb/local/include/
-LDFLAGS  = -L/home/deb/local/lib -lpthread -levent
+CXXFLAGS = -Wall -O3 -std=c++11 -g
+LDFLAGS  = -lpthread
 
 all: libjson_spirit.a
 
