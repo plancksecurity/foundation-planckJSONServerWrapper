@@ -88,6 +88,8 @@ public:
 		{
 			d(it->second);
 			m.erase(it);
+		}else{
+			throw std::runtime_error("cannot erase: There is no element with handle <" + std::to_string(handle) + "> registered.");
 		}
 	}
 
