@@ -247,6 +247,8 @@ namespace json_spirit
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //
     // implementation
+    
+    std::string simple_write(const Value&);
 
     inline bool operator==( const Null&, const Null& )
     {
@@ -386,7 +388,8 @@ namespace json_spirit
         {
             std::ostringstream os;
 
-            os << "get_value< " << value_type_to_string( vtype ) << " > called on " << value_type_to_string( type() ) << " Value";
+            os << "get_value< " << value_type_to_string( vtype ) << " > called on '" << value_type_to_string( type() ) << "' value: "
+               << simple_write(*this);
 
             throw std::runtime_error( os.str() );
         }
