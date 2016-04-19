@@ -95,7 +95,19 @@ using namespace json_spirit;
     }
 #endif
 
-    std::string json_spirit::simple_write(const Value& v)
+namespace json_spirit
+{
+
+    template<>
+    std::string simple_write(const Value& v)
     {
         return json_spirit::write(v);
     }
+
+    template<>
+    std::string simple_write(const mValue& v)
+    {
+        return json_spirit::write(v);
+    }
+
+}

@@ -248,7 +248,8 @@ namespace json_spirit
     //
     // implementation
     
-    std::string simple_write(const Value&);
+    template<class Config>
+    std::string simple_write(const Value_impl<Config>&);
 
     inline bool operator==( const Null&, const Null& )
     {
