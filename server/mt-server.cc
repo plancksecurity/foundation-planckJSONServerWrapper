@@ -42,10 +42,31 @@ In<PEP_SESSION>::~In()
 	// no automatic release!
 }
 
+
+// in pEpEngine.h positive values are hex, negative are decimal. :-o
+std::string status_to_string(PEP_STATUS status)
+{
+	if(status==PEP_STATUS_OK)
+		return "PEP_STATUS_OK";
+	
+	std::stringstream ss;
+	if(status>0)
+	{
+		ss << "0x" << std::hex << status;
+	}else{
+		ss << status;
+	}
+	return ss.str();
+}
+
 PEP_SESSION createSession()
 {
 	PEP_SESSION session = nullptr;
-	init(&session);
+	auto ret = init(&session);
+	if(ret != PEP_STATUS_OK)
+	{
+		throw std::runtime_error("createSession() failed because pEp's init() returns " + status_to_string(ret) );
+	}
 	return session;
 }
 

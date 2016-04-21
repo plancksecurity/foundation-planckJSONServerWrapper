@@ -76,7 +76,7 @@ public:
 		if(ret.second == false)
 		{
 			d(rsrc);
-			throw std::runtime_error("Duplicate entry");
+			throw std::runtime_error("Duplicate entry: id=" + std::to_string(id) + ", rsrc=" + std::to_string( intptr_t(rsrc) ) );
 		}
 		return id;
 	}
