@@ -419,9 +419,14 @@ try
 				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			}
 		}
+		catch (const std::exception& e)
+		{
+			std::cerr << " +++ std::exception in ThreadFunc: " << e.what() << "\n";
+			initExcept = std::current_exception();
+		}
 		catch (...)
 		{
-			std::cerr << " +++ EXCEPTION in ThreadFunc +++ ";
+			std::cerr << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ ";
 			initExcept = std::current_exception();
 		}
 		std::cerr << " +++ Thread exit? isRun=" << isRun << ", id=" << std::this_thread::get_id() << ". +++\n";
