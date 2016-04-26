@@ -104,7 +104,14 @@ PEP_STATUS releaseSession(const js::Value& session_handle)
 
 PEP_STATUS get_gpg_path(const char** path)
 {
-	return get_binary_path( PEP_crypt_OpenPGP, path);
+	const char* gpg_path = nullptr;
+	const auto status =get_binary_path( PEP_crypt_OpenPGP, &gpg_path);
+	
+	if(status == PEP_STATUS_OK && gpg_path!=nullptr)
+	{
+		*path = strdup(gpg_path);
+	}
+	return status;
 }
 
 std::string getVersion() { return "0.2"; }
