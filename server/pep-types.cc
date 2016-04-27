@@ -30,6 +30,13 @@ namespace
 
 
 template<>
+In<const timestamp*>::~In()
+{
+	free_timestamp(const_cast<timestamp*>(value)); // FIXME: is that const_cast okay?
+}
+
+
+template<>
 In<message*>::~In()
 {
 	free_message(value);
@@ -109,6 +116,19 @@ Out<PEP_color>::Out(const Out<PEP_color>& other)
 
 template<>
 Out<PEP_color>::~Out()
+{
+	delete value;
+}
+
+
+template<>
+Out<PEP_comm_type>::Out(const Out<PEP_comm_type>& other)
+: value( new PEP_comm_type(*other.value) )
+{
+}
+
+template<>
+Out<PEP_comm_type>::~Out()
 {
 	delete value;
 }
@@ -341,6 +361,13 @@ tm* from_json<tm*>(const js::Value& v)
 }
 
 template<>
+const tm* from_json<const tm*>(const js::Value& v)
+{
+	return new_timestamp( v.get_int64() );
+}
+
+
+template<>
 js::Value to_json<stringlist_t*>(stringlist_t* const& osl)
 {
 	stringlist_t* sl = osl;
@@ -442,12 +469,27 @@ js::Value to_json<PEP_msg_direction>(const PEP_msg_direction& v)
 	return js::Value( int(v) );
 }
 
+template<>
+PEP_comm_type from_json<PEP_comm_type>(const js::Value& v)
+{
+	return  PEP_comm_type(v.get_int());
+}
+
+template<>
+js::Value to_json<PEP_comm_type>(const PEP_comm_type& v)
+{
+	return js::Value( int(v) );
+}
+
 
 template<>
 js::Value Type2String<PEP_SESSION>::get()  { return "Session"; }
 
 template<>
 js::Value Type2String<_message*>::get()  { return "Message"; }
+
+template<>
+js::Value Type2String<const timestamp*>::get()  { return "Timestamp"; }
 
 template<>
 js::Value Type2String<pEp_identity*>::get()  { return "Identity"; }
@@ -460,6 +502,9 @@ js::Value Type2String<_PEP_color>::get()  { return "PEP_color"; }
 
 template<>
 js::Value Type2String<_PEP_enc_format>::get()  { return "PEP_enc_format"; }
+
+template<>
+js::Value Type2String<_PEP_comm_type>::get()  { return "PEP_comm_type"; }
 
 template<>
 js::Value Type2String<PEP_STATUS>::get()  { return "PEP_STATUS"; }

@@ -27,6 +27,11 @@ In<int>::~In()
 {
 }
 
+template<>
+In<std::size_t>::~In()
+{
+}
+
 
 template<>
 Out<char const*>::~Out()
@@ -44,11 +49,26 @@ Out<char*>::~Out()
 	delete value;
 }
 
+
 template<>
 Out<std::size_t>::~Out()
 {
 	delete value;
 }
+
+
+template<>
+Out<bool>::Out(const Out<bool>& other)
+: value ( new bool {*other.value} )
+{
+}
+
+template<>
+Out<bool>::~Out()
+{
+	delete value;
+}
+
 
 template<>
 Out<char const*>::Out(const Out<const char*>& other)
@@ -160,3 +180,6 @@ js::Value Type2String<int>::get()  { return "Integer"; }
 
 template<>
 js::Value Type2String<size_t>::get()  { return "Integer"; }
+
+template<>
+js::Value Type2String<bool>::get()  { return "Bool"; }
