@@ -41,8 +41,10 @@ const std::string ApiRequestUrl = BaseUrl + "callFunction";
 // https://de.wikipedia.org/wiki/Bundesautobahn_4
 const std::string server_version =
 //	"(4) Kreuz Aachen"; // first version with this version scheme :-)
-	"(5a) Eschweiler-West"; // add support for log_event() and trustwords()
- 
+//	"(5a) Eschweiler-West"; // add support for log_event() and trustwords()
+	"(5b) Eschweiler-Ost";  // add support for get_identity() and get_languagelist()
+
+
 
 template<>
 In<PEP_SESSION>::~In()
@@ -138,6 +140,8 @@ const FunctionMap functions = {
 		FP( "—— pEp Engine Core API ——", new Separator),
 		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
 		FP( "trustwords", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, Out<char*>, Out<size_t>, In<int>>( &trustwords) ),
+		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION>, Out<char*>>( &get_languagelist) ),
+		FP( "get_identity", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<pEp_identity*>>( &get_identity) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),

@@ -48,6 +48,20 @@ In<pEp_identity*>::~In()
 	free_identity(value);
 }
 
+template<>
+Out<pEp_identity*>::~Out()
+{
+	free_identity(*value);
+	delete value;
+}
+
+template<>
+Out<pEp_identity*>::Out(const Out<pEp_identity*>& other)
+: value( new pEp_identity* )
+{
+	*value = identity_dup(*other.value);
+}
+
 
 template<>
 In<PEP_enc_format>::~In()
