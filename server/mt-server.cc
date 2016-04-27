@@ -40,8 +40,9 @@ const std::string ApiRequestUrl = BaseUrl + "callFunction";
 // version names comes from here:
 // https://de.wikipedia.org/wiki/Bundesautobahn_4
 const std::string server_version =
-	"(4) Kreuz Aachen"; // first version with this version scheme :-)
-
+//	"(4) Kreuz Aachen"; // first version with this version scheme :-)
+	"(5a) Eschweiler-West"; // add support for log_event() and trustwords()
+ 
 
 template<>
 In<PEP_SESSION>::~In()
@@ -132,8 +133,11 @@ const FunctionMap functions = {
 		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_color>>(  &decrypt_message ) ),
 		FP( "outgoing_message_color", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, Out<PEP_color>>( &outgoing_message_color ) ),
 		FP( "identity_color" , new Func<PEP_STATUS, In<PEP_SESSION>, In<pEp_identity*>, Out<PEP_color>>( &identity_color) ),
+		FP( "get_gpg_path",    new Func<PEP_STATUS, Out<const char*>>(&get_gpg_path) ),
 		
-		FP( "get_gpg_path", new Func<PEP_STATUS, Out<const char*>>(&get_gpg_path) ),
+		FP( "—— pEp Engine Core API ——", new Separator),
+		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
+		FP( "trustwords", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, Out<char*>, Out<size_t>, In<int>>( &trustwords) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),

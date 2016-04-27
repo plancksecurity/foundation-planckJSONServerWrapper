@@ -17,9 +17,36 @@ namespace
 
 
 template<>
+In<char const*>::~In()
+{
+	if(value) free(const_cast<char*>(value));
+}
+
+template<>
+In<int>::~In()
+{
+}
+
+
+template<>
 Out<char const*>::~Out()
 {
 	if(value) free(const_cast<char*>(*value));
+	delete value;
+}
+
+
+template<>
+Out<char*>::~Out()
+{
+	if(value) free(*value);
+	*value = nullptr;
+	delete value;
+}
+
+template<>
+Out<std::size_t>::~Out()
+{
 	delete value;
 }
 
@@ -28,6 +55,20 @@ Out<char const*>::Out(const Out<const char*>& other)
 : value( new const char* )
 {
 	*value = *other.value ? strdup(*other.value) : nullptr;
+}
+
+template<>
+Out<char*>::Out(const Out<char*>& other)
+: value( new char* )
+{
+	*value = *other.value ? strdup(*other.value) : nullptr;
+}
+
+
+template<>
+Out<std::size_t>::Out(const Out<std::size_t>& other)
+: value( new std::size_t(*other.value))
+{
 }
 
 
@@ -52,6 +93,12 @@ std::string from_json<std::string>(const js::Value& v)
 
 template<>
 char* from_json<char*>(const js::Value& v)
+{
+	return make_c_string( v.get_str() );
+}
+
+template<>
+const char* from_json<const char*>(const js::Value& v)
 {
 	return make_c_string( v.get_str() );
 }
@@ -86,9 +133,24 @@ js::Value to_json<const char*>(const char* const & s)
 	return s ? js::Value(std::string(s)) : js::Value{};
 }
 
+template<>
+js::Value to_json<std::size_t>(const std::size_t& s)
+{
+	return js::Value{s};
+}
+
 
 template<>
 js::Value Type2String<std::string>::get()  { return "String"; }
 
 template<>
 js::Value Type2String<const char*>::get()  { return "String"; }
+
+template<>
+js::Value Type2String<char*>::get()  { return "String"; }
+
+template<>
+js::Value Type2String<int>::get()  { return "Integer"; }
+
+template<>
+js::Value Type2String<size_t>::get()  { return "Integer"; }
