@@ -136,7 +136,6 @@ extern const Concat concat;
 
 
 
-
 // helper functors for to_json(tuple<...>):
 namespace
 {
@@ -266,6 +265,7 @@ class FuncBase
 {
 public:
 	virtual ~FuncBase() = default;
+	virtual bool  isSeparator() const = 0;
 	virtual void  setJavaScriptSignature(js::Object& o) const = 0;
 	virtual js::Value     call(const js::Array& params) const = 0;
 };
@@ -279,6 +279,10 @@ public:
 	enum { Size = sizeof...(Args) };
 
 	virtual ~Func() = default;
+	virtual bool isSeparator() const override
+	{
+		return false;
+	}
 	
 	Func() : fn() {}
 
@@ -306,11 +310,22 @@ public:
 		
 		o.emplace_back( "return", Type2String<R>::get() );
 		o.emplace_back( "params", params );
+		o.emplace_back( "separator", false );
 	}
 };
 
 
-typedef std::map< std::string, FuncBase* > FunctionMap;
+class Separator : public FuncBase
+{
+public:
+	Separator() = default;
+	virtual bool isSeparator() const override { return true; }
+	virtual void setJavaScriptSignature(js::Object& o) const override { o.emplace_back("separator", true); }
+	virtual js::Value     call(const js::Array& params) const override { return js::Value{}; }
+};
+
+//typedef std::map< std::string, FuncBase* > FunctionMap;
+typedef std::vector< std::pair< std::string, FuncBase*> > FunctionMap;
 typedef FunctionMap::value_type FP;
 
 #endif // FUNCTION_MAP_HH

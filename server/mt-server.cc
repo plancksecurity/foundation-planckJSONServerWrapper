@@ -120,6 +120,7 @@ std::string getVersion() { return "0.2"; }
 const FunctionMap functions = {
 		
 		// from message_api.h
+		FP( "—— Message API ——", new Separator ),
 		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>>( &encrypt_message ) ),
 		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_color>>(  &decrypt_message ) ),
 		FP( "outgoing_message_color", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, Out<PEP_color>>( &outgoing_message_color ) ),
@@ -128,6 +129,7 @@ const FunctionMap functions = {
 		FP( "get_gpg_path", new Func<PEP_STATUS, Out<const char*>>(&get_gpg_path) ),
 		
 		// my own example function that does something useful. :-)
+		FP( "—— Other ——", new Separator ),
 		FP( "version", new Func<std::string>( &getVersion ) ),
 		FP( "releaseSession", new Func<PEP_STATUS, InRaw<PEP_SESSION>>(&releaseSession) ),
 	};

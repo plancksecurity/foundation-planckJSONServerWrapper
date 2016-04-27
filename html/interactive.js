@@ -288,6 +288,14 @@ function button_click()
 function prepare_call(f)
 {
 	func = f;
+	if(f.separator)
+	{
+		document.getElementById("td_param").innerHTML = "——";
+		document.getElementById("td_param").disabled = true;
+		return;
+	}
+	
+	document.getElementById("td_param").disabled = false;
 	func_params = new Array(func.params.length);
 	
 	var len = f.params.length;
@@ -340,7 +348,7 @@ function init_pep_functions()
 	for(var i=0, len=pep_functions.length; i<len; ++i)
 	{
 		var f = pep_functions[i];
-		optionList += "<option>" + f.name + "</option>\n";
+		optionList += '<option' + (f.separator? ' disabled>':'>') + f.name + "</option>\n";
 	}
 	document.getElementById("fn_name").innerHTML = optionList;
 	
