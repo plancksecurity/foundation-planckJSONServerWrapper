@@ -36,6 +36,13 @@ const std::string CreateSessionUrl = BaseUrl + "createSession";
 const std::string GetAllSessionsUrl = BaseUrl + "getAllSessions";
 const std::string ApiRequestUrl = BaseUrl + "callFunction";
 
+
+// version names comes from here:
+// https://de.wikipedia.org/wiki/Bundesautobahn_4
+const std::string server_version =
+	"(4) Kreuz Aachen"; // first version with this version scheme :-)
+
+
 template<>
 In<PEP_SESSION>::~In()
 {
@@ -239,7 +246,7 @@ void OnOtherRequest(evhttp_request* req, void*)
 // generate a JavaScript file containing the definition of all registered callable functions, see above.
 void OnGetFunctions(evhttp_request* req, void*)
 {
-	static const char* const preamble =
+	static const std::string preamble =
 		"var Direction = { In:1, Out:2, InOut:3 };\n"
 		"var Type = {\n"
 		"		Blob    : 10, // binary strings or 'array of octet'\n"
@@ -253,6 +260,7 @@ void OnGetFunctions(evhttp_request* req, void*)
 		"		Session : 90 // opaque type. only a special encoded 'handle' is used in JavaScript code\n"
 		"	};\n"
 		"\n"
+		"var server_version = \"" + server_version + "\";\n"
 		"var pep_functions = ";
 	
 	js::Array jsonfunctions;
