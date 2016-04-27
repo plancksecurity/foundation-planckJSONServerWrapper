@@ -8,7 +8,7 @@ namespace
 	T from_json_object(const js::Object& obj, const std::string& key)
 	{
 		const auto v = find_value(obj, key);
-		if(v.type() == js::null_type) return nullptr;
+		if(v.type() == js::null_type) return T{};
 		if(v.type() == VALUE_TYPE) return from_json<T>(v);
 		
 		throw std::runtime_error("JSON object has a member for key \"" + key + "\""
@@ -122,10 +122,17 @@ message* from_json<message*>(const js::Value& v)
 	_message* msg = new_message(PEP_dir_incoming);
 
 	// fetch values from v and put them into msg
+	msg->dir      = from_json_object<PEP_msg_direction, js::int_type>(o, "dir");
 	msg->id       = from_json_object<char*, js::str_type>(o, "id");
 	msg->shortmsg = from_json_object<char*, js::str_type>(o, "short");
 	msg->longmsg  = from_json_object<char*, js::str_type>(o, "long");
 	msg->longmsg_formatted = from_json_object<char*, js::str_type>(o, "fmt");
+	
+	msg->attachments = from_json_object<bloblist_t*, js::array_type>(o, "attachments");
+	
+	msg->sent     = from_json_object<timestamp*, js::int_type>(o, "sent");
+	msg->recv     = from_json_object<timestamp*, js::int_type>(o, "recv");
+	
 	msg->from     = from_json_object<pEp_identity*, js::obj_type>(o, "from");
 	msg->to       = from_json_object<identity_list*, js::array_type>(o, "to");
 	msg->recv_by  = from_json_object<pEp_identity*, js::obj_type>(o, "recv_by");
@@ -133,7 +140,15 @@ message* from_json<message*>(const js::Value& v)
 	msg->bcc      = from_json_object<identity_list*, js::array_type>(o, "bcc");
 	msg->reply_to = from_json_object<identity_list*, js::array_type>(o, "reply_to");
 	msg->in_reply_to = from_json_object<stringlist_t*, js::array_type>(o, "in_reply_to");
-	// TODO: remaining data members! –.–
+	
+	// TODO: refering_msg_ref
+	msg->references = from_json_object<stringlist_t*, js::array_type>(o, "references");
+	// TODO: refered_by
+	
+	msg->keywords = from_json_object<stringlist_t*, js::int_type>(o, "keywords");
+	msg->comments = from_json_object<char*, js::str_type>(o, "comments");
+	msg->opt_fields = from_json_object<stringpair_list_t*, js::array_type>(o, "opt_fields");
+	msg->enc_format = from_json_object<PEP_enc_format, js::int_type>(o, "enc_format");
 	
 	return msg;
 }
@@ -228,6 +243,76 @@ identity_list* from_json<identity_list*>(const js::Value& v)
 
 
 template<>
+_bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
+{
+	const js::Array& a = v.get_array();
+	if(a.empty())
+		return nullptr;
+	
+	auto element = a.begin();
+	const auto oelem = element->get_obj();
+	_bloblist_t* bl = new_bloblist
+		(
+			from_json_object<char*, js::str_type>      (oelem, "data"),
+			from_json_object<size_t, js::int_type>     (oelem, "size"),
+			from_json_object<const char*, js::str_type>(oelem, "mime_type"),
+			from_json_object<const char*, js::str_type>(oelem, "filename")
+		);
+
+	for(; element!=a.end(); ++element)
+	{
+		const auto oelem = element->get_obj();
+		bl = bloblist_add(bl, 
+			from_json_object<char*, js::str_type>      (oelem, "data"),
+			from_json_object<size_t, js::int_type>     (oelem, "size"),
+			from_json_object<const char*, js::str_type>(oelem, "mime_type"),
+			from_json_object<const char*, js::str_type>(oelem, "filename")
+		);
+	}
+
+	return bl;
+}
+
+
+template<>
+stringpair_t* from_json<stringpair_t*>(const js::Value& v)
+{
+	const js::Object& o = v.get_obj();
+	char* key = from_json_object<char*, js::str_type>(o, "key");
+	char* val = from_json_object<char*, js::str_type>(o, "value");
+	stringpair_t* sp = new_stringpair( key, val );
+	free(val);
+	free(key);
+	return sp;
+}
+
+
+template<>
+stringpair_list_t* from_json<stringpair_list_t*>(const js::Value& v)
+{
+	const js::Array& a = v.get_array();
+	if(a.empty())
+		return nullptr;
+	
+	auto element = a.begin();
+	stringpair_list_t* spl = new_stringpair_list( from_json<stringpair_t*>(*element) );
+
+	for(; element!=a.end(); ++element)
+	{
+		spl = stringpair_list_add(spl, from_json<stringpair_t*>(*element) );
+	}
+
+	return spl;
+}
+
+
+template<>
+tm* from_json<tm*>(const js::Value& v)
+{
+	return new_timestamp( v.get_int64() );
+}
+
+template<>
 js::Value to_json<stringlist_t*>(stringlist_t* const& osl)
 {
 	stringlist_t* sl = osl;
@@ -307,6 +392,13 @@ template<>
 PEP_enc_format from_json<PEP_enc_format>(const js::Value& v)
 {
 	return  PEP_enc_format(v.get_int());
+}
+
+
+template<>
+PEP_msg_direction from_json<PEP_msg_direction>(const js::Value& v)
+{
+	return  PEP_msg_direction(v.get_int());
 }
 
 
