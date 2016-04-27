@@ -20,7 +20,7 @@ namespace
 	template<class T>
 	void to_json_object(js::Object& obj, const std::string& key, const T& value)
 	{
-		if(value!=nullptr)
+		if(value!=T{})
 		{
 			obj.emplace_back( key, js::Value( to_json<T>(value) ));
 		}
@@ -190,19 +190,28 @@ js::Value to_json<message*>(message* const& msg)
 	}
 	
 	js::Object o;
-	to_json_object(o, "id"   , msg->id);
+	to_json_object(o, "dir"     , msg->dir);
+	to_json_object(o, "id"      , msg->id);
 	to_json_object(o, "shortmsg", msg->shortmsg);
 	to_json_object(o, "longmsg" , msg->longmsg);
 	to_json_object(o, "longmsg_formatted"  , msg->longmsg_formatted);
-	to_json_object(o, "from" , msg->from);
+	to_json_object(o, "from"    , msg->from);
 	to_json_object(o, "recv_by" , msg->recv_by);
 	
-	to_json_object(o, "to"   , msg->to);
-	to_json_object(o, "cc"   , msg->cc);
-	to_json_object(o, "bcc"   , msg->bcc);
-	to_json_object(o, "reply_to"   , msg->reply_to);
+	to_json_object(o, "to"      , msg->to);
+	to_json_object(o, "cc"      , msg->cc);
+	to_json_object(o, "bcc"     , msg->bcc);
+	to_json_object(o, "reply_to", msg->reply_to);
 	to_json_object(o, "in_reply_to"   , msg->in_reply_to);
 	
+	// TODO: refering_msg_ref
+	to_json_object(o, "references", msg->references);
+	// TODO: refered_by
+	
+	to_json_object(o, "keywords", msg->keywords);
+	to_json_object(o, "comments", msg->comments);
+	to_json_object(o, "opt_fields", msg->opt_fields);
+	to_json_object(o, "enc_format", msg->enc_format);
 	
 	return js::Value( o );
 }
@@ -307,6 +316,25 @@ stringpair_list_t* from_json<stringpair_list_t*>(const js::Value& v)
 
 
 template<>
+js::Value to_json<stringpair_list_t*>(stringpair_list_t* const& osl)
+{
+	stringpair_list_t* spl = osl;
+	js::Array a;
+	
+	while(spl)
+	{
+		js::Object o;
+		o.emplace_back( "key", spl->value->key );
+		o.emplace_back( "value", spl->value->value );
+		a.push_back( o );
+		spl = spl->next;
+	}
+	
+	return js::Value(a);
+}
+
+
+template<>
 tm* from_json<tm*>(const js::Value& v)
 {
 	return new_timestamp( v.get_int64() );
@@ -394,11 +422,24 @@ PEP_enc_format from_json<PEP_enc_format>(const js::Value& v)
 	return  PEP_enc_format(v.get_int());
 }
 
+template<>
+js::Value to_json<PEP_enc_format>(const PEP_enc_format& v)
+{
+	return js::Value( int(v) );
+}
+
 
 template<>
 PEP_msg_direction from_json<PEP_msg_direction>(const js::Value& v)
 {
 	return  PEP_msg_direction(v.get_int());
+}
+
+
+template<>
+js::Value to_json<PEP_msg_direction>(const PEP_msg_direction& v)
+{
+	return js::Value( int(v) );
 }
 
 
