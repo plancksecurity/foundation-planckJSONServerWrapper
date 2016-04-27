@@ -213,7 +213,7 @@ js::Value to_json<message*>(message* const& msg)
 	to_json_object(o, "opt_fields", msg->opt_fields);
 	to_json_object(o, "enc_format", msg->enc_format);
 	
-	return js::Value( o );
+	return js::Value( std::move(o) );
 }
 
 
@@ -326,11 +326,11 @@ js::Value to_json<stringpair_list_t*>(stringpair_list_t* const& osl)
 		js::Object o;
 		o.emplace_back( "key", spl->value->key );
 		o.emplace_back( "value", spl->value->value );
-		a.push_back( o );
+		a.push_back( std::move(o) );
 		spl = spl->next;
 	}
 	
-	return js::Value(a);
+	return js::Value( std::move(a) );
 }
 
 
@@ -348,12 +348,12 @@ js::Value to_json<stringlist_t*>(stringlist_t* const& osl)
 	
 	while(sl)
 	{
-		const std::string value = sl->value;
-		a.push_back(value);
+		std::string value = sl->value;
+		a.push_back( std::move(value) );
 		sl = sl->next;
 	}
 	
-	return js::Value( a );
+	return js::Value( std::move(a) );
 }
 
 
@@ -377,7 +377,7 @@ js::Value to_json<pEp_identity*>(pEp_identity* const& id)
 	o.emplace_back( "lang", js::Value( std::string( id->lang, id->lang+2) ));
 	o.emplace_back( "me", js::Value( id->me ));
 	
-	return js::Value( o );
+	return js::Value( std::move(o) );
 }
 
 
@@ -394,7 +394,7 @@ js::Value to_json<identity_list*>(identity_list* const& idl)
 		il = il->next;
 	}
 	
-	return js::Value( a );
+	return js::Value( std::move(a) );
 }
 
 

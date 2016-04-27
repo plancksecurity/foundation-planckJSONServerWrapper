@@ -42,8 +42,8 @@ const std::string ApiRequestUrl = BaseUrl + "callFunction";
 const std::string server_version =
 //	"(4) Kreuz Aachen"; // first version with this version scheme :-)
 //	"(5a) Eschweiler-West"; // add support for log_event() and trustwords()
-	"(5b) Eschweiler-Ost";  // add support for get_identity() and get_languagelist()
-
+//	"(5b) Eschweiler-Ost";  // add support for get_identity() and get_languagelist()
+	"(5c) Weisweiler";      // add missing members of struct message
 
 
 template<>
