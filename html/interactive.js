@@ -66,6 +66,11 @@ var Param2Form =
 					{
 						return genInput('inp_param_' + nr , 25, pp.direction, value);
 					},
+		Integer : function(nr, pp, value)
+					{
+						return genInput('inp_param_' + nr , 25, pp.direction, value);
+					},
+		
 		StringList : function(nr, pp, value)
 					{
 						if(pp.direction=="Out")
@@ -116,6 +121,10 @@ var Form2Param =
 		String : function(nr, pp, value)
 					{
 						return document.getElementById( 'inp_param_' + nr ).value;
+					},
+		Integer: function(nr, pp, value)
+					{
+						return parseInt( document.getElementById( 'inp_param_' + nr ).value );
 					},
 		StringList : function(nr, pp, value)
 					{
@@ -296,7 +305,7 @@ function prepare_call(f)
 	}
 	
 	document.getElementById("td_param").disabled = false;
-	func_params = new Array(func.params.length);
+	func_params = new Array(func.params.length, '');
 	
 	var len = f.params.length;
 	if(len==0)

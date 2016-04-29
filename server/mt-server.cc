@@ -44,8 +44,8 @@ const std::string server_version =
 //	"(5a) Eschweiler-West"; // add support for log_event() and trustwords()
 //	"(5b) Eschweiler-Ost";  // add support for get_identity() and get_languagelist()
 //	"(5c) Weisweiler";      // add missing members of struct message
-	"(5d) Langerwehe";      // add the remaining functions from pEpEngine.h
-
+//	"(5d) Langerwehe";      // add the remaining functions from pEpEngine.h
+	"(6) Düren";            // some bug fixes for missing data types, UTF-8 output etc., status in hex etc.
 
 template<>
 In<PEP_SESSION>::~In()
@@ -53,22 +53,6 @@ In<PEP_SESSION>::~In()
 	// no automatic release!
 }
 
-
-// in pEpEngine.h positive values are hex, negative are decimal. :-o
-std::string status_to_string(PEP_STATUS status)
-{
-	if(status==PEP_STATUS_OK)
-		return "PEP_STATUS_OK";
-	
-	std::stringstream ss;
-	if(status>0)
-	{
-		ss << "0x" << std::hex << status;
-	}else{
-		ss << status;
-	}
-	return ss.str();
-}
 
 PEP_SESSION createSession()
 {
@@ -80,6 +64,7 @@ PEP_SESSION createSession()
 	}
 	return session;
 }
+
 
 template<> const uint64_t SessionRegistry::Identifier = 0x44B0310A;
 
@@ -348,7 +333,7 @@ void OnApiRequest(evhttp_request* req, void*)
 		answer = make_error( JSON_RPC::INTERNAL_ERROR, "Got a std::exception: \"" + std::string(e.what()) + "\"", p, request_id );
 	}
 
-	sendReplyString(req, "text/plain", js::write(answer));
+	sendReplyString(req, "text/plain", js::write(answer, js::raw_utf8));
 };
 
 

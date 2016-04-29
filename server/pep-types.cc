@@ -29,6 +29,23 @@ namespace
 }
 
 
+// in pEpEngine.h positive values are hex, negative are decimal. :-o
+std::string status_to_string(PEP_STATUS status)
+{
+	if(status==PEP_STATUS_OK)
+		return "PEP_STATUS_OK";
+	
+	std::stringstream ss;
+	if(status>0)
+	{
+		ss << "0x" << std::hex << status;
+	}else{
+		ss << status;
+	}
+	return ss.str();
+}
+
+
 template<>
 In<const timestamp*>::~In()
 {
@@ -58,15 +75,21 @@ In<pEp_identity*>::~In()
 template<>
 Out<pEp_identity*>::~Out()
 {
-	free_identity(*value);
+	if(value)
+	{
+		free_identity(*value);
+	}
 	delete value;
 }
 
 template<>
 Out<pEp_identity*>::Out(const Out<pEp_identity*>& other)
-: value( new pEp_identity* )
+: value( new pEp_identity*{} )
 {
-	*value = identity_dup(*other.value);
+	if(*other.value)
+	{
+		*value = identity_dup(*other.value);
+	}
 }
 
 
@@ -439,6 +462,7 @@ js::Value to_json<PEP_STATUS>(const PEP_STATUS& status)
 {
 	js::Object o;
 	o.emplace_back( "status", int(status) );
+	o.emplace_back( "hex", status_to_string(status) );
 	return o;
 }
 

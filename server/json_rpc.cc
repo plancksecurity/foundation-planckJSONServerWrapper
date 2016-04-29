@@ -91,7 +91,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request)
 			"\tmethod_name=\"" << method_name << "\","
 			"\tparams=" << js::write(params) << ". ===\n";
 		const js::Value result = fn->second->call(p);
-		std::cerr << "=== Result of call: " << js::write(result) << ". ===\n";
+		std::cerr << "=== Result of call: " << js::write(result, js::raw_utf8) << ". ===\n";
 		
 		return make_result(result, request_id);
 	}

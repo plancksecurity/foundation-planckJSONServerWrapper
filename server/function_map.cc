@@ -36,7 +36,10 @@ In<std::size_t>::~In()
 template<>
 Out<char const*>::~Out()
 {
-	if(value) free(const_cast<char*>(*value));
+	if(value)
+	{
+		free(const_cast<char*>(*value));
+	}
 	delete value;
 }
 
@@ -44,8 +47,11 @@ Out<char const*>::~Out()
 template<>
 Out<char*>::~Out()
 {
-	if(value) free(*value);
-	*value = nullptr;
+	if(value)
+	{
+		free(*value);
+		*value = nullptr;
+	}
 	delete value;
 }
 
