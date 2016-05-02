@@ -171,6 +171,11 @@ function sprintf(format)
 
 function getSessions(with_radio)
 {
+	if(openSessions.length == 0)
+	{
+		return '<i>(no open sessions)</i>';
+	}
+	
 	var content = '';
 	for(var i=0; i<openSessions.length; ++i)
 	{
@@ -192,7 +197,7 @@ function createSession()
 	var url = document.getElementById("server").value + 'createSession';
 	var request = {};
 	request.method = 'createSession';
-	request.params = ['ö𝄞ö'];
+	request.params = [':-)'];
 	request.id = ++call_ID;
 	request.jsonrpc = "2.0";
 	var x = $.post(url, JSON.stringify(request), null, "json")
