@@ -45,7 +45,8 @@ const std::string server_version =
 //	"(5b) Eschweiler-Ost";  // add support for get_identity() and get_languagelist()
 //	"(5c) Weisweiler";      // add missing members of struct message
 //	"(5d) Langerwehe";      // add the remaining functions from pEpEngine.h
-	"(6) Düren";            // some bug fixes for missing data types, UTF-8 output etc., status in hex etc.
+//	"(6) Düren";            // some bug fixes for missing data types, UTF-8 output etc., status in hex etc.
+	"(7a) Merzenich";       // InOut parameters added. Untested, yet.
 
 template<>
 In<PEP_SESSION>::~In()
@@ -127,27 +128,26 @@ const FunctionMap functions = {
 		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
 		FP( "trustwords", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, Out<char*>, Out<size_t>, In<int>>( &trustwords) ),
 		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION>, Out<char*>>( &get_languagelist) ),
-		FP( "get_identity", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, Out<pEp_identity*>>( &get_identity) ),
-		FP( "set_identity", new Func<PEP_STATUS, In<PEP_SESSION>, In<pEp_identity*>> ( &set_identity) ),
+		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<int>, Out<char*>> ( &get_phrase) ),
+		
+		FP( "—— Identity Management API ——", new Separator),
+		FP( "get_identity"       , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, Out<pEp_identity*>>( &get_identity) ),
+		FP( "set_identity"       , new Func<PEP_STATUS, In<PEP_SESSION>, In<pEp_identity*>> ( &set_identity) ),
 		FP( "mark_as_comprimized", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>> ( &mark_as_compromized) ),
 		
-		// InOut<> is not yet supported
-		FP( "generate_keypair", new Separator /*new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &generate_keypair) */ ),
-		
+		FP( "—— Low level Key Management API ——", new Separator),
+		FP( "generate_keypair", new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &generate_keypair) ),
 		FP( "delete_keypair", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>> ( &delete_keypair) ),
 		FP( "import_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<std::size_t>> ( &import_key) ),
 		FP( "export_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<char*>, Out<std::size_t>> ( &export_key) ),
 		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
-		
-		// InOut<> is not yet supported
-		FP( "get_trust", new Separator /* new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &get_trust) */ ),
+		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &get_trust) ),
 		
 		FP( "least_trust"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<PEP_comm_type>> ( &least_trust) ),
 		FP( "get_key_rating", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<PEP_comm_type>> ( &get_key_rating) ),
 		FP( "renew_key"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const timestamp*>> ( &renew_key) ),
 		FP( "revoke"        , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>> ( &revoke_key) ),
 		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<bool>> ( &key_expired) ),
-		FP( "get_phrase"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<int>, Out<char*>> ( &get_phrase) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),

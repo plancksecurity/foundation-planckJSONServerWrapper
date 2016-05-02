@@ -82,6 +82,13 @@ Out<pEp_identity*>::~Out()
 	delete value;
 }
 
+
+template<>
+In<pEp_identity*>::In(const In<pEp_identity*>& other)
+: value( other.value ? identity_dup(other.value) : nullptr )
+{
+}
+
 template<>
 Out<pEp_identity*>::Out(const Out<pEp_identity*>& other)
 : value( new pEp_identity*{} )

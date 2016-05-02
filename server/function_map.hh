@@ -71,6 +71,28 @@ struct InRaw
 };
 
 
+// helper classes to specify in- and out-parameters
+template<class T>
+struct InOut : public In<T>
+{
+	typedef In<T> Base;
+
+	explicit InOut(const T& t) : Base(t) {}
+	~InOut() = default;
+	
+	// default implementation:
+	static InOut<T> from_json(const js::Value& v, const js::Array& params, unsigned position)
+	{
+		T t = ::from_json<T>(v);
+		return InOut<T>{t};
+	}
+	
+	js::Value to_json() const
+	{
+		return ::to_json<T>(Base::value);
+	}
+};
+
 
 template<class T>
 struct Out
@@ -111,6 +133,13 @@ js::Value to_json(const Out<T>& o)
 	return ::to_json(*o.value);
 }
 
+template<class T>
+js::Value to_json(const InOut<T>& o)
+{
+	return ::to_json(o.value);
+}
+
+
 struct Concat
 {
 	template<class T, class... Args>
@@ -129,6 +158,12 @@ struct Concat
 	std::tuple<Out<T>, Args...> operator()(const Out<T>& out, const std::tuple<Args...>& rest) const
 	{
 		return std::tuple_cat(std::tuple<Out<T>>{out}, rest);
+	}
+
+	template<class T, class... Args>
+	std::tuple<InOut<T>, Args...> operator()(const InOut<T>& out, const std::tuple<Args...>& rest) const
+	{
+		return std::tuple_cat(std::tuple<InOut<T>>{out}, rest);
 	}
 };
 
@@ -239,6 +274,12 @@ template<class T>
 struct Type2String<Out<T>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "Out"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
+};
+
+template<class T>
+struct Type2String<InOut<T>>
+{
+	static js::Value get() { js::Object ret; ret.emplace_back("direction", "InOut"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
 
 template<class... Args> struct Type2Json;
