@@ -213,6 +213,7 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 	char* fingerprint = from_json_object<char*, js::str_type>(o, "fpr");
 	char* user_id     = from_json_object<char*, js::str_type>(o, "user_id");
 	char* username    = from_json_object<char*, js::str_type>(o, "username");
+	char* lang        = from_json_object<char*, js::str_type>(o, "lang");
 	
 	pEp_identity* ident = new_identity
 		(
@@ -226,6 +227,11 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 	free(user_id);
 	free(fingerprint);
 	free(address);
+	
+	ident->comm_type = from_json_object<PEP_comm_type, js::int_type>(o, "comm_type");
+	strncpy(ident->lang, lang, 3);
+	free(lang);
+	ident->me = from_json_object<bool, js::bool_type>(o, "me");
 	
 	return ident;
 }
@@ -424,7 +430,6 @@ js::Value to_json<pEp_identity*>(pEp_identity* const& id)
 
 	js::Object o;
 	
-	o.emplace_back( "struct_size", js::Value( uint64_t( id->struct_size) ));
 	to_json_object(o, "address", id->address);
 	to_json_object(o, "fpr", id->fpr);
 	to_json_object(o, "user_id", id->user_id);

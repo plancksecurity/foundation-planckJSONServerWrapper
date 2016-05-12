@@ -47,7 +47,8 @@ const std::string server_version =
 //	"(5d) Langerwehe";      // add the remaining functions from pEpEngine.h
 //	"(6) Düren";            // some bug fixes for missing data types, UTF-8 output etc., status in hex etc.
 //	"(7a) Merzenich";       // InOut parameters added. Untested, yet.
-	"(7b) Elsdorf";         // add own_key functions, which are new in the pEp Engine
+//	"(7b) Elsdorf";         // add own_key functions, which are new in the pEp Engine
+	"(8) Kerpen";           // pEp_identity fixes due to changes in the pEp Engine 
 
 
 template<>

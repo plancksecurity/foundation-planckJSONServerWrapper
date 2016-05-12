@@ -171,6 +171,12 @@ std::size_t from_json<std::size_t>(const js::Value& v)
 	return v.get_uint64();
 }
 
+template<>
+bool from_json<bool>(const js::Value& v)
+{
+	return v.get_bool();
+}
+
 
 template<>
 js::Value Type2String<std::string>::get()  { return "String"; }
