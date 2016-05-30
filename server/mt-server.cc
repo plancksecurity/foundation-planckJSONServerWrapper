@@ -48,7 +48,8 @@ const std::string server_version =
 //	"(6) Düren";            // some bug fixes for missing data types, UTF-8 output etc., status in hex etc.
 //	"(7a) Merzenich";       // InOut parameters added. Untested, yet.
 //	"(7b) Elsdorf";         // add own_key functions, which are new in the pEp Engine
-	"(8) Kerpen";           // pEp_identity fixes due to changes in the pEp Engine 
+//	"(8) Kerpen";           // pEp_identity fixes due to changes in the pEp Engine 
+	"(8a) Kreuz Kerpen";    // remove own_key_add() because pEpEngine doesn't have it anymore.
 
 
 template<>
@@ -145,7 +146,7 @@ const FunctionMap functions = {
 		FP( "export_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<char*>, Out<std::size_t>> ( &export_key) ),
 		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &get_trust) ),
-		FP( "own_key_add"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>> ( &own_key_add) ),
+//		FP( "own_key_add"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>> ( &own_key_add) ),
 		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
 		FP( "own_key_retrieve" , new Func<PEP_STATUS, In<PEP_SESSION>, Out<stringlist_t*>> ( &own_key_retrieve) ),
 		
