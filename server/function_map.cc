@@ -162,7 +162,7 @@ js::Value to_json<const char*>(const char* const & s)
 template<>
 js::Value to_json<std::size_t>(const std::size_t& s)
 {
-	return js::Value{s};
+	return js::Value{uint64_t(s)};
 }
 
 template<>
