@@ -6,8 +6,9 @@ LDFLAGS  = -L/home/deb/local/lib -lpthread -levent -lpEpEngine -lgpgme-pthread -
 all: mt-server
 
 mt-server: mt-server.o registry.o nfc.o json_rpc.o function_map.o pep-types.o \
+    security-token.o \
     json_spirit/json_spirit_reader.o json_spirit/json_spirit_value.o json_spirit/json_spirit_writer.o 
-	c++ $(CXXFLAGS)  -o $@ $^ $(LDFLAGS)
+	c++ $(CXXFLAGS)  -o $@ $^ $(LDFLAGS) ../../pEpEngine/asn.1/libasn1.a
 
 
 %.o : %.cc %.hh
