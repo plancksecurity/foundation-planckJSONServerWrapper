@@ -17,6 +17,7 @@
 #include "function_map.hh"
 #include "pep-types.hh"
 #include "json_rpc.hh"
+#include "security-token.hh"
 
 #include <pEp/message_api.h>
 
@@ -49,7 +50,8 @@ const std::string server_version =
 //	"(7a) Merzenich";       // InOut parameters added. Untested, yet.
 //	"(7b) Elsdorf";         // add own_key functions, which are new in the pEp Engine
 //	"(8) Kerpen";           // pEp_identity fixes due to changes in the pEp Engine 
-	"(8a) Kreuz Kerpen";    // remove own_key_add() because pEpEngine doesn't have it anymore.
+//	"(8a) Kreuz Kerpen";    // remove own_key_add() because pEpEngine doesn't have it anymore.
+	"(9a) Frechen-Königsdorf"; // add security-token
 
 
 template<>
@@ -154,7 +156,7 @@ const FunctionMap functions = {
 		FP( "get_key_rating", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<PEP_comm_type>> ( &get_key_rating) ),
 		FP( "renew_key"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const timestamp*>> ( &renew_key) ),
 		FP( "revoke"        , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>> ( &revoke_key) ),
-		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<bool>> ( &key_expired) ),
+		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<time_t>, Out<bool>> ( &key_expired) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),
@@ -401,7 +403,6 @@ void OnCloseSession(evhttp_request* req, void*)
 
 void OnGetAllSessions(evhttp_request* req, void*)
 {
-	
 	const auto sessions = session_registry.keys();
 	std::string result;
 	for(const auto k : sessions)
@@ -431,6 +432,7 @@ try
 	
 	// initialize the pEp engine
 	registerSession();
+	create_security_token(SrvAddress, SrvPort, BaseUrl);
 	
 	std::cout << "I have " << session_registry.size() << " registered session(s).\n";
 	

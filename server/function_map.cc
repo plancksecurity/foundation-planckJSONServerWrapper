@@ -24,13 +24,15 @@ In<char const*>::~In()
 
 template<>
 In<int>::~In()
-{
-}
+{ }
+
+template<>
+In<time_t>::~In()
+{ }
 
 template<>
 In<std::size_t>::~In()
-{
-}
+{ }
 
 
 template<>
@@ -108,6 +110,12 @@ template<>
 unsigned from_json<unsigned>(const js::Value& v)
 {
 	return v.get_uint64();
+}
+
+template<>
+time_t from_json<time_t>(const js::Value& v)
+{
+	return static_cast<time_t>(v.get_int64());
 }
 
 template<>

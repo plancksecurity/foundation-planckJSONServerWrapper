@@ -2,6 +2,8 @@
 #include "json_spirit/json_spirit_utils.h"
 #include "json_spirit/json_spirit_writer.h"
 
+#include "security-token.hh"
+
 
 	js::Object make_result(const js::Value& result, int id)
 	{
@@ -52,6 +54,12 @@ js::Object call(const FunctionMap& fm, const js::Object& request)
 		if(rpc.type()!=js::str_type || rpc.get_str() != "2.0")
 		{
 			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: no valid member \"jsonrpc\" found.", request, request_id);
+		}
+		
+		const auto sec_token = find_value(request, "security-token");
+		if(sec_token.type()!=js::str_type || verify_security_token(sec_token.get_str()) == false)
+		{
+			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: Wrong security token.", request, request_id);
 		}
 		
 		const auto method = find_value(request, "method");
