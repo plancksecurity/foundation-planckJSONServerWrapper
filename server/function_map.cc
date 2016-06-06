@@ -202,4 +202,7 @@ template<>
 js::Value Type2String<size_t>::get()  { return "Integer"; }
 
 template<>
+js::Value Type2String<time_t>::get()  { return "Integer"; }
+
+template<>
 js::Value Type2String<bool>::get()  { return "Bool"; }
