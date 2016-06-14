@@ -18,7 +18,9 @@ function genInput(id, size, direction, value, onchange)
 
 function addString(nr)
 {
+	document.getElementById('debug').innerHTML += ' *  addString(' + nr + ')<\nfunc_params = ' + JSON.stringify(func_params) + '\n';
 	var pp = {direction:"In", type:"StringList"};
+	
 	func_params[nr].push("");
 	genStringList(nr, pp);
 	document.getElementById('li_' + nr ).innerHTML = Param2Form.StringList(nr, pp, func_params[nr]);
@@ -261,6 +263,7 @@ function button_click()
 	
 	var url = document.getElementById("server").value + 'callFunction';
 	var request = {};
+	request.security_token = document.getElementById("security_token").value;
 	request.method = document.getElementById("fn_name").value;
 	request.params = new Array(func.params.length);
 	
@@ -310,7 +313,7 @@ function prepare_call(f)
 	}
 	
 	document.getElementById("td_param").disabled = false;
-	func_params = new Array(func.params.length, '');
+	func_params = new Array(func.params.length);
 	
 	var len = f.params.length;
 	if(len==0)

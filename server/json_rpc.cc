@@ -56,7 +56,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request)
 			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: no valid member \"jsonrpc\" found.", request, request_id);
 		}
 		
-		const auto sec_token = find_value(request, "security-token");
+		const auto sec_token = find_value(request, "security_token");
 		if(sec_token.type()!=js::str_type || verify_security_token(sec_token.get_str()) == false)
 		{
 			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: Wrong security token.", request, request_id);

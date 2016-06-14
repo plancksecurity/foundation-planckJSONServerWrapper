@@ -44,7 +44,7 @@ std::string get_token_filename()
 	const char* const temp_dir = getenv("TEMP");
 	const char* const user_name = getenv("USER");
 	
-	const std::string ret = std::string(temp_dir ? temp_dir : "/tmp") + "pEp-json-token-" + std::string( user_name ? user_name : "XXX" ); 
+	const std::string ret = std::string(temp_dir ? temp_dir : "/tmp") + "/pEp-json-token-" + std::string( user_name ? user_name : "XXX" ); 
 	return ret;
 }
 
@@ -64,9 +64,9 @@ void create_security_token(const std::string& server_address, unsigned port_nr, 
 	o.emplace_back("address", server_address);
 	o.emplace_back("port", uint64_t(port_nr));
 	o.emplace_back("path", path);
-	o.emplace_back("security-token", sec_token );
+	o.emplace_back("security_token", sec_token );
 	
-	const std::string content = js::write( o, js::pretty_print | js::raw_utf8 );
+	const std::string content = js::write( o, js::pretty_print | js::raw_utf8 ) + '\n';
 	write(fd, content.data(), content.size());
 	close(fd);
 }

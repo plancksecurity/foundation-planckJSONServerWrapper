@@ -160,6 +160,8 @@ const FunctionMap functions = {
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),
+		FP( "encrypt_and_sign", new Func<PEP_STATUS, In<PEP_SESSION>, In<stringlist_t*>, In<const char*>, In<size_t>, Out<char*>, Out<size_t>> ( &encrypt_and_sign) ),
+		
 		FP( "version", new Func<std::string>( &getVersion ) ),
 		FP( "releaseSession", new Func<PEP_STATUS, InRaw<PEP_SESSION>>(&releaseSession) ),
 	};
