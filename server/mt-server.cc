@@ -30,7 +30,7 @@
 std::string SrvAddress = "0.0.0.0";
 std::uint16_t SrvPort  = 4223;
 std::string BaseUrl    = "/ja/0.1/";
-int SrvThreadCount     = 4;
+int SrvThreadCount     = 1;
 
 
 const std::string CreateSessionUrl = BaseUrl + "createSession";
@@ -432,10 +432,6 @@ try
 //	instanz();
 //	return 0;
 	
-	// initialize the pEp engine
-	registerSession();
-	create_security_token(SrvAddress, SrvPort, BaseUrl);
-	
 	std::cout << "I have " << session_registry.size() << " registered session(s).\n";
 	
 	std::exception_ptr initExcept;
@@ -463,9 +459,24 @@ try
 			
 			if (s == -1)
 			{
-				auto* boundSock = evhttp_bind_socket_with_handle(evHttp.get(), SrvAddress.c_str(), SrvPort);
+				// initialize the pEp engine
+				registerSession();
+				std::cout << "I have " << session_registry.size() << " registered session(s).\n";
+				
+				unsigned port_ofs = 0;
+try_next_port:
+				auto* boundSock = evhttp_bind_socket_with_handle(evHttp.get(), SrvAddress.c_str(), SrvPort + port_ofs);
 				if (!boundSock)
-					throw std::runtime_error("Failed to bind server socket.");
+				{
+					++port_ofs;
+					if(port_ofs > 9999)
+					{
+						throw std::runtime_error("Failed to bind server socket.");
+					}
+					goto try_next_port;
+				}
+				
+				create_security_token(SrvAddress, SrvPort + port_ofs, BaseUrl);
 				
 				if ((s = evhttp_bound_socket_get_fd(boundSock)) == -1)
 					throw std::runtime_error("Failed to get server socket for next instance.");
