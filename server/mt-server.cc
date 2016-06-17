@@ -51,7 +51,8 @@ const std::string server_version =
 //	"(7b) Elsdorf";         // add own_key functions, which are new in the pEp Engine
 //	"(8) Kerpen";           // pEp_identity fixes due to changes in the pEp Engine 
 //	"(8a) Kreuz Kerpen";    // remove own_key_add() because pEpEngine doesn't have it anymore.
-	"(9a) Frechen-Königsdorf"; // add security-token
+//	"(9a) Frechen-Königsdorf"; // add security-token
+	"(10) Kreuz Köln-West"; // More fields in JavaScript for "message", 1-element identity list to support message->to attribute
 
 
 template<>

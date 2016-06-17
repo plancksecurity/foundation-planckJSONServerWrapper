@@ -229,8 +229,11 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 	free(address);
 	
 	ident->comm_type = from_json_object<PEP_comm_type, js::int_type>(o, "comm_type");
-	strncpy(ident->lang, lang, 3);
-	free(lang);
+	if(lang)
+	{
+	    strncpy(ident->lang, lang, 3);
+		free(lang);
+	}
 	ident->me = from_json_object<bool, js::bool_type>(o, "me");
 	
 	return ident;

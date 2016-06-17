@@ -84,16 +84,30 @@ var Param2Form =
 					},
 		Message : function(nr, pp, value)
 					{
+						if(pp.direction=='Out')
+							return 'Message (output)';
+						
 						return 'Message:<table class="smalltable">'
 							+ '<tr><td>id: </td><td>'       + genInput('inp_param_' + nr + '_id', 16, pp.direction, "id") + '</td></tr>'
 							+ '<tr><td>shortmsg: </td><td>' + genInput('inp_param_' + nr + '_smsg', 25, pp.direction, "shortmsg") + '</td></tr>'
+							+ '<tr><td>longmsg: </td><td>'  + genInput('inp_param_' + nr + '_lmsg', 25, pp.direction, "longmsg") + '</td></tr>'
 							+ '<tr><td>from: </td><td>'     + Param2Form.Identity( nr + '_from', pp.direction, "(from)") + '</td></tr>'
-							
+							+ '<tr><td>to: </td><td>'       + Param2Form.IdentityList( nr + '_to', pp.direction, "(to)") + '</td></tr>'
+
 							+ '</table>';
 					},
 		Identity : function(nr, pp, value)
 					{
 						return 'Identity:<table class="smalltable">'
+							+ '<tr><td>user_id: </td><td>'     + genInput('inp_param_' + nr + '_id', 16, pp.direction, "id") + '</td></tr>'
+							+ '<tr><td>username: </td><td>'    + genInput('inp_param_' + nr + '_name', 16, pp.direction, "name") + '</td></tr>'
+							+ '<tr><td>address: </td><td>'     + genInput('inp_param_' + nr + '_addr', 25, pp.direction, "address") + '</td></tr>'
+							+ '<tr><td>fingerprint: </td><td>' + genInput('inp_param_' + nr + '_fpr', 25, pp.direction, "fingerprint") + '</td></tr>'
+							+ '</table>';
+					},
+		IdentityList : function(nr, pp, value)
+					{
+						return 'IdentityList (only 1 entry supported here):<table class="smalltable">'
 							+ '<tr><td>user_id: </td><td>'     + genInput('inp_param_' + nr + '_id', 16, pp.direction, "id") + '</td></tr>'
 							+ '<tr><td>username: </td><td>'    + genInput('inp_param_' + nr + '_name', 16, pp.direction, "name") + '</td></tr>'
 							+ '<tr><td>address: </td><td>'     + genInput('inp_param_' + nr + '_addr', 25, pp.direction, "address") + '</td></tr>'
@@ -142,7 +156,9 @@ var Form2Param =
 						var ret = {};
 						ret.id = document.getElementById('inp_param_' + nr + '_id').value;
 						ret.shortmsg = document.getElementById('inp_param_' + nr + '_smsg').value;
+						ret.longmsg = document.getElementById('inp_param_' + nr + '_lmsg').value;
 						ret.from = Form2Param.Identity( nr + '_from');
+						ret.to = Form2Param.IdentityList( nr + '_to');
 						return ret;
 					},
 		Identity : function(nr, pp, value)
@@ -152,6 +168,17 @@ var Form2Param =
 						ret.username = document.getElementById('inp_param_' + nr + '_name').value;
 						ret.address = document.getElementById('inp_param_' + nr + '_addr').value;
 						ret.fpr = document.getElementById('inp_param_' + nr + '_fpr').value;
+						return ret;
+					},
+		IdentityList : function(nr, pp, value)
+					{
+						var iden = {};
+						iden.user_id = document.getElementById('inp_param_' + nr + '_id').value;
+						iden.username = document.getElementById('inp_param_' + nr + '_name').value;
+						iden.address = document.getElementById('inp_param_' + nr + '_addr').value;
+						iden.fpr = document.getElementById('inp_param_' + nr + '_fpr').value;
+						var ret = [];
+						ret.push(iden);
 						return ret;
 					},
 		PEP_enc_format : function(nr, pp, value)
