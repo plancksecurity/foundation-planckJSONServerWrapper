@@ -174,9 +174,9 @@ message* from_json<message*>(const js::Value& v)
 	// fetch values from v and put them into msg
 	msg->dir      = from_json_object<PEP_msg_direction, js::int_type>(o, "dir");
 	msg->id       = from_json_object<char*, js::str_type>(o, "id");
-	msg->shortmsg = from_json_object<char*, js::str_type>(o, "short");
-	msg->longmsg  = from_json_object<char*, js::str_type>(o, "long");
-	msg->longmsg_formatted = from_json_object<char*, js::str_type>(o, "fmt");
+	msg->shortmsg = from_json_object<char*, js::str_type>(o, "shortmsg");
+	msg->longmsg  = from_json_object<char*, js::str_type>(o, "longmsg");
+	msg->longmsg_formatted = from_json_object<char*, js::str_type>(o, "longmsg_formatted");
 	
 	msg->attachments = from_json_object<bloblist_t*, js::array_type>(o, "attachments");
 	
@@ -364,7 +364,9 @@ stringpair_list_t* from_json<stringpair_list_t*>(const js::Value& v)
 	
 	auto element = a.begin();
 	stringpair_list_t* spl = new_stringpair_list( from_json<stringpair_t*>(*element) );
-
+	
+	++element;
+	
 	for(; element!=a.end(); ++element)
 	{
 		spl = stringpair_list_add(spl, from_json<stringpair_t*>(*element) );

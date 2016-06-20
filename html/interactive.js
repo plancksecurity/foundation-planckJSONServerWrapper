@@ -88,6 +88,7 @@ var Param2Form =
 							return 'Message (output)';
 						
 						return 'Message:<table class="smalltable">'
+							+ '<tr><td>dir: </td><td>'      + Param2Form.PEP_msg_direction( nr + '_dir', pp.direction, "(dir)") + '</td></tr>'
 							+ '<tr><td>id: </td><td>'       + genInput('inp_param_' + nr + '_id', 16, pp.direction, "id") + '</td></tr>'
 							+ '<tr><td>shortmsg: </td><td>' + genInput('inp_param_' + nr + '_smsg', 25, pp.direction, "shortmsg") + '</td></tr>'
 							+ '<tr><td>longmsg: </td><td>'  + genInput('inp_param_' + nr + '_lmsg', 25, pp.direction, "longmsg") + '</td></tr>'
@@ -123,7 +124,15 @@ var Param2Form =
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="1"' + disabled + '>Pieces,&nbsp;&nbsp;'
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="2"' + disabled + '>S/MIME,&nbsp;&nbsp;'
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="3"' + disabled + '>PGP/MIME,&nbsp;&nbsp;'
-							+ '<input type="radio" name="inp_rad_' + nr + '" value="4"' + disabled + ' checked>p≡p'
+							+ '<input type="radio" name="inp_rad_' + nr + '" value="4"' + disabled + ' checked>p≡p';
+					},
+		PEP_msg_direction : function(nr, pp, value)
+					{
+						var disabled = pp.direction == 'Out' ? " disabled" : "";
+						
+						return 'Message direction: '
+							+ '<input type="radio" name="inp_rad_' + nr + '" value="0"' + disabled + '>Incoming,&nbsp;&nbsp;'
+							+ '<input type="radio" name="inp_rad_' + nr + '" value="1"' + disabled + ' checked>Outgoing';
 					}
 	};
 
@@ -154,6 +163,7 @@ var Form2Param =
 		Message : function(nr, pp, value)
 					{
 						var ret = {};
+						ret.dir = Form2Param.PEP_msg_direction(nr + '_dir');
 						ret.id = document.getElementById('inp_param_' + nr + '_id').value;
 						ret.shortmsg = document.getElementById('inp_param_' + nr + '_smsg').value;
 						ret.longmsg = document.getElementById('inp_param_' + nr + '_lmsg').value;
@@ -182,6 +192,10 @@ var Form2Param =
 						return ret;
 					},
 		PEP_enc_format : function(nr, pp, value)
+					{
+						return parseInt( $('input[name=inp_rad_' + nr + ']:checked', '#frm').val() );
+					},
+		PEP_msg_direction : function(nr, pp, value)
 					{
 						return parseInt( $('input[name=inp_rad_' + nr + ']:checked', '#frm').val() );
 					}
