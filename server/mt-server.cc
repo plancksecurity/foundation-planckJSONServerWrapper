@@ -52,7 +52,8 @@ const std::string server_version =
 //	"(8) Kerpen";           // pEp_identity fixes due to changes in the pEp Engine 
 //	"(8a) Kreuz Kerpen";    // remove own_key_add() because pEpEngine doesn't have it anymore.
 //	"(9a) Frechen-Königsdorf"; // add security-token
-	"(10) Kreuz Köln-West"; // More fields in JavaScript for "message", 1-element identity list to support message->to attribute
+//	"(10) Kreuz Köln-West"; // More fields in JavaScript for "message", 1-element identity list to support message->to attribute
+	"(11) Köln-Klettenberg"; // support for identity_list as output parameter, as needed by import_key() now. Fix some issue with identity.lang
 
 
 template<>
@@ -126,7 +127,7 @@ const FunctionMap functions = {
 		// from message_api.h
 		FP( "—— Message API ——", new Separator ),
 		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>>( &encrypt_message ) ),
-		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_color>>(  &decrypt_message ) ),
+		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_color>, Out<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
 		FP( "outgoing_message_color", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, Out<PEP_color>>( &outgoing_message_color ) ),
 		FP( "identity_color" , new Func<PEP_STATUS, In<PEP_SESSION>, In<pEp_identity*>, Out<PEP_color>>( &identity_color) ),
 		FP( "get_gpg_path",    new Func<PEP_STATUS, Out<const char*>>(&get_gpg_path) ),
@@ -145,7 +146,7 @@ const FunctionMap functions = {
 		FP( "—— Low level Key Management API ——", new Separator),
 		FP( "generate_keypair", new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &generate_keypair) ),
 		FP( "delete_keypair", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>> ( &delete_keypair) ),
-		FP( "import_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<std::size_t>> ( &import_key) ),
+		FP( "import_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<std::size_t>, Out<identity_list*>> ( &import_key) ),
 		FP( "export_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<char*>, Out<std::size_t>> ( &export_key) ),
 		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &get_trust) ),

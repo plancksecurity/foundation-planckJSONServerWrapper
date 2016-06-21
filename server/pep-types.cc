@@ -82,6 +82,16 @@ Out<pEp_identity*>::~Out()
 	delete value;
 }
 
+template<>
+Out<identity_list*>::~Out()
+{
+	if(value)
+	{
+		free_identity_list(*value);
+	}
+	delete value;
+}
+
 
 template<>
 In<pEp_identity*>::In(const In<pEp_identity*>& other)
@@ -96,6 +106,17 @@ Out<pEp_identity*>::Out(const Out<pEp_identity*>& other)
 	if(*other.value)
 	{
 		*value = identity_dup(*other.value);
+	}
+}
+
+
+template<>
+Out<_identity_list*>::Out(const Out<identity_list*>& other)
+: value( new identity_list*{} )
+{
+	if(*other.value)
+	{
+		*value = identity_list_dup(*other.value);
 	}
 }
 
@@ -229,9 +250,9 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 	free(address);
 	
 	ident->comm_type = from_json_object<PEP_comm_type, js::int_type>(o, "comm_type");
-	if(lang)
+	if(lang && lang[0] && lang[1])
 	{
-	    strncpy(ident->lang, lang, 3);
+		strncpy(ident->lang, lang, 3);
 		free(lang);
 	}
 	ident->me = from_json_object<bool, js::bool_type>(o, "me");
@@ -441,7 +462,10 @@ js::Value to_json<pEp_identity*>(pEp_identity* const& id)
 	to_json_object(o, "username", id->username);
 
 	o.emplace_back( "comm_type", js::Value( int( id->comm_type) ));
-	o.emplace_back( "lang", js::Value( std::string( id->lang, id->lang+2) ));
+	
+	if(id->lang && id->lang[0] && id->lang[1])
+		o.emplace_back( "lang", js::Value( std::string( id->lang, id->lang+2) ));
+	
 	o.emplace_back( "me", js::Value( id->me ));
 	
 	return js::Value( std::move(o) );
@@ -534,6 +558,9 @@ js::Value Type2String<const timestamp*>::get()  { return "Timestamp"; }
 
 template<>
 js::Value Type2String<pEp_identity*>::get()  { return "Identity"; }
+
+template<>
+js::Value Type2String<identity_list*>::get()  { return "IdentityList"; }
 
 template<>
 js::Value Type2String<_stringlist_t*>::get()  { return "StringList"; }

@@ -35,6 +35,24 @@ In<std::size_t>::~In()
 { }
 
 
+#define SIMPLE_TYPE_OUT(TYPE) \
+	template<>                \
+	Out< TYPE >::~Out()       \
+	{                         \
+		delete value;         \
+	}                         \
+	                          \
+	template<>                                \
+	Out< TYPE >::Out(const Out<TYPE>& other)  \
+	: value ( new TYPE {*other.value} )       \
+	{ }
+
+SIMPLE_TYPE_OUT( bool )
+SIMPLE_TYPE_OUT( unsigned )
+SIMPLE_TYPE_OUT( unsigned long)
+SIMPLE_TYPE_OUT( unsigned long long)
+
+
 template<>
 Out<char const*>::~Out()
 {
@@ -58,25 +76,6 @@ Out<char*>::~Out()
 }
 
 
-template<>
-Out<std::size_t>::~Out()
-{
-	delete value;
-}
-
-
-template<>
-Out<bool>::Out(const Out<bool>& other)
-: value ( new bool {*other.value} )
-{
-}
-
-template<>
-Out<bool>::~Out()
-{
-	delete value;
-}
-
 
 template<>
 Out<char const*>::Out(const Out<const char*>& other)
@@ -90,13 +89,6 @@ Out<char*>::Out(const Out<char*>& other)
 : value( new char* )
 {
 	*value = *other.value ? strdup(*other.value) : nullptr;
-}
-
-
-template<>
-Out<std::size_t>::Out(const Out<std::size_t>& other)
-: value( new std::size_t(*other.value))
-{
 }
 
 
@@ -195,14 +187,25 @@ js::Value Type2String<const char*>::get()  { return "String"; }
 template<>
 js::Value Type2String<char*>::get()  { return "String"; }
 
+
 template<>
 js::Value Type2String<int>::get()  { return "Integer"; }
 
 template<>
-js::Value Type2String<size_t>::get()  { return "Integer"; }
+js::Value Type2String<long>::get()  { return "Integer"; }
 
 template<>
-js::Value Type2String<time_t>::get()  { return "Integer"; }
+js::Value Type2String<long long>::get()  { return "Integer"; }
+
+
+template<>
+js::Value Type2String<unsigned>::get()  { return "Integer"; }
+
+template<>
+js::Value Type2String<unsigned long>::get()  { return "Integer"; }
+
+template<>
+js::Value Type2String<unsigned long long>::get()  { return "Integer"; }
 
 template<>
 js::Value Type2String<bool>::get()  { return "Bool"; }

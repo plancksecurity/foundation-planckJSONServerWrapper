@@ -331,10 +331,17 @@ function button_click()
 			displayResult(moo);
 		})
 		.fail(function( hdr, txt, err) {
-			alert( "Ajax POST request returns an: \n" 
-			+ "Header: " + JSON.stringify(hdr) + "\n"
-			+ "Text: " +   JSON.stringify(txt) + "\n"
-			+ "Error:" +   JSON.stringify(err) + "\n" );
+			var emsg = 
+			"\nAjax POST request returns an: \n" 
+			+ "Header: " + JSON.stringify(hdr, null, 2) + "\n"
+			+ "Text: " +   JSON.stringify(txt, null, 2) + "\n"
+			+ "Error:" +   JSON.stringify(err, null, 2) + "\n";
+			
+			var pre = document.getElementById("resultpre");
+			pre.innerHTML += emsg;
+			pre.className = "red";
+			
+			alert(emsg);
 		})
 	;
 	
