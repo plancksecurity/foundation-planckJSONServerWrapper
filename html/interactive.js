@@ -100,19 +100,19 @@ var Param2Form =
 		Identity : function(nr, pp, value)
 					{
 						return 'Identity:<table class="smalltable">'
-							+ '<tr><td>user_id: </td><td>'     + genInput('inp_param_' + nr + '_id', 16, pp.direction, "id") + '</td></tr>'
+							+ '<tr><td>user_id: </td><td>'     + genInput('inp_param_' + nr + '_id', 16, pp.direction, "") + '</td></tr>'
 							+ '<tr><td>username: </td><td>'    + genInput('inp_param_' + nr + '_name', 16, pp.direction, "name") + '</td></tr>'
 							+ '<tr><td>address: </td><td>'     + genInput('inp_param_' + nr + '_addr', 25, pp.direction, "address") + '</td></tr>'
-							+ '<tr><td>fingerprint: </td><td>' + genInput('inp_param_' + nr + '_fpr', 25, pp.direction, "fingerprint") + '</td></tr>'
+							+ '<tr><td>fingerprint: </td><td>' + genInput('inp_param_' + nr + '_fpr', 25, pp.direction, "4ABE3AAF59AC32CFE4F86500A9411D176FF00E97") + '</td></tr>'
 							+ '</table>';
 					},
 		IdentityList : function(nr, pp, value)
 					{
 						return 'IdentityList (only 1 entry supported here):<table class="smalltable">'
-							+ '<tr><td>user_id: </td><td>'     + genInput('inp_param_' + nr + '_id', 16, pp.direction, "id") + '</td></tr>'
+							+ '<tr><td>user_id: </td><td>'     + genInput('inp_param_' + nr + '_id', 16, pp.direction, "") + '</td></tr>'
 							+ '<tr><td>username: </td><td>'    + genInput('inp_param_' + nr + '_name', 16, pp.direction, "name") + '</td></tr>'
 							+ '<tr><td>address: </td><td>'     + genInput('inp_param_' + nr + '_addr', 25, pp.direction, "address") + '</td></tr>'
-							+ '<tr><td>fingerprint: </td><td>' + genInput('inp_param_' + nr + '_fpr', 25, pp.direction, "fingerprint") + '</td></tr>'
+							+ '<tr><td>fingerprint: </td><td>' + genInput('inp_param_' + nr + '_fpr', 25, pp.direction, "4ABE3AAF59AC32CFE4F86500A9411D176FF00E97") + '</td></tr>'
 							+ '</table>';
 					},
 		PEP_enc_format : function(nr, pp, value)
