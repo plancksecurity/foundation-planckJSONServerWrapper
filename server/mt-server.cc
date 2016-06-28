@@ -53,7 +53,8 @@ const std::string server_version =
 //	"(8a) Kreuz Kerpen";    // remove own_key_add() because pEpEngine doesn't have it anymore.
 //	"(9a) Frechen-Königsdorf"; // add security-token
 //	"(10) Kreuz Köln-West"; // More fields in JavaScript for "message", 1-element identity list to support message->to attribute
-	"(11) Köln-Klettenberg"; // support for identity_list as output parameter, as needed by import_key() now. Fix some issue with identity.lang
+//	"(11) Köln-Klettenberg"; // support for identity_list as output parameter, as needed by import_key() now. Fix some issue with identity.lang
+	"(12) Kreuz Köln Süd";   // support for attachments, so encrypt_message() works now! :-) but we have memory corruption, hence the FIXME in pep-types.cc :-(
 
 
 template<>
@@ -202,8 +203,16 @@ void sendReplyString(evhttp_request* req, const char* contentType, const std::st
 	{
 		evhttp_add_header(evhttp_request_get_output_headers(req), "Content-Type", contentType);
 	}
-	evbuffer_add_printf(outBuf, "%s", outputText.c_str());
-	evhttp_send_reply(req, HTTP_OK, "", outBuf);
+	const int ret = evbuffer_add(outBuf, outputText.data(), outputText.size());
+	if(ret==0)
+	{
+		evhttp_send_reply(req, HTTP_OK, "", outBuf);
+	}else{
+		evhttp_send_reply(req, 500, "evbuffer_add() failed.", outBuf);
+	}
+	
+	std::cerr << "\n=== sendReplyString(): ret=" << ret << ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL") 
+		<< ", output=«" << outputText << "»." << std::endl;
 }
 
 

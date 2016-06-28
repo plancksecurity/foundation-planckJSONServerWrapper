@@ -332,7 +332,7 @@ function button_click()
 		})
 		.fail(function( hdr, txt, err) {
 			var emsg = 
-			"\nAjax POST request returns an: \n" 
+			"\nAjax POST request failed: \n" 
 			+ "Header: " + JSON.stringify(hdr, null, 2) + "\n"
 			+ "Text: " +   JSON.stringify(txt, null, 2) + "\n"
 			+ "Error:" +   JSON.stringify(err, null, 2) + "\n";

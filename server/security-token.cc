@@ -16,13 +16,13 @@ namespace
 	std::string sec_token;
 	
 	// 36 alphanumeric characters
-	static const char* const token_alphabet = "qaywsxedcrfvtgbzhnujmikolp1234567890";
+	static const char token_alphabet[] = "qaywsxedcrfvtgbzhnujmikolp1234567890POIUZTREWQASDFGHJKLMNBVCXY";
 	
 	std::string create_random_token(unsigned length=38)
 	{
 		static std::random_device rd;
 		static std::mt19937 gen(rd());
-		static std::uniform_int_distribution<> dis(0, 35); // 0..35 corrensponds to the length of the token_alphabet
+		static std::uniform_int_distribution<> dis( 0, sizeof(token_alphabet)-1 );
 		
 		const unsigned left_len = length/2;
 		const unsigned right_len = length-left_len;
@@ -30,7 +30,7 @@ namespace
 		std::string ret; ret.reserve(length+1);
 		
 		std::generate_n( std::back_inserter(ret), left_len, [&](){ return token_alphabet[dis(gen)]; } );
-		ret += '-';
+		ret += '_';
 		std::generate_n( std::back_inserter(ret), right_len, [&](){ return token_alphabet[dis(gen)]; } );
 		return ret;
 	}
@@ -75,6 +75,10 @@ void create_security_token(const std::string& server_address, unsigned port_nr, 
 // returns 'true' if 's' is the security token created by the function above.
 bool verify_security_token(const std::string& s)
 {
+    if(s!=sec_token)
+    {
+        std::cerr << "sec_token=\"" << sec_token << "\" is unequal to \"" << s << "\"!\n";
+    }
 	return s == sec_token;
 }
 

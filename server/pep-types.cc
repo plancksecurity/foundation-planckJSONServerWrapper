@@ -154,7 +154,11 @@ Out<_message*>::Out(const Out<_message*>& other)
 template<>
 Out<_message*>::~Out()
 {
-	if(value) free_message(*value);
+///////////////////////////////////////////////////////////////////////////////
+//  FIXME: due to memory corruption(?) the free_message() call crashes! :-(  //
+//  Without it we leak memory but at least it works for now... :-/           //
+///////////////////////////////////////////////////////////////////////////////
+//	if(value) free_message(*value);
 	delete value;
 }
 
@@ -275,10 +279,14 @@ js::Value to_json<message*>(message* const& msg)
 	to_json_object(o, "shortmsg", msg->shortmsg);
 	to_json_object(o, "longmsg" , msg->longmsg);
 	to_json_object(o, "longmsg_formatted"  , msg->longmsg_formatted);
+	to_json_object(o, "attachments", msg->attachments);
+	to_json_object(o, "sent"    , msg->sent);
+	to_json_object(o, "recv"    , msg->recv);
+	
 	to_json_object(o, "from"    , msg->from);
+	to_json_object(o, "to"      , msg->to);
 	to_json_object(o, "recv_by" , msg->recv_by);
 	
-	to_json_object(o, "to"      , msg->to);
 	to_json_object(o, "cc"      , msg->cc);
 	to_json_object(o, "bcc"     , msg->bcc);
 	to_json_object(o, "reply_to", msg->reply_to);
@@ -364,6 +372,33 @@ _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 
 
 template<>
+js::Value to_json<_bloblist_t*>(_bloblist_t* const& bl)
+{
+	_bloblist_t* b = bl;
+	js::Array a;
+	
+	while(b)
+	{
+		js::Object o;
+		if(b->value)
+			o.emplace_back( "value", std::string(b->value, b->value + b->size) );
+		
+		o.emplace_back( "size", b->size );
+		
+		if(b->mime_type)
+			o.emplace_back( "mime_type", b->mime_type );
+		
+		if(b->filename)
+			o.emplace_back( "filename", b->filename );
+		
+		a.push_back( std::move(o) );
+		b = b->next;
+	}
+	
+	return js::Value( std::move(a) );
+}
+
+template<>
 stringpair_t* from_json<stringpair_t*>(const js::Value& v)
 {
 	const js::Object& o = v.get_obj();
@@ -374,6 +409,7 @@ stringpair_t* from_json<stringpair_t*>(const js::Value& v)
 	free(key);
 	return sp;
 }
+
 
 
 template<>

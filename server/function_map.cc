@@ -172,6 +172,20 @@ std::size_t from_json<std::size_t>(const js::Value& v)
 }
 
 template<>
+js::Value to_json<struct tm*>(struct tm* const& t)
+{
+	if(t==nullptr)
+	{
+		return js::Value{};
+	}
+	
+	char s[32] = "YYYY-MM-DDThh:mm:ss";
+	snprintf(s,31, "%04u-%02u-%02uT%02u:%02u:%02u", t->tm_year+1900, t->tm_mon+1, t->tm_mday,  t->tm_hour, t->tm_min, t->tm_sec);
+	return js::Value{s};
+}
+
+
+template<>
 bool from_json<bool>(const js::Value& v)
 {
 	return v.get_bool();
