@@ -1,6 +1,9 @@
 #include "pep-types.hh"
 #include "json_spirit/json_spirit_utils.h"
 
+#include <iostream> // Just to print debug stuff to std::cerr
+
+
 namespace
 {
 	// fetch a member from the given object, if set. (return a sensible NULL/default value if not)
@@ -148,6 +151,9 @@ Out<_message*>::Out(const Out<_message*>& other)
 : value( new _message* )
 {
 	*value = *other.value ? message_dup(*other.value) : nullptr;
+	std::cerr << "$|  Out<message*> is copied: this=" << (void*)this << ", "
+		"other=" << (void*)&other << ", other.value=" << (void*)other.value << ", *other.value=" << (void*)*other.value >> ", "
+		"this->value=" << (void*)value << ", *this->value=" << (void*)*this->value << ". \n";
 }
 
 
@@ -158,7 +164,10 @@ Out<_message*>::~Out()
 //  FIXME: due to memory corruption(?) the free_message() call crashes! :-(  //
 //  Without it we leak memory but at least it works for now... :-/           //
 ///////////////////////////////////////////////////////////////////////////////
-//	if(value) free_message(*value);
+	std::cerr << "$|  ~Out<message*>: this=" << (void*)this << ", "
+		"this->value=" << (void*)value << ", *this->value=" << (void*)*this->value << ". \n";
+
+	if(value) free_message(*value);
 	delete value;
 }
 
@@ -195,6 +204,8 @@ message* from_json<message*>(const js::Value& v)
 	const js::Object& o = v.get_obj();
 
 	_message* msg = new_message(PEP_dir_incoming);
+
+	std::cout << "|$ from_json<message*>: msg=" << (void*)msg << " \n";
 
 	// fetch values from v and put them into msg
 	msg->dir      = from_json_object<PEP_msg_direction, js::int_type>(o, "dir");
