@@ -1,7 +1,7 @@
 .PHONY: all clear
 
-CXXFLAGS = -Wall -O0 -std=c++11 -g -I/home/deb/local/include/ -Ijson_spirit -fstack-protector-all
-LDFLAGS  = -L/home/deb/local/lib -lpthread -levent -lpEpEngine -lgpgme-pthread -letpan -lboost_system -lboost_filesystem
+CXXFLAGS = -Wall -O0 -std=c++11 -g -I/home/krista/include/ -Ijson_spirit -fstack-protector-all
+LDFLAGS  = -L/home/krista/lib -lpthread -levent -lpEpEngine -lgpgme-pthread -letpan -lboost_system -lboost_filesystem
 
 all: mt-server
 

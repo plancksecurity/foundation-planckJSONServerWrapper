@@ -152,8 +152,8 @@ Out<_message*>::Out(const Out<_message*>& other)
 {
 	*value = *other.value ? message_dup(*other.value) : nullptr;
 	std::cerr << "$|  Out<message*> is copied: this=" << (void*)this << ", "
-		"other=" << (void*)&other << ", other.value=" << (void*)other.value << ", *other.value=" << (void*)*other.value << ", "
-		"this->value=" << (void*)value << ", *this->value=" << (void*)*this->value << ". \n";
+		"other=" << (void*)&other << ", other.value=" << ((void*)&other ? (void*)other.value : (void*)"NOPE") << ", *other.value=" << ((void*)&other && (void*)&other.value ? (void*)*other.value : (void*)"NOPE") << ", "
+		"this->value=" << (void*)value << ", *this->value=" << (this->value ? (void*)*this->value : (void*)"NOPE") << ". \n";
 }
 
 
@@ -165,7 +165,7 @@ Out<_message*>::~Out()
 //  Without it we leak memory but at least it works for now... :-/           //
 ///////////////////////////////////////////////////////////////////////////////
 	std::cerr << "$|  ~Out<message*>: this=" << (void*)this << ", "
-		"this->value=" << (void*)value << ", *this->value=" << (void*)*this->value << ". \n";
+		"this->value=" << (void*)value << ", *this->value=" << (this->value ? (void*)*this->value : (void*)"NOPE") << ". \n";
 
 	if(value) free_message(*value);
 	delete value;

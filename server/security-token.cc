@@ -22,7 +22,8 @@ namespace
 	{
 		static std::random_device rd;
 		static std::mt19937 gen(rd());
-		static std::uniform_int_distribution<> dis( 0, sizeof(token_alphabet)-1 );
+static std::uniform_int_distribution<> dis( 0, 32 );
+//		static std::uniform_int_distribution<> dis( 0, sizeof(token_alphabet)-1 );
 		
 		const unsigned left_len = length/2;
 		const unsigned right_len = length-left_len;
