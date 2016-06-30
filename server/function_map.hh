@@ -108,7 +108,7 @@ struct Out
 	template<class... Args>
 	using pack = std::tuple<Out<T>, Args...>;
 	
-	explicit Out(const T& v );
+//	explicit Out(const T& v );
 	explicit Out() : value{ new T{} } {}
 	~Out();
 	
