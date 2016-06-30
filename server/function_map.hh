@@ -4,6 +4,10 @@
 #include "json_spirit/json_spirit_value.h"
 #include <type_traits>
 
+// Just for debugging:
+#include <iostream>
+#include <pEp/message_api.h>
+
 
 namespace js = json_spirit;
 
@@ -108,8 +112,13 @@ struct Out
 	template<class... Args>
 	using pack = std::tuple<Out<T>, Args...>;
 	
-//	explicit Out(const T& v );
-	explicit Out() : value{ new T{} } {}
+	explicit Out() : value{ new T{} }
+	{
+		if(typeid(T)==typeid(_message*))
+		{
+			std::cerr << "|$ Out<message*>(): this=" << (void*)this << ", this->value=" << (void*)value << ",  *this->value=" << *value << "\n";
+		}
+	}
 	~Out();
 	
 	Out(const Out<T>& other);
