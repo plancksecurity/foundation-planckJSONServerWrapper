@@ -35,6 +35,8 @@ struct In
 	In(const In<T>& other);
 	In(In<T>&& victim);
 	
+	In<T>& operator=(const In<T>&) = delete;
+	
 	// default implementation:
 	static In<T> from_json(const js::Value& v, const js::Array& params, unsigned position)
 	{
@@ -60,6 +62,8 @@ struct InRaw
 	
 	InRaw(const InRaw<T>& other) = default;
 	InRaw(InRaw<T>&& victim) = default;
+
+	InRaw<T>& operator=(const InRaw<T>&) = delete;
 	
 	// default implementation:
 	static InRaw<T> from_json(const js::Value& v, const js::Array& params, unsigned position)
@@ -79,6 +83,8 @@ struct InOut : public In<T>
 
 	explicit InOut(const T& t) : Base(t) {}
 	~InOut() = default;
+	
+	InOut<T>& operator=(const InOut<T>&) = delete;
 	
 	// default implementation:
 	static InOut<T> from_json(const js::Value& v, const js::Array& params, unsigned position)
@@ -112,6 +118,10 @@ struct Out
 	{
 		victim.value = nullptr;
 	}
+	
+	// just to be sure they are not implicitly defined:
+	Out<T>& operator=(const Out<T>& other) = delete;
+	Out<T>& operator=(Out<T>&& victim) = delete;
 	
 	static Out<T> from_json(const js::Value& v, const js::Array& params, unsigned position)
 	{
