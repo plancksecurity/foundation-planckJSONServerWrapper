@@ -29,9 +29,7 @@ template<class T>
 struct In
 {
 	typedef T c_type; // the according type in C function parameter
-	
-	template<class... Args>
-	using pack = std::tuple<Args...>;
+	enum { is_output = false };
 	
 	explicit In(const T& t) : value(t) {}
 	~In();
@@ -57,9 +55,7 @@ template<class T>
 struct InRaw
 {
 	typedef js::Value c_type; // do not unwrap JSON data type
-	
-	template<class... Args>
-	using pack = std::tuple<Args...>;
+	enum { is_output = false };
 	
 	explicit InRaw(const js::Value& t) : value(t) {}
 	~InRaw() = default;
@@ -84,6 +80,7 @@ template<class T>
 struct InOut : public In<T>
 {
 	typedef In<T> Base;
+	enum { is_output = true };
 
 	explicit InOut(const T& t) : Base(t) {}
 	~InOut() = default;
@@ -108,9 +105,7 @@ template<class T>
 struct Out
 {
 	typedef T* c_type; // the according type in C function parameter
-	
-	template<class... Args>
-	using pack = std::tuple<Out<T>, Args...>;
+	enum { is_output = true };
 	
 	explicit Out() : value{ new T{} }
 	{
@@ -178,72 +173,6 @@ js::Value to_json(const InOut<T>& o)
 }
 
 
-// Heloer class to concatenate the "result-relevant" parameters into a tuple<...>:  Out<T> and InOut<T>
-// In<T> and InRaw<T> are ignored and _not_ collected into the output tuple<>
-struct Concat
-{
-	template<class T, class... Args>
-	std::tuple<Args...> operator()(const In<T>& in, const std::tuple<Args...>& rest) const
-	{
-		return rest;
-	}
-
-	template<class T, class... Args>
-	std::tuple<Args...> operator()(const InRaw<T>& in, const std::tuple<Args...>& rest) const
-	{
-		return rest;
-	}
-
-	template<class T, class... Args>
-	std::tuple<Out<T>, Args...> operator()(const Out<T>& out, const std::tuple<Args...>& rest) const
-	{
-		return std::tuple_cat(std::tuple<Out<T>>{out}, rest);
-	}
-
-	template<class T, class... Args>
-	std::tuple<InOut<T>, Args...> operator()(const InOut<T>& out, const std::tuple<Args...>& rest) const
-	{
-		return std::tuple_cat(std::tuple<InOut<T>>{out}, rest);
-	}
-};
-
-// because operator() needs an object, we create a dummy one:
-extern const Concat concat;
-
-
-
-// recursive helper functors for to_json(tuple<...>):
-namespace
-{
-	// generic implementation, used for U < V
-	template<unsigned U, unsigned V, class... Args>
-	struct copy_value
-	{
-		static void to(js::Array& a, const std::tuple<Args...>& t)
-		{
-			a[U] = to_json(std::get<U>(t));
-			copy_value<U+1, sizeof...(Args), Args...>::to(a, t);
-		}
-	};
-	
-	// spezialization for U==V
-	template<unsigned U, class... Args>
-	struct copy_value<U,U,Args...>
-	{
-		static void to(js::Array& a, const std::tuple<Args...>& t) {}
-	};
-}
-
-
-template<class... Args>
-js::Value to_json(const std::tuple<Args...>& t)
-{
-	js::Array ret; ret.resize(sizeof...(Args));
-	copy_value<0, sizeof...(Args), Args...>::to(ret, t);
-	return ret;
-}
-
-
 // heloer class for generic calls:
 // R : return type of the called function
 // U : number of the parameter which is being extracted
@@ -258,11 +187,9 @@ template<class R, unsigned U, class... Args>
 class helper<R, U, U, Args...>
 {
 public:
-	typedef std::tuple<R> RetType;
-
-	static RetType call( const std::function<R(typename Args::c_type...)>& fn, const js::Array& parameters, const Args&... args)
+	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
-		return RetType( fn(args.value...) );
+		return to_json( fn(args.value...) );
 	}
 };
 
@@ -272,12 +199,10 @@ template<unsigned U, class... Args>
 class helper<void, U, U, Args...>
 {
 public:
-	typedef std::tuple<> RetType;
-
-	static RetType call( const std::function<void(typename Args::c_type...)>& fn, const js::Array& parameters, const Args&... args)
+	static js::Value call( const std::function<void(typename Args::c_type...)>& fn, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
 		fn(args.value...);
-		return RetType{};
+		return js::Value{};
 	}
 };
 
@@ -293,20 +218,21 @@ public:
 	typedef typename std::tuple_element<U, Tuple>::type Element; // The type of the U'th parameter
 	typedef helper<R, U+1, MAX, Args...> NextHelper;
 	
-	// depending on whether Element is an output parameter or not the returned tuple contains the paremeter or not:
-	typedef typename std::result_of<Concat(Element, typename NextHelper::RetType )>::type  RetType;
-	
 public:
 
 	// A2... a2 are the alredy pealed-off paremeters
 	template<class... A2>
-	static RetType call( const std::function<R(typename Args::c_type...)>& fn, const js::Array& parameters, const A2&... a2)
+	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, js::Array& out_parameters, const js::Array& parameters, const A2&... a2)
 	{
 		// extract the U'th element of the parameter list
 		const Element element{ Element::from_json(parameters[U], parameters, U) };
 		
-		// concatenate (Out<T>) or ignore (In<T>) this element into the output tuple:
-		return concat( element, NextHelper::call(fn, parameters, a2..., element ) );
+		const js::Value ret = NextHelper::call(fn, out_parameters, parameters, a2..., element );
+		if(Element::is_output)
+		{
+			out_parameters.push_back( to_json(element) );
+		}
+		return ret;
 	}
 };
 
@@ -405,7 +331,12 @@ public:
 		// recursive template magic breaks loose:
 		// recursively extract the JSON parameters, call 'fn' and collect its return value
 		// and all output parameters into a tuple<> and return it as JSON array
-		return to_json( helper<R, 0, sizeof...(Args), Args...>::call(fn, parameters) );
+		js::Array out_params;
+		out_params.reserve( 1 + sizeof...(Args) ); // too big, but who cares?
+		
+		js::Value ret = helper<R, 0, sizeof...(Args), Args...>::call(fn, out_params, parameters);
+		out_params.push_back( ret );
+		return ret;
 	}
 
 	void setJavaScriptSignature(js::Object& o) const override

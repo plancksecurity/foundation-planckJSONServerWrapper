@@ -3,7 +3,6 @@
 
 #include <cstring> // for memcpy()
 
-const Concat concat{};
 
 namespace
 {
