@@ -344,7 +344,7 @@ public:
 		
 		js::Value ret = helper<R, 0, sizeof...(Args), Args...>::call(fn, out_params, parameters);
 		out_params.push_back( ret );
-		return ret;
+		return out_params;
 	}
 
 	void setJavaScriptSignature(js::Object& o) const override
