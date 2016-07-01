@@ -178,6 +178,8 @@ js::Value to_json(const InOut<T>& o)
 }
 
 
+// Heloer class to concatenate the "result-relevant" parameters into a tuple<...>:  Out<T> and InOut<T>
+// In<T> and InRaw<T> are ignored and _not_ collected into the output tuple<>
 struct Concat
 {
 	template<class T, class... Args>
@@ -205,13 +207,15 @@ struct Concat
 	}
 };
 
+// because operator() needs an object, we create a dummy one:
 extern const Concat concat;
 
 
 
-// helper functors for to_json(tuple<...>):
+// recursive helper functors for to_json(tuple<...>):
 namespace
 {
+	// generic implementation, used for U < V
 	template<unsigned U, unsigned V, class... Args>
 	struct copy_value
 	{
@@ -222,6 +226,7 @@ namespace
 		}
 	};
 	
+	// spezialization for U==V
 	template<unsigned U, class... Args>
 	struct copy_value<U,U,Args...>
 	{
@@ -239,9 +244,16 @@ js::Value to_json(const std::tuple<Args...>& t)
 }
 
 
+// heloer class for generic calls:
+// R : return type of the called function
+// U : number of the parameter which is being extracted
+// MAX: maximum number of parameters. if U==MAX the function call is executed
+// Args... the function's parameter types
 template<class R, unsigned U, unsigned MAX, class... Args>
 class helper;
 
+
+// specialization for U==MAX: do the function call here
 template<class R, unsigned U, class... Args>
 class helper<R, U, U, Args...>
 {
@@ -255,6 +267,7 @@ public:
 };
 
 
+// specialization for Return type == void
 template<unsigned U, class... Args>
 class helper<void, U, U, Args...>
 {
@@ -269,22 +282,30 @@ public:
 };
 
 
+// recursive helper class:
+// It is used with U==0 in Func<>::call() and calls itself recursively until U==MAX, where the real function calls occurs,
+// and the output parameters are collected during unwinding of the recursion
 template<class R, unsigned U, unsigned MAX, class... Args>
 class helper
 {
 public:
 	typedef std::tuple<Args...> Tuple;
-	typedef typename std::tuple_element<U, Tuple>::type Element;
+	typedef typename std::tuple_element<U, Tuple>::type Element; // The type of the U'th parameter
 	typedef helper<R, U+1, MAX, Args...> NextHelper;
 	
+	// depending on whether Element is an output parameter or not the returned tuple contains the paremeter or not:
 	typedef typename std::result_of<Concat(Element, typename NextHelper::RetType )>::type  RetType;
 	
 public:
+
+	// A2... a2 are the alredy pealed-off paremeters
 	template<class... A2>
 	static RetType call( const std::function<R(typename Args::c_type...)>& fn, const js::Array& parameters, const A2&... a2)
 	{
+		// extract the U'th element of the parameter list
 		const Element element{ Element::from_json(parameters[U], parameters, U) };
-
+		
+		// concatenate (Out<T>) or ignore (In<T>) this element into the output tuple:
 		return concat( element, NextHelper::call(fn, parameters, a2..., element ) );
 	}
 };
@@ -340,6 +361,8 @@ template<> struct Type2Json<>
 };
 
 
+
+// abstract base class for all Func<...> types below
 class FuncBase
 {
 public:
@@ -379,6 +402,9 @@ public:
 				"but I expect " + std::to_string( sizeof...(Args) )   + " element(s)! "
 			);
 		
+		// recursive template magic breaks loose:
+		// recursively extract the JSON parameters, call 'fn' and collect its return value
+		// and all output parameters into a tuple<> and return it as JSON array
 		return to_json( helper<R, 0, sizeof...(Args), Args...>::call(fn, parameters) );
 	}
 
@@ -394,6 +420,7 @@ public:
 };
 
 
+// Just a separating placeholder in the drop-down list. Does not calls anything.
 class Separator : public FuncBase
 {
 public:
