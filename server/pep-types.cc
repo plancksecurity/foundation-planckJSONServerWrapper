@@ -151,9 +151,9 @@ Out<_message*>::Out(const Out<_message*>& other)
 : value( new _message* )
 {
 	*value = *other.value ? message_dup(*other.value) : nullptr;
-	std::cerr << "$|  Out<message*> is copied: this=" << (void*)this << ", "
-		"other=" << (void*)&other << ", other.value=" << ((void*)&other ? (void*)other.value : (void*)"NOPE") << ", *other.value=" << ((void*)&other && (void*)&other.value ? (void*)*other.value : (void*)"NOPE") << ", "
-		"this->value=" << (void*)value << ", *this->value=" << (this->value ? (void*)*this->value : (void*)"NOPE") << ". \n";
+	std::cerr << "$|  Out<message*> is copied: "
+		"this="  << *this << ", "
+		"other=" << other << ".\n";
 }
 
 
@@ -164,8 +164,7 @@ Out<_message*>::~Out()
 //  FIXME: due to memory corruption(?) the free_message() call crashes! :-(  //
 //  Without it we leak memory but at least it works for now... :-/           //
 ///////////////////////////////////////////////////////////////////////////////
-	std::cerr << "$|  ~Out<message*>: this=" << (void*)this << ", "
-		"this->value=" << (void*)value << ", *this->value=" << (this->value ? (void*)*this->value : (void*)"NOPE") << ". \n";
+	std::cerr << "$|  ~Out<message*>: this=" << *this << ".\n";
 
 	if(value) free_message(*value);
 	delete value;

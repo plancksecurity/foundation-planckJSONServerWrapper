@@ -116,9 +116,10 @@ struct Out
 	{
 		if(typeid(T)==typeid(_message*))
 		{
-			std::cerr << "|$ Out<message*>(): this=" << (void*)this << ", this->value=" << (void*)value << ",  *this->value=" << *value << "\n";
+			std::cerr << "|$ Out<message*>(): this=" << *this << "\n";
 		}
 	}
+	
 	~Out();
 	
 	Out(const Out<T>& other);
@@ -143,6 +144,24 @@ struct Out
 	}
 	
 	T* value = nullptr;
+	
+	friend
+	std::ostream& operator<<(std::ostream& o, const Out<T>& out)
+	{
+		o << (const void*)&out;
+		
+		if(&out)
+		{
+			o << ", value=" << (const void*)out.value;
+			if(out.value)
+			{
+				o << ", *value=" << *(out.value);
+			}
+		}
+		
+		return o;
+	}
+	
 };
 
 
