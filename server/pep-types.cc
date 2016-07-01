@@ -97,34 +97,6 @@ Out<identity_list*>::~Out()
 
 
 template<>
-In<pEp_identity*>::In(const In<pEp_identity*>& other)
-: value( other.value ? identity_dup(other.value) : nullptr )
-{
-}
-
-template<>
-Out<pEp_identity*>::Out(const Out<pEp_identity*>& other)
-: value( new pEp_identity*{} )
-{
-	if(*other.value)
-	{
-		*value = identity_dup(*other.value);
-	}
-}
-
-
-template<>
-Out<_identity_list*>::Out(const Out<identity_list*>& other)
-: value( new identity_list*{} )
-{
-	if(*other.value)
-	{
-		*value = identity_list_dup(*other.value);
-	}
-}
-
-
-template<>
 In<PEP_enc_format>::~In()
 {
 	// nothing to do here. :-)
@@ -132,28 +104,10 @@ In<PEP_enc_format>::~In()
 
 
 template<>
-Out<stringlist_t*>::Out(const Out<stringlist_t*>& other)
-: value( new stringlist_t* )
-{
-	*value = *other.value ? stringlist_dup(*other.value) : nullptr;
-}
-
-template<>
 Out<stringlist_t*>::~Out()
 {
 	if(value) free_stringlist(*value);
 	delete value;
-}
-
-
-template<>
-Out<_message*>::Out(const Out<_message*>& other)
-: value( new _message* )
-{
-	*value = *other.value ? message_dup(*other.value) : nullptr;
-	std::cerr << "$|  Out<message*> is copied: "
-		"this="  << *this << ", "
-		"other=" << other << ".\n";
 }
 
 
@@ -172,23 +126,11 @@ Out<_message*>::~Out()
 
 
 template<>
-Out<PEP_color>::Out(const Out<PEP_color>& other)
-: value( new PEP_color(*other.value) )
-{
-}
-
-template<>
 Out<PEP_color>::~Out()
 {
 	delete value;
 }
 
-
-template<>
-Out<PEP_comm_type>::Out(const Out<PEP_comm_type>& other)
-: value( new PEP_comm_type(*other.value) )
-{
-}
 
 template<>
 Out<PEP_comm_type>::~Out()
