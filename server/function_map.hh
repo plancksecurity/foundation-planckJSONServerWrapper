@@ -2,6 +2,7 @@
 #define FUNCTION_MAP_HH
 
 #include "json_spirit/json_spirit_value.h"
+#include "json_spirit/json_spirit_writer.h"
 #include <type_traits>
 
 // Just for debugging:
@@ -21,6 +22,10 @@ T from_json(const js::Value& v);
 
 template<class T>
 js::Value to_json(const T& t);
+
+template<class T>
+js::Value to_json(const Out<T>& t);
+
 
 
 
@@ -44,6 +49,11 @@ struct In
 	: In( from_json<T>(v) )
 	{ }
 	
+	js::Value to_json() const
+	{
+		throw std::logic_error( std::string(typeid(T).name()) + " is not for output!" );
+	}
+	
 	T value;
 };
 
@@ -66,6 +76,11 @@ struct InRaw
 	InRaw(const js::Value& v, const js::Array& params, unsigned position)
 	: InRaw(v)
 	{ }
+
+	js::Value to_json() const
+	{
+		throw std::logic_error( std::string(typeid(T).name()) + " is not for output!" );
+	}
 	
 	js::Value value;
 };
@@ -219,7 +234,11 @@ public:
 		const js::Value ret = NextHelper::call(fn, out_parameters, parameters, a2..., element );
 		if(Element::is_output)
 		{
-			out_parameters.push_back( to_json(element) );
+			js::Value out = element.to_json();
+			std::cerr << "|$ Out #" << U << " : " << js::write(out) << "\n";
+			out_parameters.push_back( std::move(out) );
+		}else{
+			std::cerr << "|$ Param #" << U << " is not for output.\n";
 		}
 		return ret;
 	}
