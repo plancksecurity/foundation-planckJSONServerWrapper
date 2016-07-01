@@ -42,8 +42,7 @@ struct In
 	// default implementation:
 	In(const js::Value& v, const js::Array& params, unsigned position)
 	: In( from_json<T>(v) )
-	{
-	}
+	{ }
 	
 	T value;
 };
@@ -66,8 +65,7 @@ struct InRaw
 	// default implementation:
 	InRaw(const js::Value& v, const js::Array& params, unsigned position)
 	: InRaw(v)
-	{
-	}
+	{ }
 	
 	js::Value value;
 };
@@ -88,8 +86,7 @@ struct InOut : public In<T>
 	// default implementation:
 	InOut(const js::Value& v, const js::Array& params, unsigned position)
 	: Base( from_json<T>(v) )
-	{
-	}
+	{ }
 	
 	js::Value to_json() const
 	{
@@ -123,8 +120,7 @@ struct Out
 	
 	Out(const js::Value& v, const js::Array& params, unsigned position)
 	: Out()
-	{
-	}
+	{ }
 	
 	js::Value to_json() const
 	{

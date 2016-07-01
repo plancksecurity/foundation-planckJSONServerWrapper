@@ -40,11 +40,7 @@ In<std::size_t>::~In()
 	{                         \
 		delete value;         \
 	}                         \
-	                          \
-	template<>                                \
-	Out< TYPE >::Out(const Out<TYPE>& other)  \
-	: value ( new TYPE {*other.value} )       \
-	{ }
+
 
 SIMPLE_TYPE_OUT( bool )
 SIMPLE_TYPE_OUT( unsigned )
@@ -74,21 +70,6 @@ Out<char*>::~Out()
 	delete value;
 }
 
-
-
-template<>
-Out<char const*>::Out(const Out<const char*>& other)
-: value( new const char* )
-{
-	*value = *other.value ? strdup(*other.value) : nullptr;
-}
-
-template<>
-Out<char*>::Out(const Out<char*>& other)
-: value( new char* )
-{
-	*value = *other.value ? strdup(*other.value) : nullptr;
-}
 
 
 template<>
