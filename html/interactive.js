@@ -220,10 +220,12 @@ function getSessions(with_radio)
 	}
 	
 	var content = '';
+	var lastSession = openSessions.length - 1;
 	for(var i=0; i<openSessions.length; ++i)
 	{
 		var os = openSessions[i];
-		content += (with_radio ? '<input type="radio" name="sessionRadio" value="' + os.session + '">' : '') + '&nbsp;<tt>' + os.session + '</tt><br>';
+		content += (with_radio ? '<input type="radio" name="sessionRadio" value="' + os.session + '"' + (i==lastSession ? ' checked' : '') + '>' : '') 
+			+ '&nbsp;<tt>' + os.session + '</tt><br>';
 	}
 	
 	return content;
