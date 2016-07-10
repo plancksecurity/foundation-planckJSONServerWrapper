@@ -54,8 +54,8 @@ const std::string server_version =
 //	"(9a) Frechen-Königsdorf"; // add security-token
 //	"(10) Kreuz Köln-West"; // More fields in JavaScript for "message", 1-element identity list to support message->to attribute
 //	"(11) Köln-Klettenberg"; // support for identity_list as output parameter, as needed by import_key() now. Fix some issue with identity.lang
-	"(12) Kreuz Köln Süd";   // support for attachments, so encrypt_message() works now! :-) but we have memory corruption, hence the FIXME in pep-types.cc :-(
-
+//	"(12) Kreuz Köln Süd";   // support for attachments, so encrypt_message() works now! :-) but we have memory corruption, hence the FIXME in pep-types.cc :-(
+	"(13) Köln-Poll";        // refactoring to avoid copying of parameters. Fixes the memory corruption. Some other clean-ups
 
 template<>
 In<PEP_SESSION>::~In()
@@ -166,6 +166,7 @@ const FunctionMap functions = {
 		FP( "encrypt_and_sign", new Func<PEP_STATUS, In<PEP_SESSION>, In<stringlist_t*>, In<const char*>, In<size_t>, Out<char*>, Out<size_t>> ( &encrypt_and_sign) ),
 		
 		FP( "version", new Func<std::string>( &getVersion ) ),
+		FP( "registerSession", new Func<std::string>(&registerSession) ),
 		FP( "releaseSession", new Func<PEP_STATUS, InRaw<PEP_SESSION>>(&releaseSession) ),
 	};
 
@@ -324,7 +325,7 @@ void OnApiRequest(evhttp_request* req, void*)
 
 	int request_id = -42;
 	js::Object answer;
-		js::Value p;
+	js::Value p;
 	
 	try
 	{
@@ -462,10 +463,10 @@ try
 			if (!evHttp)
 				throw std::runtime_error("Failed to create new evhttp.");
 			
-			evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str(), OnApiRequest, nullptr);
-			evhttp_set_cb(evHttp.get(), CreateSessionUrl.c_str(), OnCreateSession, nullptr);
+			evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str()    , OnApiRequest    , nullptr);
+			evhttp_set_cb(evHttp.get(), CreateSessionUrl.c_str() , OnCreateSession , nullptr);
 			evhttp_set_cb(evHttp.get(), GetAllSessionsUrl.c_str(), OnGetAllSessions, nullptr);
-			evhttp_set_cb(evHttp.get(), "/pep_functions.js", OnGetFunctions, nullptr);
+			evhttp_set_cb(evHttp.get(), "/pep_functions.js"      , OnGetFunctions  , nullptr);
 			evhttp_set_gencb(evHttp.get(), OnOtherRequest, nullptr);
 			
 			if (s == -1)
@@ -495,7 +496,7 @@ try_next_port:
 			else
 			{
 				if (evhttp_accept_socket(evHttp.get(), s) == -1)
-					throw std::runtime_error("Failed to bind server socket for new instance.");
+					throw std::runtime_error("Failed to accept() on server socket for new instance.");
 			}
 			
 			while(isRun)
