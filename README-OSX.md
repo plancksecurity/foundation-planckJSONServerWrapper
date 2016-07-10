@@ -1,3 +1,8 @@
+# Notes for OS X
+
+Please see also the README.md, these are only OS X specific instructions.
+You'll need some special environment to run the server, see "Running the server".
+
 # Building libevent on OS X
 
 ## MacPorts
@@ -30,4 +35,10 @@ make install
 ```
 cd server
 make
+```
+
+# Running the server
+
+```
+LD_LIBRARY_PATH=/opt/local/lib ./mt-server
 ```

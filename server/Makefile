@@ -1,7 +1,21 @@
-.PHONY: all clear
+BUILD_ON=$(shell uname)
+BUILD_FOR=$(BUILD_ON)
 
-CXXFLAGS = -Wall -O0 -std=c++11 -g -I/opt/local/include -I$(HOME)/include -I/home/deb/local/include/ -Ijson_spirit -fstack-protector-all
-LDFLAGS  = -L/opt/local/lib -L$(HOME)/lib -L/home/deb/local/lib -lpthread -levent -lpEpEngine -lgpgme-pthread -letpan -lboost_system -lboost_filesystem
+ifeq ($(BUILD_ON),Darwin)
+ifeq ($(BUILD_FOR),Darwin)
+
+CXXFLAGS = -Wall -O0 -std=c++11 -g -I/opt/local/include -I$(HOME)/include -Ijson_spirit -fstack-protector-all
+LDFLAGS  = -L/opt/local/lib -L$(HOME)/lib -lpthread -levent -lpEpEngine -lgpgme-pthread -letpan -lboost_system-mt -lboost_filesystem-mt
+endif
+
+else
+
+CXXFLAGS = -Wall -O0 -std=c++11 -g -I/home/deb/local/include/ -Ijson_spirit -fstack-protector-all
+LDFLAGS  = -L/home/deb/local/lib -lpthread -levent -lpEpEngine -lgpgme-pthread -letpan -lboost_system -lboost_filesystem
+
+endif
+
+.PHONY: all clear
 
 all: mt-server
 

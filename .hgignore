@@ -15,3 +15,4 @@ libevent-*-stable/libtool
 libevent-*-stable/sample/Makefile
 libevent-*-stable/stamp-h1
 libevent-*-stable/test/Makefile
+server/mt-server
