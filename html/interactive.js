@@ -241,10 +241,11 @@ function createSession()
 {
 	var url = document.getElementById("server").value + 'createSession';
 	var request = {};
-	request.method = 'createSession';
-	request.params = [':-)'];
 	request.id = ++call_ID;
 	request.jsonrpc = "2.0";
+	request.security_token = document.getElementById("security_token").value;
+	request.method = 'createSession';
+	request.params = [];
 	var x = $.post(url, JSON.stringify(request), null, "json")
 		.done(function(data, status, xhr) {
 			openSessions.push(data);
@@ -261,10 +262,11 @@ function getAllSessions()
 {
 	var url = document.getElementById("server").value + 'getAllSessions';
 	var request = {};
-	request.method = 'getAllSessions';
-	request.params = {};
 	request.id = ++call_ID;
 	request.jsonrpc = "2.0";
+	request.security_token = document.getElementById("security_token").value;
+	request.method = 'getAllSessions';
+	request.params = [];
 	var x = $.post(url, JSON.stringify(request), null, "json")
 		.done(function(data, status, xhr) {
 			openSessions = data;
@@ -297,6 +299,15 @@ function displayResult(response)
 }
 
 
+function pc(c)
+{
+	if(c>32 && c<127)
+	{
+		return '“' + String.fromCharCode(c) + '|' + c + '”';
+	}else
+		return '(' + c + ')';
+}
+
 function button_click()
 {
 	var deb = document.getElementById("debug");
@@ -306,6 +317,8 @@ function button_click()
 	
 	var url = document.getElementById("server").value + 'callFunction';
 	var request = {};
+	request.id = ++call_ID;
+	request.jsonrpc = "2.0";
 	request.security_token = document.getElementById("security_token").value;
 	request.method = document.getElementById("fn_name").value;
 	request.params = new Array(func.params.length);
@@ -326,8 +339,6 @@ function button_click()
 		}
 	}
 	
-	request.id = ++call_ID;
-	request.jsonrpc = "2.0";
 	var x = $.post(url, JSON.stringify(request), null, "json")
 		.done(function(moo) {
 			displayResult(moo);
@@ -338,6 +349,25 @@ function button_click()
 			+ "Header: " + JSON.stringify(hdr, null, 2) + "\n"
 			+ "Text: " +   JSON.stringify(txt, null, 2) + "\n"
 			+ "Error:" +   JSON.stringify(err, null, 2) + "\n";
+			
+			// HACK to try to parse hdr.responseText:
+			var rt = hdr.responseText;
+			if($.type(rt) === 'string')
+			{
+				try{
+					var j = JSON.parse(rt);
+					emsg += "Header.responseText: " + JSON.stringify(j, null, 2) + "\n";
+				}
+				catch(e)
+				{
+					emsg += "Header.responseText cannot be parsed: " + e + "\n";
+					for(var i=0; i<200; ++i)
+					{
+						emsg += i + ":" + pc(rt.charCodeAt(i)) + ', ';
+					}
+					emsg += "\n";
+				}
+			}
 			
 			var pre = document.getElementById("resultpre");
 			pre.innerHTML += emsg;

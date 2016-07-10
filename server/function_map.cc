@@ -21,20 +21,12 @@ In<char const*>::~In()
 	if(value) free(const_cast<char*>(value));
 }
 
-template<>
-In<int>::~In()
-{ }
 
-template<>
-In<time_t>::~In()
-{ }
-
-template<>
-In<std::size_t>::~In()
-{ }
-
-
-#define SIMPLE_TYPE_OUT(TYPE) \
+#define SIMPLE_TYPE(TYPE)     \
+	template<>                \
+	In< TYPE >::~In()         \
+	{ }                       \
+	                          \
 	template<>                \
 	Out< TYPE >::~Out()       \
 	{                         \
@@ -42,10 +34,16 @@ In<std::size_t>::~In()
 	}                         \
 
 
-SIMPLE_TYPE_OUT( bool )
-SIMPLE_TYPE_OUT( unsigned )
-SIMPLE_TYPE_OUT( unsigned long)
-SIMPLE_TYPE_OUT( unsigned long long)
+SIMPLE_TYPE( bool )
+SIMPLE_TYPE( unsigned short )
+SIMPLE_TYPE( unsigned )
+SIMPLE_TYPE( unsigned long )
+SIMPLE_TYPE( unsigned long long )
+
+SIMPLE_TYPE( short )
+SIMPLE_TYPE( int )
+SIMPLE_TYPE( long )
+SIMPLE_TYPE( long long )
 
 
 template<>
@@ -71,7 +69,6 @@ Out<char*>::~Out()
 }
 
 
-
 template<>
 int from_json<int>(const js::Value& v)
 {
@@ -79,16 +76,46 @@ int from_json<int>(const js::Value& v)
 }
 
 template<>
-unsigned from_json<unsigned>(const js::Value& v)
+bool from_json<bool>(const js::Value& v)
 {
-	return v.get_uint64();
+	return v.get_bool();
 }
 
-template<>
-time_t from_json<time_t>(const js::Value& v)
-{
-	return static_cast<time_t>(v.get_int64());
-}
+
+#define FROM_TO_JSON_UINT64( TYPE )          \
+	template<>                               \
+	TYPE from_json<TYPE>(const js::Value& v) \
+	{                                        \
+		return v.get_uint64();               \
+	}                                        \
+	                                         \
+	template<>                               \
+	js::Value to_json< TYPE >(const TYPE& t) \
+	{                                        \
+		return js::Value(uint64_t(t));       \
+	}
+
+FROM_TO_JSON_UINT64( unsigned )
+FROM_TO_JSON_UINT64( unsigned long )
+FROM_TO_JSON_UINT64( unsigned long long )
+
+
+#define FROM_TO_JSON_INT64( TYPE )           \
+	template<>                               \
+	TYPE from_json<TYPE>(const js::Value& v) \
+	{                                        \
+		return v.get_int64();                \
+	}                                        \
+	                                         \
+	template<>                               \
+	js::Value to_json< TYPE >(const TYPE& t) \
+	{                                        \
+		return js::Value(int64_t(t));        \
+	}
+
+FROM_TO_JSON_UINT64( long )
+FROM_TO_JSON_UINT64( long long )
+
 
 template<>
 std::string from_json<std::string>(const js::Value& v)
@@ -122,12 +149,6 @@ template js::Value to_json<std::string>(const std::string&);
 
 
 template<>
-js::Value to_json<unsigned>(const unsigned& t)
-{
-	return js::Value(uint64_t(t));
-}
-
-template<>
 js::Value to_json<char*>(char* const & s)
 {
 	return s ? js::Value(std::string(s)) : js::Value{};
@@ -139,17 +160,6 @@ js::Value to_json<const char*>(const char* const & s)
 	return s ? js::Value(std::string(s)) : js::Value{};
 }
 
-template<>
-js::Value to_json<std::size_t>(const std::size_t& s)
-{
-	return js::Value{uint64_t(s)};
-}
-
-template<>
-std::size_t from_json<std::size_t>(const js::Value& v)
-{
-	return v.get_uint64();
-}
 
 template<>
 js::Value to_json<struct tm*>(struct tm* const& t)
@@ -164,12 +174,6 @@ js::Value to_json<struct tm*>(struct tm* const& t)
 	return js::Value{s};
 }
 
-
-template<>
-bool from_json<bool>(const js::Value& v)
-{
-	return v.get_bool();
-}
 
 
 template<>

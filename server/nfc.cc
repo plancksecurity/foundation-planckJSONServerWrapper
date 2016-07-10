@@ -165,7 +165,7 @@ bool isNFC(const std::string& s)
 std::string toNFC(std::string s)
 {
 	if(isNFC(s))
-		return std::move(s);
+		return s;
 	
 	std::string ret;
 	

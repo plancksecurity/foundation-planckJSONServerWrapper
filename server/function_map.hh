@@ -23,11 +23,6 @@ T from_json(const js::Value& v);
 template<class T>
 js::Value to_json(const T& t);
 
-template<class T>
-js::Value to_json(const Out<T>& t);
-
-
-
 
 // helper classes to specify in- and out-parameters
 template<class T>
@@ -40,8 +35,7 @@ struct In
 	~In();
 	
 	In(const In<T>& other) = delete;
-	In(In<T>&& victim);
-	
+	In(In<T>&& victim) = delete;
 	In<T>& operator=(const In<T>&) = delete;
 	
 	// default implementation:
@@ -69,7 +63,7 @@ struct InRaw
 	~InRaw() = default;
 	
 	InRaw(const InRaw<T>& other) = delete;
-	InRaw(InRaw<T>&& victim);
+	InRaw(InRaw<T>&& victim) = delete;
 	InRaw<T>& operator=(const InRaw<T>&) = delete;
 	
 	// default implementation:
@@ -127,7 +121,7 @@ struct Out
 	~Out();
 	
 	Out(const Out<T>& other) = delete;
-	Out(Out<T>&& victim);
+	Out(Out<T>&& victim) = delete;
 	
 	// just to be sure they are not implicitly defined:
 	Out<T>& operator=(const Out<T>& other) = delete;
@@ -149,7 +143,8 @@ struct Out
 	{
 		o << (const void*)&out;
 		
-		if(&out)
+// the if() was added to avoid crashes on memory corruptuon. But clang++ warns, that this check is always true on "well-formed" programs, and he is right. In an ideal world there are no memory corruptions. ;-(
+//		if(&out)
 		{
 			o << ", value=" << (const void*)out.value;
 			if(out.value)

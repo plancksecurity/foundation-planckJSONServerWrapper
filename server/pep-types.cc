@@ -302,7 +302,7 @@ _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 	const auto oelem = element->get_obj();
 	_bloblist_t* bl = new_bloblist
 		(
-			from_json_object<char*, js::str_type>      (oelem, "data"),
+			from_json_object<char*, js::str_type>      (oelem, "value"),
 			from_json_object<size_t, js::int_type>     (oelem, "size"),
 			from_json_object<const char*, js::str_type>(oelem, "mime_type"),
 			from_json_object<const char*, js::str_type>(oelem, "filename")
@@ -312,7 +312,7 @@ _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 	{
 		const auto oelem = element->get_obj();
 		bl = bloblist_add(bl, 
-			from_json_object<char*, js::str_type>      (oelem, "data"),
+			from_json_object<char*, js::str_type>      (oelem, "value"),
 			from_json_object<size_t, js::int_type>     (oelem, "size"),
 			from_json_object<const char*, js::str_type>(oelem, "mime_type"),
 			from_json_object<const char*, js::str_type>(oelem, "filename")
@@ -451,7 +451,7 @@ js::Value to_json<pEp_identity*>(pEp_identity* const& id)
 
 	o.emplace_back( "comm_type", js::Value( int( id->comm_type) ));
 	
-	if(id->lang && id->lang[0] && id->lang[1])
+	if(id->lang[0] && id->lang[1])
 		o.emplace_back( "lang", js::Value( std::string( id->lang, id->lang+2) ));
 	
 	o.emplace_back( "me", js::Value( id->me ));
