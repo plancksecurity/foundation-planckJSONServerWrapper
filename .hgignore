@@ -1,0 +1,17 @@
+syntax: glob
+.DS_Store
+
+*.o
+*.Po
+*.Plo
+*.pc
+
+libevent-*-stable/Makefile
+libevent-*-stable/config.h
+libevent-*-stable/config.log
+libevent-*-stable/config.status
+libevent-*-stable/include/Makefile
+libevent-*-stable/libtool
+libevent-*-stable/sample/Makefile
+libevent-*-stable/stamp-h1
+libevent-*-stable/test/Makefile
