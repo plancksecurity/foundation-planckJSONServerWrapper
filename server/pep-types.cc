@@ -335,7 +335,7 @@ js::Value to_json<_bloblist_t*>(_bloblist_t* const& bl)
 		if(b->value)
 			o.emplace_back( "value", std::string(b->value, b->value + b->size) );
 		
-		o.emplace_back( "size", b->size );
+		o.emplace_back( "size", boost::uint64_t(b->size) );
 		
 		if(b->mime_type)
 			o.emplace_back( "mime_type", b->mime_type );
