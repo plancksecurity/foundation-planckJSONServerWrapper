@@ -13,7 +13,7 @@
 #include <functional>
 #include <tuple>
 
-#include "mt-server.hh"
+#include "json-adapter.hh"
 #include "function_map.hh"
 #include "pep-types.hh"
 #include "json_rpc.hh"
@@ -26,12 +26,13 @@
 #include "json_spirit/json_spirit_reader.h"
 #include "json_spirit/json_spirit_utils.h"
 
-//std::string SrvAddress = "127.0.0.1";
-std::string SrvAddress = "0.0.0.0";
-std::uint16_t SrvPort  = 4223;
+
+namespace {
+
+static const unsigned API_VERSION = 0x0002;
+
 std::string BaseUrl    = "/ja/0.1/";
 int SrvThreadCount     = 1;
-
 
 const std::string CreateSessionUrl = BaseUrl + "createSession";
 const std::string GetAllSessionsUrl = BaseUrl + "getAllSessions";
@@ -57,12 +58,6 @@ const std::string server_version =
 //	"(12) Kreuz Köln Süd";   // support for attachments, so encrypt_message() works now! :-) but we have memory corruption, hence the FIXME in pep-types.cc :-(
 	"(13) Köln-Poll";        // refactoring to avoid copying of parameters. Fixes the memory corruption. Some other clean-ups
 
-template<>
-In<PEP_SESSION>::~In()
-{
-	// no automatic release!
-}
-
 
 PEP_SESSION createSession()
 {
@@ -76,15 +71,11 @@ PEP_SESSION createSession()
 }
 
 
+typedef Registry<PEP_SESSION, PEP_SESSION(*)(), void(*)(PEP_SESSION)>  SessionRegistry;
+
 template<> const uint64_t SessionRegistry::Identifier = 0x44B0310A;
 
 SessionRegistry session_registry(&createSession, &release);
-
-template<>
-PEP_SESSION from_json(const js::Value& v)
-{
-	return session_registry.get(v.get_str());
-}
 
 
 std::string registerSession()
@@ -120,7 +111,6 @@ PEP_STATUS get_gpg_path(const char** path)
 	return status;
 }
 
-std::string getVersion() { return "0.2"; }
 
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
@@ -151,7 +141,6 @@ const FunctionMap functions = {
 		FP( "export_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<char*>, Out<std::size_t>> ( &export_key) ),
 		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &get_trust) ),
-//		FP( "own_key_add"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>> ( &own_key_add) ),
 		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
 		FP( "own_key_retrieve" , new Func<PEP_STATUS, In<PEP_SESSION>, Out<stringlist_t*>> ( &own_key_retrieve) ),
 		
@@ -169,29 +158,6 @@ const FunctionMap functions = {
 		FP( "registerSession", new Func<std::string>(&registerSession) ),
 		FP( "releaseSession", new Func<PEP_STATUS, InRaw<PEP_SESSION>>(&releaseSession) ),
 	};
-
-
-
-unsigned long long instanz()
-{
-/*
-	js::Array arr0;
-	js::Array arr1 = js::Array({ 0 });
-	
-	unsigned long long l0 =  fn_s(arr0);
-	unsigned long long l1 =  fn_s(arr1);
-*/
-	for( auto f : functions )
-	{
-		std::cout << f.first << " -> " ;
-		js::Object o; 
-		f.second->setJavaScriptSignature(o);
-		js::write( o, std::cout, js::pretty_print | js::raw_utf8 | js::single_line_arrays );
-		std::cout << ".\n";
-	}
-	
-	return test_joggle();
-}
 
 
 void sendReplyString(evhttp_request* req, const char* contentType, const std::string& outputText)
@@ -252,7 +218,6 @@ void OnOtherRequest(evhttp_request* req, void*)
 		{
 			{ "/"                , {"text/html"      , "../html/index.html"       } },
 			{ "/jquery.js"       , {"text/javascript", "../html/jquery-2.2.0.min.js"  } },
-	//		{ "/pep_functions.js", {"text/javascript", "../html/pep_functions.js" } },
 			{ "/interactive.js"  , {"text/javascript", "../html/interactive.js"   } },
 			{ "/favicon.ico"     , {"image/vnd.microsoft.icon", "../html/json-test.ico"} },
 		};
@@ -429,6 +394,28 @@ void OnGetAllSessions(evhttp_request* req, void*)
 	sendReplyString(req, "text/plain", result );
 }
 
+} // end of anonymous namespace
+
+
+template<>
+PEP_SESSION from_json(const js::Value& v)
+{
+	return session_registry.get(v.get_str());
+}
+
+
+const std::string& JsonAdapter::version()
+{
+	return server_version;
+}
+
+
+
+unsigned JsonAdapter::apiVersion()
+{
+	return API_VERSION;
+}
+
 
 bool volatile isRun = true;
 
@@ -441,9 +428,6 @@ typedef std::vector<ThreadPtr> ThreadPool;
 int main()
 try
 {
-//	instanz();
-//	return 0;
-	
 	std::cout << "I have " << session_registry.size() << " registered session(s).\n";
 	
 	std::exception_ptr initExcept;
