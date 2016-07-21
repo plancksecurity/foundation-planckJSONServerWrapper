@@ -152,11 +152,10 @@ const FunctionMap functions = {
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),
-		FP( "encrypt_and_sign", new Func<PEP_STATUS, In<PEP_SESSION>, In<stringlist_t*>, In<const char*>, In<size_t>, Out<char*>, Out<size_t>> ( &encrypt_and_sign) ),
-		
-		FP( "version", new Func<std::string>( &getVersion ) ),
+		FP( "version",     new Func<const std::string&>( &JsonAdapter::version ) ),
+		FP( "apiVversion", new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
 		FP( "registerSession", new Func<std::string>(&registerSession) ),
-		FP( "releaseSession", new Func<PEP_STATUS, InRaw<PEP_SESSION>>(&releaseSession) ),
+		FP( "releaseSession",  new Func<PEP_STATUS, InRaw<PEP_SESSION>>(&releaseSession) ),
 	};
 
 
@@ -410,7 +409,6 @@ const std::string& JsonAdapter::version()
 }
 
 
-
 unsigned JsonAdapter::apiVersion()
 {
 	return API_VERSION;
@@ -425,7 +423,39 @@ typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
 
 
-int main()
+struct JsonAdapter::Internal
+{
+	std::unique_ptr<event_base, decltype(&event_base_free)> eventBase = {nullptr, &event_base_free};
+	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
+	std::string address;
+	unsigned    port = 0;
+	unsigned    request_count = 0;
+	evutil_socket_t sock;
+	bool        running = false;
+	
+};
+
+
+JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port)
+: i(new Internal)
+{
+	i->eventBase.reset(event_base_new());
+	if (!i->eventBase)
+		throw std::runtime_error("Failed to create new base_event.");
+	
+	i->evHttp.reset( evhttp_new(i->eventBase.get()));
+	
+	i->address = address;
+}
+
+
+JsonAdapter::~JsonAdapter()
+{
+	delete i;
+}
+
+
+void JsonAdapter::run()
 try
 {
 	std::cout << "I have " << session_registry.size() << " registered session(s).\n";
