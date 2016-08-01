@@ -41,7 +41,7 @@ public:
 	
 	// returns a version name
 	static
-	const std::string& version();
+	std::string version();
 
 private:
 	struct Internal;

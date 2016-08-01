@@ -152,7 +152,7 @@ const FunctionMap functions = {
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),
-		FP( "version",     new Func<const std::string&>( &JsonAdapter::version ) ),
+		FP( "version",     new Func<std::string>( &JsonAdapter::version ) ),
 		FP( "apiVversion", new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
 		FP( "registerSession", new Func<std::string>(&registerSession) ),
 		FP( "releaseSession",  new Func<PEP_STATUS, InRaw<PEP_SESSION>>(&releaseSession) ),
@@ -347,6 +347,7 @@ void OnCreateSession(evhttp_request* req, void*)
 }
 
 
+/*
 void OnCloseSession(evhttp_request* req, void*)
 {
 	std::cout << "Close session: " << std::flush;
@@ -377,6 +378,7 @@ void OnCloseSession(evhttp_request* req, void*)
 	
 	sendReplyString(req, "text/plain", js::write(answer) );
 }
+*/
 
 
 void OnGetAllSessions(evhttp_request* req, void*)
@@ -403,7 +405,7 @@ PEP_SESSION from_json(const js::Value& v)
 }
 
 
-const std::string& JsonAdapter::version()
+std::string JsonAdapter::version()
 {
 	return server_version;
 }
@@ -415,9 +417,7 @@ unsigned JsonAdapter::apiVersion()
 }
 
 
-bool volatile isRun = true;
-
-auto ThreadDeleter = [](std::thread *t) { isRun = false; t->join(); delete t; };
+auto ThreadDeleter = [](std::thread *t) { t->join(); delete t; };
 
 typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
@@ -428,11 +428,13 @@ struct JsonAdapter::Internal
 	std::unique_ptr<event_base, decltype(&event_base_free)> eventBase = {nullptr, &event_base_free};
 	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
 	std::string address;
-	unsigned    port = 0;
+	unsigned    start_port    = 0;
+	unsigned    end_port      = 0;
+	unsigned    port          = 0;
 	unsigned    request_count = 0;
-	evutil_socket_t sock;
+	evutil_socket_t sock      = -1;
 	bool        running = false;
-	
+	ThreadPool  threads;
 };
 
 
@@ -444,8 +446,12 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 		throw std::runtime_error("Failed to create new base_event.");
 	
 	i->evHttp.reset( evhttp_new(i->eventBase.get()));
+	if (!i->evHttp)
+		throw std::runtime_error("Failed to create new evhttp.");
 	
-	i->address = address;
+	i->address    = address;
+	i->start_port = start_port;
+	i->end_port   = end_port;
 }
 
 
@@ -461,29 +467,19 @@ try
 	std::cout << "I have " << session_registry.size() << " registered session(s).\n";
 	
 	std::exception_ptr initExcept;
-	evutil_socket_t s = -1;
 	auto ThreadFunc = [&] ()
 	{
 		try
 		{
-			std::cerr << " +++ Thread starts: isRun=" << isRun << ", id=" << std::this_thread::get_id() << ". +++\n";
+			std::cerr << " +++ Thread starts: isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". +++\n";
 			
-			std::unique_ptr<event_base, decltype(&event_base_free)> eventBase(event_base_new(), &event_base_free);
-			if (!eventBase)
-				throw std::runtime_error("Failed to create new base_event.");
+			evhttp_set_cb(i->evHttp.get(), ApiRequestUrl.c_str()    , OnApiRequest    , nullptr);
+			evhttp_set_cb(i->evHttp.get(), CreateSessionUrl.c_str() , OnCreateSession , nullptr);
+			evhttp_set_cb(i->evHttp.get(), GetAllSessionsUrl.c_str(), OnGetAllSessions, nullptr);
+			evhttp_set_cb(i->evHttp.get(), "/pep_functions.js"      , OnGetFunctions  , nullptr);
+			evhttp_set_gencb(i->evHttp.get(), OnOtherRequest, nullptr);
 			
-			std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp(evhttp_new(eventBase.get()), &evhttp_free);
-			
-			if (!evHttp)
-				throw std::runtime_error("Failed to create new evhttp.");
-			
-			evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str()    , OnApiRequest    , nullptr);
-			evhttp_set_cb(evHttp.get(), CreateSessionUrl.c_str() , OnCreateSession , nullptr);
-			evhttp_set_cb(evHttp.get(), GetAllSessionsUrl.c_str(), OnGetAllSessions, nullptr);
-			evhttp_set_cb(evHttp.get(), "/pep_functions.js"      , OnGetFunctions  , nullptr);
-			evhttp_set_gencb(evHttp.get(), OnOtherRequest, nullptr);
-			
-			if (s == -1)
+			if (i->sock == -1) // no port bound, yet
 			{
 				// initialize the pEp engine
 				registerSession();
@@ -491,32 +487,35 @@ try
 				
 				unsigned port_ofs = 0;
 try_next_port:
-				auto* boundSock = evhttp_bind_socket_with_handle(evHttp.get(), SrvAddress.c_str(), SrvPort + port_ofs);
+				auto* boundSock = evhttp_bind_socket_with_handle(i->evHttp.get(), i->address.c_str(), i->start_port + port_ofs);
 				if (!boundSock)
 				{
 					++port_ofs;
-					if(port_ofs > 9999)
+					if(i->start_port + port_ofs > i->end_port)
 					{
-						throw std::runtime_error("Failed to bind server socket.");
+						throw std::runtime_error("Failed to bind server socket: "
+							"No free port between " + std::to_string(i->start_port) + " and " + std::to_string(i->end_port)
+							);
 					}
 					goto try_next_port;
 				}
 				
-				create_security_token(SrvAddress, SrvPort + port_ofs, BaseUrl);
-				
-				if ((s = evhttp_bound_socket_get_fd(boundSock)) == -1)
+				if ((i->sock = evhttp_bound_socket_get_fd(boundSock)) == -1)
 					throw std::runtime_error("Failed to get server socket for next instance.");
+				
+				i->port = i->start_port + port_ofs;
+				create_security_token(i->address, i->port, BaseUrl);
 			}
 			else
 			{
-				if (evhttp_accept_socket(evHttp.get(), s) == -1)
+				if (evhttp_accept_socket(i->evHttp.get(), i->sock) == -1)
 					throw std::runtime_error("Failed to accept() on server socket for new instance.");
 			}
 			
-			while(isRun)
+			while(i->running)
 			{
-				event_base_loop(eventBase.get(), EVLOOP_NONBLOCK);
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				event_base_loop(i->eventBase.get(), EVLOOP_NONBLOCK);
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 		}
 		catch (const std::exception& e)
@@ -529,34 +528,36 @@ try_next_port:
 			std::cerr << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ ";
 			initExcept = std::current_exception();
 		}
-		std::cerr << " +++ Thread exit? isRun=" << isRun << ", id=" << std::this_thread::get_id() << ". +++\n";
+		std::cerr << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". +++\n";
 	};
 	
 	
-	ThreadPool threads;
-	for (int i=0; i<SrvThreadCount; ++i)
+	for(int t=0; t<SrvThreadCount; ++t)
 	{
 		std::cout << "Start Thread #" << i << "...\n";
 		ThreadPtr thread(new std::thread(ThreadFunc), ThreadDeleter);
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		if (initExcept != std::exception_ptr())
 		{
-			isRun = false;
+			i->running = false;
 			std::rethrow_exception(initExcept);
 		}
-		threads.push_back(std::move(thread));
+		i->threads.push_back(std::move(thread));
 	}
-	
-	int input = 0;
-	do{
-		std::cout << "Press <Q> <Enter> to quit." << std::endl;
-		input = std::cin.get();
-		std::cout << "Oh, I got a '" << input << "'. \n";
-	}while(input != 'q' && input != 'Q');
-	
-	isRun = false;
 }
 catch (std::exception const &e)
 {
 	std::cerr << "Exception catched in main(): \"" << e.what() << "\"" << std::endl;
 }
+
+
+void JsonAdapter::shutdown(timeval* t)
+{
+	i->running = false;
+	const int ret = event_base_loopexit(i->eventBase.get(), t);
+	if(ret!=0)
+	{
+		throw std::runtime_error("JsonAdapter::shutdown() failed.");
+	}
+}
+
