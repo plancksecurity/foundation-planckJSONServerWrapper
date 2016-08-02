@@ -13,7 +13,7 @@
 #include <functional>
 #include <tuple>
 
-#include "mt-server.hh"
+#include "json-adapter.hh"
 #include "function_map.hh"
 #include "pep-types.hh"
 #include "json_rpc.hh"
@@ -26,12 +26,13 @@
 #include "json_spirit/json_spirit_reader.h"
 #include "json_spirit/json_spirit_utils.h"
 
-//std::string SrvAddress = "127.0.0.1";
-std::string SrvAddress = "0.0.0.0";
-std::uint16_t SrvPort  = 4223;
+
+namespace {
+
+static const unsigned API_VERSION = 0x0002;
+
 std::string BaseUrl    = "/ja/0.1/";
 int SrvThreadCount     = 1;
-
 
 const std::string CreateSessionUrl = BaseUrl + "createSession";
 const std::string GetAllSessionsUrl = BaseUrl + "getAllSessions";
@@ -55,13 +56,8 @@ const std::string server_version =
 //	"(10) Kreuz Köln-West"; // More fields in JavaScript for "message", 1-element identity list to support message->to attribute
 //	"(11) Köln-Klettenberg"; // support for identity_list as output parameter, as needed by import_key() now. Fix some issue with identity.lang
 //	"(12) Kreuz Köln Süd";   // support for attachments, so encrypt_message() works now! :-) but we have memory corruption, hence the FIXME in pep-types.cc :-(
-	"(13) Köln-Poll";        // refactoring to avoid copying of parameters. Fixes the memory corruption. Some other clean-ups
-
-template<>
-In<PEP_SESSION>::~In()
-{
-	// no automatic release!
-}
+//	"(13) Köln-Poll";        // refactoring to avoid copying of parameters. Fixes the memory corruption. Some other clean-ups
+	"(!4) Köln-Gremberg";    // refactoring to use JSON-Adapter as a library
 
 
 PEP_SESSION createSession()
@@ -76,15 +72,11 @@ PEP_SESSION createSession()
 }
 
 
+typedef Registry<PEP_SESSION, PEP_SESSION(*)(), void(*)(PEP_SESSION)>  SessionRegistry;
+
 template<> const uint64_t SessionRegistry::Identifier = 0x44B0310A;
 
 SessionRegistry session_registry(&createSession, &release);
-
-template<>
-PEP_SESSION from_json(const js::Value& v)
-{
-	return session_registry.get(v.get_str());
-}
 
 
 std::string registerSession()
@@ -120,7 +112,6 @@ PEP_STATUS get_gpg_path(const char** path)
 	return status;
 }
 
-std::string getVersion() { return "0.2"; }
 
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
@@ -151,7 +142,6 @@ const FunctionMap functions = {
 		FP( "export_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<char*>, Out<std::size_t>> ( &export_key) ),
 		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &get_trust) ),
-//		FP( "own_key_add"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>> ( &own_key_add) ),
 		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
 		FP( "own_key_retrieve" , new Func<PEP_STATUS, In<PEP_SESSION>, Out<stringlist_t*>> ( &own_key_retrieve) ),
 		
@@ -163,35 +153,11 @@ const FunctionMap functions = {
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),
-		FP( "encrypt_and_sign", new Func<PEP_STATUS, In<PEP_SESSION>, In<stringlist_t*>, In<const char*>, In<size_t>, Out<char*>, Out<size_t>> ( &encrypt_and_sign) ),
-		
-		FP( "version", new Func<std::string>( &getVersion ) ),
+		FP( "version",     new Func<std::string>( &JsonAdapter::version ) ),
+		FP( "apiVversion", new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
 		FP( "registerSession", new Func<std::string>(&registerSession) ),
-		FP( "releaseSession", new Func<PEP_STATUS, InRaw<PEP_SESSION>>(&releaseSession) ),
+		FP( "releaseSession",  new Func<PEP_STATUS, InRaw<PEP_SESSION>>(&releaseSession) ),
 	};
-
-
-
-unsigned long long instanz()
-{
-/*
-	js::Array arr0;
-	js::Array arr1 = js::Array({ 0 });
-	
-	unsigned long long l0 =  fn_s(arr0);
-	unsigned long long l1 =  fn_s(arr1);
-*/
-	for( auto f : functions )
-	{
-		std::cout << f.first << " -> " ;
-		js::Object o; 
-		f.second->setJavaScriptSignature(o);
-		js::write( o, std::cout, js::pretty_print | js::raw_utf8 | js::single_line_arrays );
-		std::cout << ".\n";
-	}
-	
-	return test_joggle();
-}
 
 
 void sendReplyString(evhttp_request* req, const char* contentType, const std::string& outputText)
@@ -252,7 +218,6 @@ void OnOtherRequest(evhttp_request* req, void*)
 		{
 			{ "/"                , {"text/html"      , "../html/index.html"       } },
 			{ "/jquery.js"       , {"text/javascript", "../html/jquery-2.2.0.min.js"  } },
-	//		{ "/pep_functions.js", {"text/javascript", "../html/pep_functions.js" } },
 			{ "/interactive.js"  , {"text/javascript", "../html/interactive.js"   } },
 			{ "/favicon.ico"     , {"image/vnd.microsoft.icon", "../html/json-test.ico"} },
 		};
@@ -318,7 +283,7 @@ void OnGetFunctions(evhttp_request* req, void*)
 }
 
 
-void OnApiRequest(evhttp_request* req, void*)
+void OnApiRequest(evhttp_request* req, void* obj)
 {
 	evbuffer* inbuf = evhttp_request_get_input_buffer(req);
 	const size_t length = evbuffer_get_length(inbuf);
@@ -330,6 +295,8 @@ void OnApiRequest(evhttp_request* req, void*)
 	try
 	{
 	
+	const JsonAdapter* ja = static_cast<const JsonAdapter*>(obj);
+	
 	std::vector<char> data(length);
 	ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
 	const std::string data_string(data.data(), data.data() + nr );
@@ -340,7 +307,7 @@ void OnApiRequest(evhttp_request* req, void*)
 		if(p.type() == js::obj_type)
 		{
 			const js::Object& request = p.get_obj();
-			answer = call( functions, request );
+			answer = call( functions, request, ja->sec_token() );
 		}else{
 			answer = make_error( JSON_RPC::PARSE_ERROR, "evbuffer_copyout does not return a JSON string. b=" + std::to_string(b), js::Value{data_string}, 42 );
 		}
@@ -383,6 +350,7 @@ void OnCreateSession(evhttp_request* req, void*)
 }
 
 
+/*
 void OnCloseSession(evhttp_request* req, void*)
 {
 	std::cout << "Close session: " << std::flush;
@@ -413,6 +381,7 @@ void OnCloseSession(evhttp_request* req, void*)
 	
 	sendReplyString(req, "text/plain", js::write(answer) );
 }
+*/
 
 
 void OnGetAllSessions(evhttp_request* req, void*)
@@ -429,47 +398,93 @@ void OnGetAllSessions(evhttp_request* req, void*)
 	sendReplyString(req, "text/plain", result );
 }
 
+} // end of anonymous namespace
 
-bool volatile isRun = true;
 
-auto ThreadDeleter = [](std::thread *t) { isRun = false; t->join(); delete t; };
+template<>
+PEP_SESSION from_json(const js::Value& v)
+{
+	return session_registry.get(v.get_str());
+}
+
+
+std::string JsonAdapter::version()
+{
+	return server_version;
+}
+
+
+unsigned JsonAdapter::apiVersion()
+{
+	return API_VERSION;
+}
+
+
+auto ThreadDeleter = [](std::thread *t) { t->join(); delete t; };
 
 typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
 
 
-int main()
+struct JsonAdapter::Internal
+{
+	std::unique_ptr<event_base, decltype(&event_base_free)> eventBase = {nullptr, &event_base_free};
+	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
+	std::string address;
+	std::string token;
+	
+	unsigned    start_port    = 0;
+	unsigned    end_port      = 0;
+	unsigned    port          = 0;
+	unsigned    request_count = 0;
+	evutil_socket_t sock      = -1;
+	bool        running = false;
+	ThreadPool  threads;
+};
+
+
+JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port)
+: i(new Internal)
+{
+	i->eventBase.reset(event_base_new());
+	if (!i->eventBase)
+		throw std::runtime_error("Failed to create new base_event.");
+	
+	i->evHttp.reset( evhttp_new(i->eventBase.get()));
+	if (!i->evHttp)
+		throw std::runtime_error("Failed to create new evhttp.");
+	
+	i->address    = address;
+	i->start_port = start_port;
+	i->end_port   = end_port;
+}
+
+
+JsonAdapter::~JsonAdapter()
+{
+	delete i;
+}
+
+
+void JsonAdapter::run()
 try
 {
-//	instanz();
-//	return 0;
-	
 	std::cout << "I have " << session_registry.size() << " registered session(s).\n";
 	
 	std::exception_ptr initExcept;
-	evutil_socket_t s = -1;
 	auto ThreadFunc = [&] ()
 	{
 		try
 		{
-			std::cerr << " +++ Thread starts: isRun=" << isRun << ", id=" << std::this_thread::get_id() << ". +++\n";
+			std::cerr << " +++ Thread starts: isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". +++\n";
 			
-			std::unique_ptr<event_base, decltype(&event_base_free)> eventBase(event_base_new(), &event_base_free);
-			if (!eventBase)
-				throw std::runtime_error("Failed to create new base_event.");
+			evhttp_set_cb(i->evHttp.get(), ApiRequestUrl.c_str()    , OnApiRequest    , this);
+			evhttp_set_cb(i->evHttp.get(), CreateSessionUrl.c_str() , OnCreateSession , this);
+			evhttp_set_cb(i->evHttp.get(), GetAllSessionsUrl.c_str(), OnGetAllSessions, this);
+			evhttp_set_cb(i->evHttp.get(), "/pep_functions.js"      , OnGetFunctions  , this);
+			evhttp_set_gencb(i->evHttp.get(), OnOtherRequest, nullptr);
 			
-			std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp(evhttp_new(eventBase.get()), &evhttp_free);
-			
-			if (!evHttp)
-				throw std::runtime_error("Failed to create new evhttp.");
-			
-			evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str()    , OnApiRequest    , nullptr);
-			evhttp_set_cb(evHttp.get(), CreateSessionUrl.c_str() , OnCreateSession , nullptr);
-			evhttp_set_cb(evHttp.get(), GetAllSessionsUrl.c_str(), OnGetAllSessions, nullptr);
-			evhttp_set_cb(evHttp.get(), "/pep_functions.js"      , OnGetFunctions  , nullptr);
-			evhttp_set_gencb(evHttp.get(), OnOtherRequest, nullptr);
-			
-			if (s == -1)
+			if (i->sock == -1) // no port bound, yet
 			{
 				// initialize the pEp engine
 				registerSession();
@@ -477,32 +492,39 @@ try
 				
 				unsigned port_ofs = 0;
 try_next_port:
-				auto* boundSock = evhttp_bind_socket_with_handle(evHttp.get(), SrvAddress.c_str(), SrvPort + port_ofs);
+				auto* boundSock = evhttp_bind_socket_with_handle(i->evHttp.get(), i->address.c_str(), i->start_port + port_ofs);
 				if (!boundSock)
 				{
 					++port_ofs;
-					if(port_ofs > 9999)
+					if(i->start_port + port_ofs > i->end_port)
 					{
-						throw std::runtime_error("Failed to bind server socket.");
+						throw std::runtime_error("Failed to bind server socket: "
+							"No free port between " + std::to_string(i->start_port) + " and " + std::to_string(i->end_port)
+							);
 					}
 					goto try_next_port;
 				}
 				
-				create_security_token(SrvAddress, SrvPort + port_ofs, BaseUrl);
-				
-				if ((s = evhttp_bound_socket_get_fd(boundSock)) == -1)
+				if ((i->sock = evhttp_bound_socket_get_fd(boundSock)) == -1)
 					throw std::runtime_error("Failed to get server socket for next instance.");
+				
+				i->port = i->start_port + port_ofs;
+				i->token = create_security_token(i->address, i->port, BaseUrl);
+				
+				std::cout << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"\n";
 			}
 			else
 			{
-				if (evhttp_accept_socket(evHttp.get(), s) == -1)
+				if (evhttp_accept_socket(i->evHttp.get(), i->sock) == -1)
 					throw std::runtime_error("Failed to accept() on server socket for new instance.");
 			}
 			
-			while(isRun)
+			unsigned numnum = 1000000;
+			while(i->running)
 			{
-				event_base_loop(eventBase.get(), EVLOOP_NONBLOCK);
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				event_base_loop(i->eventBase.get(), EVLOOP_NONBLOCK);
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				std::cerr << "\r" << ++numnum << ".   ";
 			}
 		}
 		catch (const std::exception& e)
@@ -515,34 +537,53 @@ try_next_port:
 			std::cerr << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ ";
 			initExcept = std::current_exception();
 		}
-		std::cerr << " +++ Thread exit? isRun=" << isRun << ", id=" << std::this_thread::get_id() << ". +++\n";
+		std::cerr << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". +++\n";
 	};
 	
-	
-	ThreadPool threads;
-	for (int i=0; i<SrvThreadCount; ++i)
+	i->running = true;
+	for(int t=0; t<SrvThreadCount; ++t)
 	{
-		std::cout << "Start Thread #" << i << "...\n";
+		std::cout << "Start Thread #" << t << "...\n";
 		ThreadPtr thread(new std::thread(ThreadFunc), ThreadDeleter);
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		if (initExcept != std::exception_ptr())
 		{
-			isRun = false;
+			i->running = false;
 			std::rethrow_exception(initExcept);
 		}
-		threads.push_back(std::move(thread));
+		i->threads.push_back(std::move(thread));
 	}
-	
-	int input = 0;
-	do{
-		std::cout << "Press <Q> <Enter> to quit." << std::endl;
-		input = std::cin.get();
-		std::cout << "Oh, I got a '" << input << "'. \n";
-	}while(input != 'q' && input != 'Q');
-	
-	isRun = false;
+	std::cout << "All " << SrvThreadCount << " thread(s) started.\n";
 }
 catch (std::exception const &e)
 {
 	std::cerr << "Exception catched in main(): \"" << e.what() << "\"" << std::endl;
+}
+
+
+void JsonAdapter::shutdown(timeval* t)
+{
+	i->running = false;
+	const int ret = event_base_loopexit(i->eventBase.get(), t);
+	if(ret!=0)
+	{
+		throw std::runtime_error("JsonAdapter::shutdown() failed.");
+	}
+}
+
+
+const std::string& JsonAdapter::sec_token() const
+{
+	return i->token;
+}
+
+
+// returns 'true' if 's' is the security token created by the function above.
+bool JsonAdapter::verify_security_token(const std::string& s) const
+{
+	if(s!=i->token)
+	{
+		std::cerr << "sec_token=\"" << i->token << "\" is unequal to \"" << s << "\"!\n";
+	}
+	return s == i->token;
 }

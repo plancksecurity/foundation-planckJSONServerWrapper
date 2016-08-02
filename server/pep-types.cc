@@ -50,6 +50,13 @@ std::string status_to_string(PEP_STATUS status)
 
 
 template<>
+In<PEP_SESSION>::~In()
+{
+	// no automatic release!
+}
+
+
+template<>
 In<const timestamp*>::~In()
 {
 	free_timestamp(const_cast<timestamp*>(value)); // FIXME: is that const_cast okay?
