@@ -512,10 +512,12 @@ try_next_port:
 					throw std::runtime_error("Failed to accept() on server socket for new instance.");
 			}
 			
+			unsigned numnum = 1000000;
 			while(i->running)
 			{
 				event_base_loop(i->eventBase.get(), EVLOOP_NONBLOCK);
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				std::cerr << "\r" << ++numnum << ".   ";
 			}
 		}
 		catch (const std::exception& e)
@@ -531,10 +533,10 @@ try_next_port:
 		std::cerr << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". +++\n";
 	};
 	
-	
+	i->running = true;
 	for(int t=0; t<SrvThreadCount; ++t)
 	{
-		std::cout << "Start Thread #" << i << "...\n";
+		std::cout << "Start Thread #" << t << "...\n";
 		ThreadPtr thread(new std::thread(ThreadFunc), ThreadDeleter);
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		if (initExcept != std::exception_ptr())
@@ -544,6 +546,7 @@ try_next_port:
 		}
 		i->threads.push_back(std::move(thread));
 	}
+	std::cout << "All " << SrvThreadCount << " thread(s) started.\n";
 }
 catch (std::exception const &e)
 {
