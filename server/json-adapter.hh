@@ -36,6 +36,11 @@ public:
 	
 	unsigned request_count() const;
 	
+	// returns 'true' if 's' is the security token created by the function above.
+	bool verify_security_token(const std::string& s) const;
+	
+	const std::string& sec_token() const;
+	
 	static
 	unsigned apiVersion();
 	

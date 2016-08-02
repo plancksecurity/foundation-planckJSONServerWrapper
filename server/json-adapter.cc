@@ -56,7 +56,8 @@ const std::string server_version =
 //	"(10) Kreuz Köln-West"; // More fields in JavaScript for "message", 1-element identity list to support message->to attribute
 //	"(11) Köln-Klettenberg"; // support for identity_list as output parameter, as needed by import_key() now. Fix some issue with identity.lang
 //	"(12) Kreuz Köln Süd";   // support for attachments, so encrypt_message() works now! :-) but we have memory corruption, hence the FIXME in pep-types.cc :-(
-	"(13) Köln-Poll";        // refactoring to avoid copying of parameters. Fixes the memory corruption. Some other clean-ups
+//	"(13) Köln-Poll";        // refactoring to avoid copying of parameters. Fixes the memory corruption. Some other clean-ups
+	"(!4) Köln-Gremberg";    // refactoring to use JSON-Adapter as a library
 
 
 PEP_SESSION createSession()
@@ -282,7 +283,7 @@ void OnGetFunctions(evhttp_request* req, void*)
 }
 
 
-void OnApiRequest(evhttp_request* req, void*)
+void OnApiRequest(evhttp_request* req, void* obj)
 {
 	evbuffer* inbuf = evhttp_request_get_input_buffer(req);
 	const size_t length = evbuffer_get_length(inbuf);
@@ -294,6 +295,8 @@ void OnApiRequest(evhttp_request* req, void*)
 	try
 	{
 	
+	const JsonAdapter* ja = static_cast<const JsonAdapter*>(obj);
+	
 	std::vector<char> data(length);
 	ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
 	const std::string data_string(data.data(), data.data() + nr );
@@ -304,7 +307,7 @@ void OnApiRequest(evhttp_request* req, void*)
 		if(p.type() == js::obj_type)
 		{
 			const js::Object& request = p.get_obj();
-			answer = call( functions, request );
+			answer = call( functions, request, ja->sec_token() );
 		}else{
 			answer = make_error( JSON_RPC::PARSE_ERROR, "evbuffer_copyout does not return a JSON string. b=" + std::to_string(b), js::Value{data_string}, 42 );
 		}
@@ -428,6 +431,8 @@ struct JsonAdapter::Internal
 	std::unique_ptr<event_base, decltype(&event_base_free)> eventBase = {nullptr, &event_base_free};
 	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
 	std::string address;
+	std::string token;
+	
 	unsigned    start_port    = 0;
 	unsigned    end_port      = 0;
 	unsigned    port          = 0;
@@ -473,10 +478,10 @@ try
 		{
 			std::cerr << " +++ Thread starts: isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". +++\n";
 			
-			evhttp_set_cb(i->evHttp.get(), ApiRequestUrl.c_str()    , OnApiRequest    , nullptr);
-			evhttp_set_cb(i->evHttp.get(), CreateSessionUrl.c_str() , OnCreateSession , nullptr);
-			evhttp_set_cb(i->evHttp.get(), GetAllSessionsUrl.c_str(), OnGetAllSessions, nullptr);
-			evhttp_set_cb(i->evHttp.get(), "/pep_functions.js"      , OnGetFunctions  , nullptr);
+			evhttp_set_cb(i->evHttp.get(), ApiRequestUrl.c_str()    , OnApiRequest    , this);
+			evhttp_set_cb(i->evHttp.get(), CreateSessionUrl.c_str() , OnCreateSession , this);
+			evhttp_set_cb(i->evHttp.get(), GetAllSessionsUrl.c_str(), OnGetAllSessions, this);
+			evhttp_set_cb(i->evHttp.get(), "/pep_functions.js"      , OnGetFunctions  , this);
 			evhttp_set_gencb(i->evHttp.get(), OnOtherRequest, nullptr);
 			
 			if (i->sock == -1) // no port bound, yet
@@ -504,7 +509,9 @@ try_next_port:
 					throw std::runtime_error("Failed to get server socket for next instance.");
 				
 				i->port = i->start_port + port_ofs;
-				create_security_token(i->address, i->port, BaseUrl);
+				i->token = create_security_token(i->address, i->port, BaseUrl);
+				
+				std::cout << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"\n";
 			}
 			else
 			{
@@ -564,3 +571,19 @@ void JsonAdapter::shutdown(timeval* t)
 	}
 }
 
+
+const std::string& JsonAdapter::sec_token() const
+{
+	return i->token;
+}
+
+
+// returns 'true' if 's' is the security token created by the function above.
+bool JsonAdapter::verify_security_token(const std::string& s) const
+{
+	if(s!=i->token)
+	{
+		std::cerr << "sec_token=\"" << i->token << "\" is unequal to \"" << s << "\"!\n";
+	}
+	return s == i->token;
+}

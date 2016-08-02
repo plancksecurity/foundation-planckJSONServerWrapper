@@ -45,7 +45,7 @@ namespace
 using json_spirit::find_value;
 
 
-js::Object call(const FunctionMap& fm, const js::Object& request)
+js::Object call(const FunctionMap& fm, const js::Object& request, const std::string& sec_token_orig)
 {
 	int request_id = -1;
 	try
@@ -57,7 +57,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request)
 		}
 		
 		const auto sec_token = find_value(request, "security_token");
-		if(sec_token.type()!=js::str_type || verify_security_token(sec_token.get_str()) == false)
+		if(sec_token.type()!=js::str_type || (sec_token.get_str()!=sec_token_orig) == false)
 		{
 			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: Wrong security token.", request, request_id);
 		}
