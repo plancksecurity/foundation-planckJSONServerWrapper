@@ -21,10 +21,15 @@ endif
 
 all: mt-server
 
-mt-server: json-adapter.o main.o registry.o nfc.o json_rpc.o function_map.o pep-types.o \
+mt-server: main.o libjson-adapter.a
+	$(CXX) $(CXXFLAGS)  -o $@ $^ $(LDFLAGS) ../../pEpEngine/asn.1/libasn1.a
+
+
+libjson-adapter.a: json-adapter.o registry.o nfc.o json_rpc.o \
+    function_map.o pep-types.o \
     security-token.o \
     json_spirit/json_spirit_reader.o json_spirit/json_spirit_value.o json_spirit/json_spirit_writer.o 
-	$(CXX) $(CXXFLAGS)  -o $@ $^ $(LDFLAGS) ../../pEpEngine/asn.1/libasn1.a
+	ar rcs $@ $^
 
 
 %.o : %.cc  %.hh  Makefile
@@ -33,3 +38,5 @@ mt-server: json-adapter.o main.o registry.o nfc.o json_rpc.o function_map.o pep-
 clean:
 	rm -vf mt-server
 	rm -vf *.o
+	rm -vf *.a
+
