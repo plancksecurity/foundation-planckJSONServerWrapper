@@ -57,7 +57,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request, const std::str
 		}
 		
 		const auto sec_token = find_value(request, "security_token");
-		if(sec_token.type()!=js::str_type || (sec_token.get_str()!=sec_token_orig) == false)
+		if(sec_token.type()!=js::str_type || (sec_token.get_str()!=sec_token_orig) )
 		{
 			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: Wrong security token.", request, request_id);
 		}
