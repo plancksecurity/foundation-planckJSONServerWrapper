@@ -1,6 +1,5 @@
 
 var call_ID = 1000;
-var openSessions = [];
 var func;
 var func_params = [];
 
@@ -62,7 +61,7 @@ var Param2Form =
 	{
 		Session : function(nr, pp, value)
 					{
-						return getSessions(true);
+						return '<small><i>– Sessions are handled internally –</i></small>';
 					},
 		String : function(nr, pp, value)
 					{
@@ -94,7 +93,6 @@ var Param2Form =
 							+ '<tr><td>longmsg: </td><td>'  + genInput('inp_param_' + nr + '_lmsg', 25, pp.direction, "longmsg") + '</td></tr>'
 							+ '<tr><td>from: </td><td>'     + Param2Form.Identity( nr + '_from', pp.direction, "(from)") + '</td></tr>'
 							+ '<tr><td>to: </td><td>'       + Param2Form.IdentityList( nr + '_to', pp.direction, "(to)") + '</td></tr>'
-
 							+ '</table>';
 					},
 		Identity : function(nr, pp, value)
@@ -141,7 +139,7 @@ var Form2Param =
 	{
 		Session : function(nr, pp, value)
 					{
-						return $('input[name=sessionRadio]:checked', '#frm').val();
+						return null; // no longer necessary in the API. :-)
 					},
 		String : function(nr, pp, value)
 					{
@@ -212,73 +210,6 @@ function sprintf(format)
 };
 
 
-function getSessions(with_radio)
-{
-	if(openSessions.length == 0)
-	{
-		return '<i>(no open sessions)</i>';
-	}
-	
-	var content = '';
-	var lastSession = openSessions.length - 1;
-	for(var i=0; i<openSessions.length; ++i)
-	{
-		var os = openSessions[i];
-		content += (with_radio ? '<input type="radio" name="sessionRadio" value="' + os.session + '"' + (i==lastSession ? ' checked' : '') + '>' : '') 
-			+ '&nbsp;<tt>' + os.session + '</tt><br>';
-	}
-	
-	return content;
-}
-
-function showSessions()
-{
-	document.getElementById("sessions").innerHTML = getSessions(false);
-}
-
-
-function createSession()
-{
-	var url = document.getElementById("server").value + 'createSession';
-	var request = {};
-	request.id = ++call_ID;
-	request.jsonrpc = "2.0";
-	request.security_token = document.getElementById("security_token").value;
-	request.method = 'createSession';
-	request.params = [];
-	var x = $.post(url, JSON.stringify(request), null, "json")
-		.done(function(data, status, xhr) {
-			openSessions.push(data);
-			showSessions();
-		})
-		.fail(function( hdr, txt, err) {
-			alert( "error [" + hdr + "|" + txt + "|" + err + "]" );
-		})
-	;
-}
-
-
-function getAllSessions()
-{
-	var url = document.getElementById("server").value + 'getAllSessions';
-	var request = {};
-	request.id = ++call_ID;
-	request.jsonrpc = "2.0";
-	request.security_token = document.getElementById("security_token").value;
-	request.method = 'getAllSessions';
-	request.params = [];
-	var x = $.post(url, JSON.stringify(request), null, "json")
-		.done(function(data, status, xhr) {
-			openSessions = data;
-			showSessions();
-		})
-		.fail(function( hdr, txt, err) {
-			alert( "error [" + hdr + "|" + txt + "|" + err + "]" );
-		})
-	;
-}
-
-
 function displayResult(response)
 {
 	var pre = document.getElementById("resultpre");
@@ -294,7 +225,6 @@ function displayResult(response)
 		pre.className = "red";
 	}
 	
-	getAllSessions(); // to update the session lists
 	on_select_change(); // to update the function parameters
 }
 
@@ -449,5 +379,4 @@ function init_pep_functions()
 	}
 	document.getElementById("fn_name").innerHTML = optionList;
 	document.getElementById("spn_version").innerHTML = "version: " + server_version;
-	getAllSessions();
 }

@@ -1,7 +1,7 @@
 #include "json_rpc.hh"
 #include "json_spirit/json_spirit_utils.h"
 #include "json_spirit/json_spirit_writer.h"
-
+#include "json-adapter.hh"
 #include "security-token.hh"
 
 
@@ -57,7 +57,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request, const std::str
 		}
 		
 		const auto sec_token = find_value(request, "security_token");
-		if(sec_token.type()!=js::str_type || (sec_token.get_str()!=sec_token_orig) == false)
+		if(sec_token.type()!=js::str_type || (sec_token.get_str()!=sec_token_orig) )
 		{
 			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: Wrong security token.", request, request_id);
 		}
@@ -100,6 +100,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request, const std::str
 			"\tparams=" << js::write(params) << ". ===\n";
 		const js::Value result = fn->second->call(p);
 		std::cerr << "=== Result of call: " << js::write(result, js::raw_utf8) << ". ===\n";
+		std::cerr << "\tSessions: " << getSessions() << "\n";
 		
 		return make_result(result, request_id);
 	}

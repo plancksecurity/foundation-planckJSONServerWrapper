@@ -57,47 +57,13 @@ const std::string server_version =
 //	"(11) Köln-Klettenberg"; // support for identity_list as output parameter, as needed by import_key() now. Fix some issue with identity.lang
 //	"(12) Kreuz Köln Süd";   // support for attachments, so encrypt_message() works now! :-) but we have memory corruption, hence the FIXME in pep-types.cc :-(
 //	"(13) Köln-Poll";        // refactoring to avoid copying of parameters. Fixes the memory corruption. Some other clean-ups
-	"(!4) Köln-Gremberg";    // refactoring to use JSON-Adapter as a library
+//	"(!4) Köln-Gremberg";    // refactoring to use JSON-Adapter as a library
+	"(15) Dreieck Heumar";   // PEP_SESSIONs are now handled internally, so the adapter's users don't have to care about anymore. :-)
 
 
-PEP_SESSION createSession()
-{
-	PEP_SESSION session = nullptr;
-	auto ret = init(&session);
-	if(ret != PEP_STATUS_OK)
-	{
-		throw std::runtime_error("createSession() failed because pEp's init() returns " + status_to_string(ret) );
-	}
-	return session;
-}
+typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
 
-
-typedef Registry<PEP_SESSION, PEP_SESSION(*)(), void(*)(PEP_SESSION)>  SessionRegistry;
-
-template<> const uint64_t SessionRegistry::Identifier = 0x44B0310A;
-
-SessionRegistry session_registry(&createSession, &release);
-
-
-std::string registerSession()
-{
-	const std::uint64_t idx = session_registry.emplace();
-	return base57(idx);
-}
-
-
-PEP_STATUS releaseSession(const js::Value& session_handle)
-{
-	try{
-		const std::string s = session_handle.get_str();
-		session_registry.erase(s);
-		return PEP_STATUS_OK;
-	}
-	catch(...)
-	{
-		return PEP_ILLEGAL_VALUE; // There is no "PEP_INVALID_SESSION" or the like. :-(
-	}
-}
+SessionRegistry session_registry;
 
 
 PEP_STATUS get_gpg_path(const char** path)
@@ -155,8 +121,6 @@ const FunctionMap functions = {
 		FP( "—— Other ——", new Separator ),
 		FP( "version",     new Func<std::string>( &JsonAdapter::version ) ),
 		FP( "apiVversion", new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
-		FP( "registerSession", new Func<std::string>(&registerSession) ),
-		FP( "releaseSession",  new Func<PEP_STATUS, InRaw<PEP_SESSION>>(&releaseSession) ),
 	};
 
 
@@ -327,84 +291,45 @@ void OnApiRequest(evhttp_request* req, void* obj)
 };
 
 
-void OnCreateSession(evhttp_request* req, void*)
-{
-	std::cout << "Create session: " << std::flush;
-	
-	evbuffer* inbuf = evhttp_request_get_input_buffer(req);
-	const size_t length = evbuffer_get_length(inbuf);
-	
-	std::vector<char> data(length);
-	ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
-	if(nr>0)
-	{
-		std::cout << "\tData: «" << std::string( data.data(), data.data() + nr )  << "»\n";
-	}else{
-		std::cout << "\tError: " << nr << ".\n";
-	}
-	const auto sn = registerSession();
-	const std::string a = "{\"session\":\"" + sn + "\"}\n";
-	std::cout << "\tResult: " << a << "\n";
-	
-	sendReplyString(req, "text/plain", a );
-}
-
-
-/*
-void OnCloseSession(evhttp_request* req, void*)
-{
-	std::cout << "Close session: " << std::flush;
-	
-	evbuffer* inbuf = evhttp_request_get_input_buffer(req);
-	const size_t length = evbuffer_get_length(inbuf);
-	
-	js::Object answer;
-	std::vector<char> data(length);
-	ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
-	const std::string data_string(data.data(), data.data() + nr );
-	if(nr>0)
-	{
-		std::cout << "\tData: «" << data_string  << "»\n";
-		js::Value p;
-		bool b = js::read( data_string, p);
-		if(p.type() == js::str_type)
-		{
-			session_registry.erase( p.get_str() );
-			answer = make_result( std::string( "\"" + p.get_str() + "\" successfully erased."), 44 );
-		}else{
-			answer = make_error( JSON_RPC::PARSE_ERROR, "evbuffer_copyout does not return a JSON string. b=" + std::to_string(b), js::Value{data_string}, 42 );
-		}
-	}else{
-		std::cout << "\tError: " << nr << ".\n";
-		answer = make_error( JSON_RPC::PARSE_ERROR, "evbuffer_copyout returns negative value " + std::to_string(nr), js::Value{}, 42 );
-	}
-	
-	sendReplyString(req, "text/plain", js::write(answer) );
-}
-*/
-
-
-void OnGetAllSessions(evhttp_request* req, void*)
-{
-	const auto sessions = session_registry.keys();
-	std::string result;
-	for(const auto k : sessions)
-	{
-		result += std::string(result.empty() ? "" : ",") + "{\"session\":\"" + base57(k) + "\"}\n";
-	}
-	
-	result = "[" + result + "]\n";
-	std::cout << "Get All Sessions: " << result;
-	sendReplyString(req, "text/plain", result );
-}
-
 } // end of anonymous namespace
+
+
+std::string getSessions()
+{
+	js::Array a;
+	a.reserve(session_registry.size());
+	for(const auto& s : session_registry)
+	{
+		std::stringstream ss;
+		js::Object o;
+		ss << s.first;
+		o.emplace_back("tid", ss.str() );
+		ss.str("");
+		ss << static_cast<void*>(s.second);
+		o.emplace_back("session", ss.str() );
+		if(s.first == std::this_thread::get_id())
+		{
+			o.emplace_back("mine", true);
+		}
+		a.push_back( std::move(o) );
+	}
+	
+	return js::write( a, js::pretty_print | js::raw_utf8 | js::single_line_arrays );
+}
 
 
 template<>
 PEP_SESSION from_json(const js::Value& v)
 {
-	return session_registry.get(v.get_str());
+	const auto id = std::this_thread::get_id();
+	const auto q = session_registry.find( id );
+	if(q == session_registry.end())
+	{
+		std::stringstream ss;
+		ss << "There is no SESSION for this thread (" << id << ")!"; 
+		throw std::logic_error( ss.str() );
+	}
+	return q->second;
 }
 
 
@@ -420,7 +345,19 @@ unsigned JsonAdapter::apiVersion()
 }
 
 
-auto ThreadDeleter = [](std::thread *t) { t->join(); delete t; };
+auto ThreadDeleter = [](std::thread *t)
+{
+	const auto id = t->get_id();
+	const auto q = session_registry.find( id );
+	if(q != session_registry.end())
+	{
+		release(q->second);
+		session_registry.erase( q );
+	}
+	
+	t->join();
+	delete t;
+};
 
 typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
@@ -476,18 +413,31 @@ try
 	{
 		try
 		{
-			std::cerr << " +++ Thread starts: isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". +++\n";
+			const auto id = std::this_thread::get_id();
+			std::cerr << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++\n";
+			const auto q=session_registry.find(id);
+			if(q==session_registry.end())
+			{
+				PEP_SESSION session = nullptr;
+				const PEP_STATUS status = init(&session); // release(status) in ThreadDeleter
+				if(status != PEP_STATUS_OK || session==nullptr)
+				{
+					throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
+				}
+				
+				session_registry.emplace( id, session);
+				std::cerr << "\tcreated new session for this thread: " << static_cast<void*>(session) << ".\n";
+			}else{
+				std::cerr << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
+			}
 			
 			evhttp_set_cb(i->evHttp.get(), ApiRequestUrl.c_str()    , OnApiRequest    , this);
-			evhttp_set_cb(i->evHttp.get(), CreateSessionUrl.c_str() , OnCreateSession , this);
-			evhttp_set_cb(i->evHttp.get(), GetAllSessionsUrl.c_str(), OnGetAllSessions, this);
 			evhttp_set_cb(i->evHttp.get(), "/pep_functions.js"      , OnGetFunctions  , this);
 			evhttp_set_gencb(i->evHttp.get(), OnOtherRequest, nullptr);
 			
 			if (i->sock == -1) // no port bound, yet
 			{
 				// initialize the pEp engine
-				registerSession();
 				std::cout << "I have " << session_registry.size() << " registered session(s).\n";
 				
 				unsigned port_ofs = 0;
