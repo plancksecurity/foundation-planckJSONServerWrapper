@@ -61,7 +61,7 @@ var Param2Form =
 	{
 		Session : function(nr, pp, value)
 					{
-						return '<i>– handled internally –</i>';
+						return '<small><i>– Sessions are handled internally –</i></small>';
 					},
 		String : function(nr, pp, value)
 					{
@@ -139,7 +139,7 @@ var Form2Param =
 	{
 		Session : function(nr, pp, value)
 					{
-						return "[S]";
+						return null; // no longer necessary in the API. :-)
 					},
 		String : function(nr, pp, value)
 					{

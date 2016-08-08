@@ -57,8 +57,8 @@ const std::string server_version =
 //	"(11) Köln-Klettenberg"; // support for identity_list as output parameter, as needed by import_key() now. Fix some issue with identity.lang
 //	"(12) Kreuz Köln Süd";   // support for attachments, so encrypt_message() works now! :-) but we have memory corruption, hence the FIXME in pep-types.cc :-(
 //	"(13) Köln-Poll";        // refactoring to avoid copying of parameters. Fixes the memory corruption. Some other clean-ups
-	"(!4) Köln-Gremberg";    // refactoring to use JSON-Adapter as a library
-
+//	"(!4) Köln-Gremberg";    // refactoring to use JSON-Adapter as a library
+	"(15) Dreieck Heumar";   // PEP_SESSIONs are now handled internally, so the adapter's users don't have to care about anymore. :-)
 
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
