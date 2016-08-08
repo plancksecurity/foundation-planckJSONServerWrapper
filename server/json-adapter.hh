@@ -53,4 +53,9 @@ private:
 	Internal* i; // pimpl for stable interface.
 };
 
+// just for debug:
+// returns a string with a pretty-printed JSON array containing the session registry
+std::string getSessions();
+
+
 #endif // JSON_ADAPTER_HH

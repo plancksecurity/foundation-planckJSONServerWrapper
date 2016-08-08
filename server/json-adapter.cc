@@ -294,6 +294,30 @@ void OnApiRequest(evhttp_request* req, void* obj)
 } // end of anonymous namespace
 
 
+std::string getSessions()
+{
+	js::Array a;
+	a.reserve(session_registry.size());
+	for(const auto& s : session_registry)
+	{
+		std::stringstream ss;
+		js::Object o;
+		ss << s.first;
+		o.emplace_back("tid", ss.str() );
+		ss.str("");
+		ss << static_cast<void*>(s.second);
+		o.emplace_back("session", ss.str() );
+		if(s.first == std::this_thread::get_id())
+		{
+			o.emplace_back("mine", true);
+		}
+		a.push_back( std::move(o) );
+	}
+	
+	return js::write( a, js::pretty_print | js::raw_utf8 | js::single_line_arrays );
+}
+
+
 template<>
 PEP_SESSION from_json(const js::Value& v)
 {
