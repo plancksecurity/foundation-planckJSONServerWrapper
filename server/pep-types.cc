@@ -109,6 +109,13 @@ In<PEP_enc_format>::~In()
 	// nothing to do here. :-)
 }
 
+template<>
+In<sync_handshake_result>::~In()
+{
+	// nothing to do here. :-)
+}
+
+
 
 template<>
 Out<stringlist_t*>::~Out()
@@ -536,6 +543,12 @@ PEP_comm_type from_json<PEP_comm_type>(const js::Value& v)
 }
 
 template<>
+sync_handshake_result from_json<sync_handshake_result>(const js::Value& v)
+{
+	return  sync_handshake_result(v.get_int());
+}
+
+template<>
 js::Value to_json<PEP_comm_type>(const PEP_comm_type& v)
 {
 	return js::Value( int(v) );
@@ -565,6 +578,9 @@ js::Value Type2String<_PEP_color>::get()  { return "PEP_color"; }
 
 template<>
 js::Value Type2String<_PEP_enc_format>::get()  { return "PEP_enc_format"; }
+
+template<>
+js::Value Type2String<sync_handshake_result>::get()  { return "PEP_sync_handshake_result"; }
 
 template<>
 js::Value Type2String<_PEP_comm_type>::get()  { return "PEP_comm_type"; }

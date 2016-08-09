@@ -131,9 +131,10 @@ const FunctionMap functions = {
 		FP( "revoke"        , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>> ( &revoke_key) ),
 		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<time_t>, Out<bool>> ( &key_expired) ),
 		
-		FP( "-- Event Listener", new Separator ),
+		FP( "-- Event Listener & Results", new Separator ),
 		FP( "registerEventListener"  , new Func<PEP_STATUS, In<std::string>, In<unsigned>, In<std::string>> ( &registerEventListener) ),
 		FP( "unregisterEventListener", new Func<PEP_STATUS, In<std::string>, In<unsigned>, In<std::string>> ( &unregisterEventListener) ),
+		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In<PEP_SESSION>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),
