@@ -79,6 +79,20 @@ PEP_STATUS get_gpg_path(const char** path)
 }
 
 
+PEP_STATUS registerEventListener(std::string address, unsigned port, std::string securityContext)
+{
+	// TODO: implement it!
+	return PEP_STATUS_OK;
+}
+
+PEP_STATUS unregisterEventListener(std::string address, unsigned port, std::string securityContext)
+{
+	// TODO: implement it!
+	return PEP_STATUS_OK;
+}
+
+
+
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 		
@@ -116,6 +130,10 @@ const FunctionMap functions = {
 		FP( "renew_key"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const timestamp*>> ( &renew_key) ),
 		FP( "revoke"        , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>> ( &revoke_key) ),
 		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<time_t>, Out<bool>> ( &key_expired) ),
+		
+		FP( "-- Event Listener", new Separator ),
+		FP( "registerEventListener"  , new Func<PEP_STATUS, In<std::string>, In<unsigned>, In<std::string>> ( &registerEventListener) ),
+		FP( "unregisterEventListener", new Func<PEP_STATUS, In<std::string>, In<unsigned>, In<std::string>> ( &unregisterEventListener) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),

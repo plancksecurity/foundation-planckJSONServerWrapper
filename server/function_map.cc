@@ -45,6 +45,8 @@ SIMPLE_TYPE( int )
 SIMPLE_TYPE( long )
 SIMPLE_TYPE( long long )
 
+SIMPLE_TYPE( std::string )
+
 
 template<>
 Out<char const*>::~Out()
