@@ -191,7 +191,7 @@ public:
 	enum { nr_of_output_params = 0 };
 	enum { nr_of_input_params = 0 };
 
-	static void copyParam( js::Array& dest, const js::Array& src )
+	static void copyParam( js::Array& dest, const js::Array& src, unsigned index )
 	{
 		// do nothing. :-)
 	}
@@ -211,7 +211,7 @@ public:
 	enum { nr_of_output_params = 0 };
 	enum { nr_of_input_params = 0 };
 
-	static void copyParam( js::Array& dest, const js::Array& src )
+	static void copyParam( js::Array& dest, const js::Array& src, unsigned index )
 	{
 		// do nothing. :-)
 	}
@@ -238,13 +238,16 @@ public:
 	enum { nr_of_output_params = int(Element::is_output) + NextHelper::nr_of_output_params };
 	enum { nr_of_input_params = int(Element::need_input) + NextHelper::nr_of_input_params };
 	
-	static void copyParam( js::Array& dest, const js::Array& src )
+	static void copyParam( js::Array& dest, const js::Array& src, unsigned index )
 	{
 		if(Element::need_input)
 		{
-			dest.push_back( src[U] );
+			dest.push_back( src.at(index) );
+			++index;
+		}else{
+			dest.push_back( js::Value{} ); // insert dummy parameter
 		}
-		NextHelper::copyParam( dest, src );
+		NextHelper::copyParam( dest, src, index );
 	}
 	
 	// A2... a2 are the alredy pealed-off paremeters
@@ -368,7 +371,7 @@ public:
 		if( Helper::nr_of_input_params != sizeof...(Args) )
 		{
 			param_copy.reserve( Helper::nr_of_input_params );
-			Helper::copyParam( param_copy, parameters );
+			Helper::copyParam( param_copy, parameters, 0u );
 			p_params = &param_copy; // use the copy instead of 'parameters'
 		}
 		
