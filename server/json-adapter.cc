@@ -98,43 +98,43 @@ const FunctionMap functions = {
 		
 		// from message_api.h
 		FP( "—— Message API ——", new Separator ),
-		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>>( &encrypt_message ) ),
-		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_color>, Out<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
-		FP( "outgoing_message_color", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, Out<PEP_color>>( &outgoing_message_color ) ),
-		FP( "identity_color" , new Func<PEP_STATUS, In<PEP_SESSION>, In<pEp_identity*>, Out<PEP_color>>( &identity_color) ),
+		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>>( &encrypt_message ) ),
+		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_color>, Out<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
+		FP( "outgoing_message_color", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, Out<PEP_color>>( &outgoing_message_color ) ),
+		FP( "identity_color" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_color>>( &identity_color) ),
 		FP( "get_gpg_path",    new Func<PEP_STATUS, Out<const char*>>(&get_gpg_path) ),
 		
 		FP( "—— pEp Engine Core API ——", new Separator),
-		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
-		FP( "trustwords", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, Out<char*>, Out<size_t>, In<int>>( &trustwords) ),
-		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION>, Out<char*>>( &get_languagelist) ),
-		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<int>, Out<char*>> ( &get_phrase) ),
+		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
+		FP( "trustwords", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, Out<char*>, Out<size_t>, In<int>>( &trustwords) ),
+		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<char*>>( &get_languagelist) ),
+		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<int>, Out<char*>> ( &get_phrase) ),
 		
 		FP( "—— Identity Management API ——", new Separator),
-		FP( "get_identity"       , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, Out<pEp_identity*>>( &get_identity) ),
-		FP( "set_identity"       , new Func<PEP_STATUS, In<PEP_SESSION>, In<pEp_identity*>> ( &set_identity) ),
-		FP( "mark_as_comprimized", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>> ( &mark_as_compromized) ),
+		FP( "get_identity"       , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, Out<pEp_identity*>>( &get_identity) ),
+		FP( "set_identity"       , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>> ( &set_identity) ),
+		FP( "mark_as_comprimized", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &mark_as_compromized) ),
 		
 		FP( "—— Low level Key Management API ——", new Separator),
-		FP( "generate_keypair", new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &generate_keypair) ),
-		FP( "delete_keypair", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>> ( &delete_keypair) ),
-		FP( "import_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<std::size_t>, Out<identity_list*>> ( &import_key) ),
-		FP( "export_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<char*>, Out<std::size_t>> ( &export_key) ),
-		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
-		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &get_trust) ),
-		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
-		FP( "own_key_retrieve" , new Func<PEP_STATUS, In<PEP_SESSION>, Out<stringlist_t*>> ( &own_key_retrieve) ),
+		FP( "generate_keypair", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &generate_keypair) ),
+		FP( "delete_keypair", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &delete_keypair) ),
+		FP( "import_key"    , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<std::size_t>, Out<identity_list*>> ( &import_key) ),
+		FP( "export_key"    , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<char*>, Out<std::size_t>> ( &export_key) ),
+		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
+		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &get_trust) ),
+		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
+		FP( "own_key_retrieve" , new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<stringlist_t*>> ( &own_key_retrieve) ),
 		
-		FP( "least_trust"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<PEP_comm_type>> ( &least_trust) ),
-		FP( "get_key_rating", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<PEP_comm_type>> ( &get_key_rating) ),
-		FP( "renew_key"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const timestamp*>> ( &renew_key) ),
-		FP( "revoke"        , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>> ( &revoke_key) ),
-		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<time_t>, Out<bool>> ( &key_expired) ),
+		FP( "least_trust"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<PEP_comm_type>> ( &least_trust) ),
+		FP( "get_key_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<PEP_comm_type>> ( &get_key_rating) ),
+		FP( "renew_key"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const timestamp*>> ( &renew_key) ),
+		FP( "revoke"        , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>> ( &revoke_key) ),
+		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<time_t>, Out<bool>> ( &key_expired) ),
 		
 		FP( "-- Event Listener & Results", new Separator ),
 		FP( "registerEventListener"  , new Func<PEP_STATUS, In<std::string>, In<unsigned>, In<std::string>> ( &registerEventListener) ),
 		FP( "unregisterEventListener", new Func<PEP_STATUS, In<std::string>, In<unsigned>, In<std::string>> ( &unregisterEventListener) ),
-		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In<PEP_SESSION>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
+		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),
@@ -546,7 +546,7 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 {
 	if(s!=i->token)
 	{
-		std::cerr << "sec_token=\"" << i->token << "\" is unequal to \"" << s << "\"!\n";
+		std::cerr << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!\n";
 	}
 	return s == i->token;
 }

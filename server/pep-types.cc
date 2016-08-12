@@ -50,7 +50,7 @@ std::string status_to_string(PEP_STATUS status)
 
 
 template<>
-In<PEP_SESSION>::~In()
+In<PEP_SESSION, false>::~In()
 {
 	// no automatic release!
 }
