@@ -31,7 +31,7 @@ template<class T>
 struct In
 {
 	typedef T c_type; // the according type in C function parameter
-	enum { is_output = false };
+	enum { is_output = false, need_input = true };
 	
 	explicit In(const T& t) : value(t) {}
 	~In();
@@ -41,7 +41,7 @@ struct In
 	In<T>& operator=(const In<T>&) = delete;
 	
 	// default implementation:
-	In(const js::Value& v, const js::Array& params, unsigned position)
+	In(const js::Value& v, const Context*)
 	: In( from_json<T>(v) )
 	{ }
 	
@@ -59,7 +59,7 @@ template<class T>
 struct InRaw
 {
 	typedef js::Value c_type; // do not unwrap JSON data type
-	enum { is_output = false };
+	enum { is_output = false, need_input = true };
 	
 	explicit InRaw(const js::Value& t) : value(t) {}
 	~InRaw() = default;
@@ -69,7 +69,7 @@ struct InRaw
 	InRaw<T>& operator=(const InRaw<T>&) = delete;
 	
 	// default implementation:
-	InRaw(const js::Value& v, const js::Array& params, unsigned position)
+	InRaw(const js::Value& v, const Context*)
 	: InRaw(v)
 	{ }
 
@@ -87,7 +87,7 @@ template<class T>
 struct InOut : public In<T>
 {
 	typedef In<T> Base;
-	enum { is_output = true };
+	enum { is_output = true, need_input = true };
 
 	explicit InOut(const T& t) : Base(t) {}
 	~InOut() = default;
@@ -95,7 +95,7 @@ struct InOut : public In<T>
 	InOut<T>& operator=(const InOut<T>&) = delete;
 	
 	// default implementation:
-	InOut(const js::Value& v, const js::Array& params, unsigned position)
+	InOut(const js::Value& v, const Context*)
 	: Base( from_json<T>(v) )
 	{ }
 	
@@ -110,7 +110,7 @@ template<class T>
 struct Out
 {
 	typedef T* c_type; // the according type in C function parameter
-	enum { is_output = true };
+	enum { is_output = true, need_input = true }; // if need_input=false it would no longer consume an element in the input parameter array.
 	
 	explicit Out() : value{ new T{} }
 	{
@@ -129,7 +129,7 @@ struct Out
 	Out<T>& operator=(const Out<T>& other) = delete;
 	Out<T>& operator=(Out<T>&& victim) = delete;
 	
-	Out(const js::Value& v, const js::Array& params, unsigned position)
+	Out(const js::Value& v, const Context*)
 	: Out()
 	{ }
 	
@@ -188,7 +188,10 @@ template<class R, unsigned U, class... Args>
 class helper<R, U, U, Args...>
 {
 public:
-	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
+	enum { nr_of_output_params = 0 };
+	enum { nr_of_input_params = 0 };
+
+	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, const Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
 		return to_json( fn(args.value...) );
 	}
@@ -200,7 +203,10 @@ template<unsigned U, class... Args>
 class helper<void, U, U, Args...>
 {
 public:
-	static js::Value call( const std::function<void(typename Args::c_type...)>& fn, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
+	enum { nr_of_output_params = 0 };
+	enum { nr_of_input_params = 0 };
+
+	static js::Value call( const std::function<void(typename Args::c_type...)>& fn, const Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
 		fn(args.value...);
 		return js::Value{};
@@ -219,16 +225,19 @@ public:
 	typedef typename std::tuple_element<U, Tuple>::type Element; // The type of the U'th parameter
 	typedef helper<R, U+1, MAX, Args...> NextHelper;
 	
+	enum { nr_of_output_params = int(Element::is_output) + NextHelper::nr_of_output_params };
+	enum { nr_of_input_params = int(Element::need_input) + NextHelper::nr_of_input_params };
+	
 public:
 
 	// A2... a2 are the alredy pealed-off paremeters
 	template<class... A2>
-	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, js::Array& out_parameters, const js::Array& parameters, const A2&... a2)
+	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, const Context* ctx, js::Array& out_parameters, const js::Array& parameters, const A2&... a2)
 	{
 		// extract the U'th element of the parameter list
-		const Element element(parameters[U], parameters, U);
+		const Element element(parameters[U], ctx);
 		
-		const js::Value ret = NextHelper::call(fn, out_parameters, parameters, a2..., element );
+		const js::Value ret = NextHelper::call(fn, ctx, out_parameters, parameters, a2..., element );
 		if(Element::is_output)
 		{
 			js::Value out = element.to_json();
@@ -308,9 +317,6 @@ template<class R, class... Args>
 class Func : public FuncBase
 {
 public:
-//	typedef std::tuple<Args...> arg_t;
-	enum { Size = sizeof...(Args) };
-
 	virtual ~Func() = default;
 	virtual bool isSeparator() const override
 	{
@@ -327,19 +333,21 @@ public:
 
 	js::Value call(const js::Array& parameters, const Context* context) const override
 	{
-		if(parameters.size() != sizeof...(Args))
+		typedef helper<R, 0, sizeof...(Args), Args...> Helper;
+		
+		if(parameters.size() != Helper::nr_of_input_params)
 			throw std::runtime_error("Size mismatch: "
 				"Array has "    + std::to_string( parameters.size() ) + " element(s), "
-				"but I expect " + std::to_string( sizeof...(Args) )   + " element(s)! "
+				"but I expect " + std::to_string( Helper::nr_of_input_params) + " element(s)! "
 			);
 		
 		// recursive template magic breaks loose:
 		// recursively extract the JSON parameters, call 'fn' and collect its return value
 		// and all output parameters into a tuple<> and return it as JSON array
 		js::Array out_params;
-		out_params.reserve( 1 + sizeof...(Args) ); // too big, but who cares?
+		out_params.reserve( 1 + Helper::nr_of_output_params );
 		
-		js::Value ret = helper<R, 0, sizeof...(Args), Args...>::call(fn, out_params, parameters);
+		js::Value ret = Helper::call(fn, context, out_params, parameters);
 		out_params.push_back( ret );
 		return out_params;
 	}
