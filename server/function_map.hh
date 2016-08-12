@@ -14,8 +14,8 @@
 
 namespace js = json_spirit;
 
-template<class T> struct In;
-template<class T> struct Out;
+template<class T, bool NeedInput> struct In;
+template<class T, bool NeedInput> struct Out;
 
 // "params" and "position" might be used to fetch additional parameters from the array.
 template<class T>
@@ -27,18 +27,18 @@ js::Value to_json(const T& t);
 
 
 // helper classes to specify in- and out-parameters
-template<class T>
+template<class T, bool NeedInput=true>
 struct In
 {
 	typedef T c_type; // the according type in C function parameter
-	enum { is_output = false, need_input = true };
+	enum { is_output = false, need_input = NeedInput };
 	
 	explicit In(const T& t) : value(t) {}
 	~In();
 	
-	In(const In<T>& other) = delete;
-	In(In<T>&& victim) = delete;
-	In<T>& operator=(const In<T>&) = delete;
+	In(const In<T,NeedInput>& other) = delete;
+	In(In<T,NeedInput>&& victim) = delete;
+	In<T,NeedInput>& operator=(const In<T,NeedInput>&) = delete;
 	
 	// default implementation:
 	In(const js::Value& v, const Context*)
@@ -55,18 +55,18 @@ struct In
 
 
 // to call functions that operate directly on the JSON data type
-template<class T>
+template<class T, bool NeedInput=true>
 struct InRaw
 {
 	typedef js::Value c_type; // do not unwrap JSON data type
-	enum { is_output = false, need_input = true };
+	enum { is_output = false, need_input = NeedInput };
 	
 	explicit InRaw(const js::Value& t) : value(t) {}
 	~InRaw() = default;
 	
-	InRaw(const InRaw<T>& other) = delete;
-	InRaw(InRaw<T>&& victim) = delete;
-	InRaw<T>& operator=(const InRaw<T>&) = delete;
+	InRaw(const InRaw<T,NeedInput>& other) = delete;
+	InRaw(InRaw<T,NeedInput>&& victim) = delete;
+	InRaw<T,NeedInput>& operator=(const InRaw<T,NeedInput>&) = delete;
 	
 	// default implementation:
 	InRaw(const js::Value& v, const Context*)
@@ -83,16 +83,16 @@ struct InRaw
 
 
 // helper classes to specify in- and out-parameters
-template<class T>
-struct InOut : public In<T>
+template<class T, bool NeedInput=true>
+struct InOut : public In<T,NeedInput>
 {
-	typedef In<T> Base;
-	enum { is_output = true, need_input = true };
+	typedef In<T,NeedInput> Base;
+	enum { is_output = true, need_input = NeedInput };
 
 	explicit InOut(const T& t) : Base(t) {}
 	~InOut() = default;
 	
-	InOut<T>& operator=(const InOut<T>&) = delete;
+	InOut<T,NeedInput>& operator=(const InOut<T,NeedInput>&) = delete;
 	
 	// default implementation:
 	InOut(const js::Value& v, const Context*)
@@ -106,11 +106,11 @@ struct InOut : public In<T>
 };
 
 
-template<class T>
+template<class T, bool NeedInput = true>
 struct Out
 {
 	typedef T* c_type; // the according type in C function parameter
-	enum { is_output = true, need_input = true }; // if need_input=false it would no longer consume an element in the input parameter array.
+	enum { is_output = true, need_input = NeedInput }; // if need_input=false it would no longer consume an element in the input parameter array.
 	
 	explicit Out() : value{ new T{} }
 	{
@@ -122,12 +122,12 @@ struct Out
 	
 	~Out();
 	
-	Out(const Out<T>& other) = delete;
-	Out(Out<T>&& victim) = delete;
+	Out(const Out<T,NeedInput>& other) = delete;
+	Out(Out<T,NeedInput>&& victim) = delete;
 	
 	// just to be sure they are not implicitly defined:
-	Out<T>& operator=(const Out<T>& other) = delete;
-	Out<T>& operator=(Out<T>&& victim) = delete;
+	Out<T,NeedInput>& operator=(const Out<T,NeedInput>& other) = delete;
+	Out<T,NeedInput>& operator=(Out<T,NeedInput>&& victim) = delete;
 	
 	Out(const js::Value& v, const Context*)
 	: Out()
@@ -141,7 +141,7 @@ struct Out
 	T* value = nullptr;
 	
 	friend
-	std::ostream& operator<<(std::ostream& o, const Out<T>& out)
+	std::ostream& operator<<(std::ostream& o, const Out<T,NeedInput>& out)
 	{
 		o << (const void*)&out;
 		
@@ -161,14 +161,14 @@ struct Out
 };
 
 
-template<class T>
-js::Value to_json(const Out<T>& o)
+template<class T, bool NeedInput>
+js::Value to_json(const Out<T,NeedInput>& o)
 {
 	return ::to_json(*o.value);
 }
 
-template<class T>
-js::Value to_json(const InOut<T>& o)
+template<class T, bool NeedInput>
+js::Value to_json(const InOut<T,NeedInput>& o)
 {
 	return ::to_json(o.value);
 }
@@ -191,6 +191,11 @@ public:
 	enum { nr_of_output_params = 0 };
 	enum { nr_of_input_params = 0 };
 
+	static void copyParam( js::Array& dest, const js::Array& src )
+	{
+		// do nothing. :-)
+	}
+
 	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, const Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
 		return to_json( fn(args.value...) );
@@ -205,6 +210,11 @@ class helper<void, U, U, Args...>
 public:
 	enum { nr_of_output_params = 0 };
 	enum { nr_of_input_params = 0 };
+
+	static void copyParam( js::Array& dest, const js::Array& src )
+	{
+		// do nothing. :-)
+	}
 
 	static js::Value call( const std::function<void(typename Args::c_type...)>& fn, const Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
@@ -228,8 +238,15 @@ public:
 	enum { nr_of_output_params = int(Element::is_output) + NextHelper::nr_of_output_params };
 	enum { nr_of_input_params = int(Element::need_input) + NextHelper::nr_of_input_params };
 	
-public:
-
+	static void copyParam( js::Array& dest, const js::Array& src )
+	{
+		if(Element::need_input)
+		{
+			dest.push_back( src[U] );
+		}
+		NextHelper::copyParam( dest, src );
+	}
+	
 	// A2... a2 are the alredy pealed-off paremeters
 	template<class... A2>
 	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, const Context* ctx, js::Array& out_parameters, const js::Array& parameters, const A2&... a2)
@@ -258,25 +275,25 @@ struct Type2String
 };
 
 template<class T>
-struct Type2String<In<T>>
+struct Type2String<In<T, true>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
 
 template<class T>
-struct Type2String<InRaw<T>>
+struct Type2String<InRaw<T, true>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
 
 template<class T>
-struct Type2String<Out<T>>
+struct Type2String<Out<T, true>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "Out"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
 
 template<class T>
-struct Type2String<InOut<T>>
+struct Type2String<InOut<T, true>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "InOut"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
@@ -288,7 +305,10 @@ struct Type2Json<T, Args...>
 {
 	static js::Array& get(js::Array& a)
 	{
-		a.push_back( Type2String<T>::get() );
+		if(T::need_input)
+		{
+			a.push_back( Type2String<T>::get() );
+		}
 		Type2Json<Args...>::get(a);
 		return a;
 	}
@@ -341,13 +361,24 @@ public:
 				"but I expect " + std::to_string( Helper::nr_of_input_params) + " element(s)! "
 			);
 		
+		const js::Array* p_params = &parameters;
+		
+		// create a copy of the parameters only if necessary
+		js::Array param_copy;
+		if( Helper::nr_of_input_params != sizeof...(Args) )
+		{
+			param_copy.reserve( Helper::nr_of_input_params );
+			Helper::copyParam( param_copy, parameters );
+			p_params = &param_copy; // use the copy instead of 'parameters'
+		}
+		
 		// recursive template magic breaks loose:
 		// recursively extract the JSON parameters, call 'fn' and collect its return value
 		// and all output parameters into a tuple<> and return it as JSON array
 		js::Array out_params;
 		out_params.reserve( 1 + Helper::nr_of_output_params );
 		
-		js::Value ret = Helper::call(fn, context, out_params, parameters);
+		js::Value ret = Helper::call(fn, context, out_params, *p_params);
 		out_params.push_back( ret );
 		return out_params;
 	}
@@ -358,7 +389,7 @@ public:
 		Type2Json<Args...>::get(params);
 		
 		o.emplace_back( "return", Type2String<R>::get() );
-		o.emplace_back( "params", params );
+		o.emplace_back( "params", std::move(params) );
 		o.emplace_back( "separator", false );
 	}
 };
