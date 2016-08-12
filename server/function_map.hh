@@ -3,6 +3,8 @@
 
 #include "json_spirit/json_spirit_value.h"
 #include "json_spirit/json_spirit_writer.h"
+
+#include "context.hh"
 #include <type_traits>
 
 // Just for debugging:
@@ -298,7 +300,7 @@ public:
 	virtual ~FuncBase() = default;
 	virtual bool  isSeparator() const = 0;
 	virtual void  setJavaScriptSignature(js::Object& o) const = 0;
-	virtual js::Value     call(const js::Array& params) const = 0;
+	virtual js::Value  call(const js::Array& params, const Context* context) const = 0;
 };
 
 
@@ -323,7 +325,7 @@ public:
 
 	std::function<R(typename Args::c_type ...)> fn;
 
-	js::Value call(const js::Array& parameters) const override
+	js::Value call(const js::Array& parameters, const Context* context) const override
 	{
 		if(parameters.size() != sizeof...(Args))
 			throw std::runtime_error("Size mismatch: "
@@ -359,9 +361,9 @@ class Separator : public FuncBase
 {
 public:
 	Separator() = default;
-	virtual bool isSeparator() const override { return true; }
-	virtual void setJavaScriptSignature(js::Object& o) const override { o.emplace_back("separator", true); }
-	virtual js::Value     call(const js::Array& params) const override { return js::Value{}; }
+	virtual bool isSeparator()                                const override { return true; }
+	virtual void setJavaScriptSignature(js::Object& o)        const override { o.emplace_back("separator", true); }
+	virtual js::Value  call(const js::Array&, const Context*) const override { return js::Value{}; }
 };
 
 //typedef std::map< std::string, FuncBase* > FunctionMap;

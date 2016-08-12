@@ -2,6 +2,7 @@
 #define JSON_RPC_HH
 
 #include "json_spirit/json_spirit_value.h"
+#include "context.hh"
 #include "function_map.hh"
 
 namespace js = json_spirit;
@@ -19,7 +20,7 @@ enum class JSON_RPC
 
 // parse the JSON-RPC 2.0 compatible "request", call the function
 // and create an appropiate "response" object (containing a result or an error)
-js::Object call(const FunctionMap& fm, const js::Object& request, const std::string& sec_token_orig);
+js::Object call(const FunctionMap& fm, const js::Object& request, const Context* context);
 
 // create a JSON-RPC 2.0 compatible result response object
 js::Object make_result(const js::Value& result, int id);

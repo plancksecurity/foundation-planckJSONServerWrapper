@@ -290,7 +290,7 @@ void OnApiRequest(evhttp_request* req, void* obj)
 		if(p.type() == js::obj_type)
 		{
 			const js::Object& request = p.get_obj();
-			answer = call( functions, request, ja->sec_token() );
+			answer = call( functions, request, ja );
 		}else{
 			answer = make_error( JSON_RPC::PARSE_ERROR, "evbuffer_copyout does not return a JSON string. b=" + std::to_string(b), js::Value{data_string}, 42 );
 		}
@@ -538,12 +538,6 @@ void JsonAdapter::shutdown(timeval* t)
 	{
 		throw std::runtime_error("JsonAdapter::shutdown() failed.");
 	}
-}
-
-
-const std::string& JsonAdapter::sec_token() const
-{
-	return i->token;
 }
 
 

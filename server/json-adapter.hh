@@ -3,8 +3,9 @@
 
 #include <pEp/pEpEngine.h>
 #include "registry.hh"
+#include "context.hh"
 
-class JsonAdapter
+class JsonAdapter : public Context
 {
 public:
 	// creates an instance of the JSON adapter. It tries to bind the first available port in the given range
@@ -12,7 +13,7 @@ public:
 	JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port);
 	
 	// calls abort() on the instance if it is still running().
-	~JsonAdapter();
+	virtual ~JsonAdapter();
 	
 	// don't allow copies
 	JsonAdapter(const JsonAdapter&) = delete;
@@ -37,9 +38,7 @@ public:
 	unsigned request_count() const;
 	
 	// returns 'true' if 's' is the security token created by the function above.
-	bool verify_security_token(const std::string& s) const;
-	
-	const std::string& sec_token() const;
+	virtual bool verify_security_token(const std::string& s) const override;
 	
 	static
 	unsigned apiVersion();
