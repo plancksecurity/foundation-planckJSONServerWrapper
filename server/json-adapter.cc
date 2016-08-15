@@ -97,13 +97,25 @@ PEP_STATUS get_gpg_path(const char** path)
 
 PEP_STATUS registerEventListener(Context* ctx, std::string address, unsigned port, std::string securityContext)
 {
-	// TODO: implement it!
+	JsonAdapter* ja = dynamic_cast<JsonAdapter*>(ctx);
+	if(!ja)
+	{
+		return PEP_STATUS(-42);
+	}
+	
+	ja->registerEventListener(address, port, securityContext);
 	return PEP_STATUS_OK;
 }
 
 PEP_STATUS unregisterEventListener(Context* ctx, std::string address, unsigned port, std::string securityContext)
 {
-	// TODO: implement it!
+	JsonAdapter* ja = dynamic_cast<JsonAdapter*>(ctx);
+	if(!ja)
+	{
+		return PEP_STATUS(-42);
+	}
+	
+	ja->unregisterEventListener(address, port, securityContext);
 	return PEP_STATUS_OK;
 }
 
