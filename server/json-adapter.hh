@@ -19,7 +19,7 @@ public:
 	JsonAdapter(const JsonAdapter&) = delete;
 	void operator=(const JsonAdapter&) = delete;
 	
-	void registerEventListener(const std::string& address, unsigned port, const std::string& securityContext);
+	void   registerEventListener(const std::string& address, unsigned port, const std::string& securityContext);
 	void unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext);
 	
 	// run the server in another thread and returns immediately.

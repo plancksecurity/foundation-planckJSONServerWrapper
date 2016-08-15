@@ -410,6 +410,7 @@ auto ThreadDeleter = [](std::thread *t)
 typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
 
+typedef std::pair<std::string, unsigned> EventListenerKey;
 
 struct JsonAdapter::Internal
 {
@@ -417,6 +418,7 @@ struct JsonAdapter::Internal
 	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
 	std::string address;
 	std::string token;
+	std::map<EventListenerKey, std::string> eventListener;
 	
 	unsigned    start_port    = 0;
 	unsigned    end_port      = 0;
@@ -579,3 +581,30 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 	}
 	return s == i->token;
 }
+
+
+void JsonAdapter::registerEventListener(const std::string& address, unsigned port, const std::string& securityContext)
+{
+	const auto key = std::make_pair(address, port);
+	const auto q = i->eventListener.find(key);
+	if( q != i->eventListener.end() && q->second != securityContext)
+	{
+		throw std::runtime_error("EventListener at host \"" + address + "\":" + std::to_string(port) + " is already registered with different securityContext." );
+	}
+	
+	i->eventListener[key] = securityContext;
+}
+
+
+void JsonAdapter::unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext)
+{
+	const auto key = std::make_pair(address, port);
+	const auto q = i->eventListener.find(key);
+	if( q == i->eventListener.end() || q->second != securityContext)
+	{
+		throw std::runtime_error("Cannot unregister EventListener at host \"" + address + "\":" + std::to_string(port) + ". Not registered or wrong securityContext." );
+	}
+	
+	i->eventListener.erase(q);
+}
+
