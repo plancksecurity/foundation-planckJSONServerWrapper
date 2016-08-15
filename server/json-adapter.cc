@@ -137,6 +137,7 @@ const FunctionMap functions = {
 		FP( "trustwords", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, Out<char*>, Out<size_t>, In<int>>( &trustwords) ),
 		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<char*>>( &get_languagelist) ),
 		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<int>, Out<char*>> ( &get_phrase) ),
+		FP( "get_engine_version", new Func<const char*> ( &get_engine_version) ),
 		
 		FP( "—— Identity Management API ——", new Separator),
 		FP( "get_identity"       , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, Out<pEp_identity*>>( &get_identity) ),
