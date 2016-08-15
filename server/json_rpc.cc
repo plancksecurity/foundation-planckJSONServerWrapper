@@ -45,7 +45,7 @@ namespace
 using json_spirit::find_value;
 
 
-js::Object call(const FunctionMap& fm, const js::Object& request, const Context* context)
+js::Object call(const FunctionMap& fm, const js::Object& request, Context* context)
 {
 	int request_id = -1;
 	try

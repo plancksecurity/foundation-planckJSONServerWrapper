@@ -27,6 +27,21 @@
 #include "json_spirit/json_spirit_utils.h"
 
 
+template<>
+In<Context*, false>::~In()
+{
+	// do nothing
+}
+
+template<>
+In<Context*, false>::In(const js::Value&, Context* ctx)
+: value( ctx )
+{
+
+}
+
+
+
 namespace {
 
 static const unsigned API_VERSION = 0x0002;
@@ -79,13 +94,14 @@ PEP_STATUS get_gpg_path(const char** path)
 }
 
 
-PEP_STATUS registerEventListener(std::string address, unsigned port, std::string securityContext)
+
+PEP_STATUS registerEventListener(Context* ctx, std::string address, unsigned port, std::string securityContext)
 {
 	// TODO: implement it!
 	return PEP_STATUS_OK;
 }
 
-PEP_STATUS unregisterEventListener(std::string address, unsigned port, std::string securityContext)
+PEP_STATUS unregisterEventListener(Context* ctx, std::string address, unsigned port, std::string securityContext)
 {
 	// TODO: implement it!
 	return PEP_STATUS_OK;
@@ -132,8 +148,8 @@ const FunctionMap functions = {
 		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<time_t>, Out<bool>> ( &key_expired) ),
 		
 		FP( "-- Event Listener & Results", new Separator ),
-		FP( "registerEventListener"  , new Func<PEP_STATUS, In<std::string>, In<unsigned>, In<std::string>> ( &registerEventListener) ),
-		FP( "unregisterEventListener", new Func<PEP_STATUS, In<std::string>, In<unsigned>, In<std::string>> ( &unregisterEventListener) ),
+		FP( "registerEventListener"  , new Func<PEP_STATUS, In<Context*, false>, In<std::string>, In<unsigned>, In<std::string>> ( &registerEventListener) ),
+		FP( "unregisterEventListener", new Func<PEP_STATUS, In<Context*, false>, In<std::string>, In<unsigned>, In<std::string>> ( &unregisterEventListener) ),
 		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
 		
 		// my own example function that does something useful. :-)
@@ -278,7 +294,7 @@ void OnApiRequest(evhttp_request* req, void* obj)
 	try
 	{
 	
-	const JsonAdapter* ja = static_cast<const JsonAdapter*>(obj);
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	
 	std::vector<char> data(length);
 	ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());

@@ -41,7 +41,7 @@ struct In
 	In<T,NeedInput>& operator=(const In<T,NeedInput>&) = delete;
 	
 	// default implementation:
-	In(const js::Value& v, const Context*)
+	In(const js::Value& v, Context*)
 	: In( from_json<T>(v) )
 	{ }
 	
@@ -69,7 +69,7 @@ struct InRaw
 	InRaw<T,NeedInput>& operator=(const InRaw<T,NeedInput>&) = delete;
 	
 	// default implementation:
-	InRaw(const js::Value& v, const Context*)
+	InRaw(const js::Value& v, Context*)
 	: InRaw(v)
 	{ }
 
@@ -95,7 +95,7 @@ struct InOut : public In<T,NeedInput>
 	InOut<T,NeedInput>& operator=(const InOut<T,NeedInput>&) = delete;
 	
 	// default implementation:
-	InOut(const js::Value& v, const Context*)
+	InOut(const js::Value& v, Context*)
 	: Base( from_json<T>(v) )
 	{ }
 	
@@ -129,7 +129,7 @@ struct Out
 	Out<T,NeedInput>& operator=(const Out<T,NeedInput>& other) = delete;
 	Out<T,NeedInput>& operator=(Out<T,NeedInput>&& victim) = delete;
 	
-	Out(const js::Value& v, const Context*)
+	Out(const js::Value& v, Context*)
 	: Out()
 	{ }
 	
@@ -196,7 +196,7 @@ public:
 		// do nothing. :-)
 	}
 
-	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, const Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
+	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
 		return to_json( fn(args.value...) );
 	}
@@ -216,7 +216,7 @@ public:
 		// do nothing. :-)
 	}
 
-	static js::Value call( const std::function<void(typename Args::c_type...)>& fn, const Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
+	static js::Value call( const std::function<void(typename Args::c_type...)>& fn, Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
 		fn(args.value...);
 		return js::Value{};
@@ -252,7 +252,7 @@ public:
 	
 	// A2... a2 are the alredy pealed-off paremeters
 	template<class... A2>
-	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, const Context* ctx, js::Array& out_parameters, const js::Array& parameters, const A2&... a2)
+	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, Context* ctx, js::Array& out_parameters, const js::Array& parameters, const A2&... a2)
 	{
 		// extract the U'th element of the parameter list
 		const Element element(parameters[U], ctx);
@@ -332,7 +332,7 @@ public:
 	virtual ~FuncBase() = default;
 	virtual bool  isSeparator() const = 0;
 	virtual void  setJavaScriptSignature(js::Object& o) const = 0;
-	virtual js::Value  call(const js::Array& params, const Context* context) const = 0;
+	virtual js::Value  call(const js::Array& params, Context* context) const = 0;
 };
 
 
@@ -354,7 +354,7 @@ public:
 
 	std::function<R(typename Args::c_type ...)> fn;
 
-	js::Value call(const js::Array& parameters, const Context* context) const override
+	js::Value call(const js::Array& parameters, Context* context) const override
 	{
 		typedef helper<R, 0, sizeof...(Args), Args...> Helper;
 		
@@ -403,9 +403,9 @@ class Separator : public FuncBase
 {
 public:
 	Separator() = default;
-	virtual bool isSeparator()                                const override { return true; }
-	virtual void setJavaScriptSignature(js::Object& o)        const override { o.emplace_back("separator", true); }
-	virtual js::Value  call(const js::Array&, const Context*) const override { return js::Value{}; }
+	virtual bool isSeparator()                          const override { return true; }
+	virtual void setJavaScriptSignature(js::Object& o)  const override { o.emplace_back("separator", true); }
+	virtual js::Value  call(const js::Array&, Context*) const override { return js::Value{}; }
 };
 
 //typedef std::map< std::string, FuncBase* > FunctionMap;
