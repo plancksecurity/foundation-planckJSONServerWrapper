@@ -1,7 +1,7 @@
 #ifndef JSON_ADAPTER_HH
 #define JSON_ADAPTER_HH
 
-#include <pEp/pEpEngine.h>
+#include <pEp/message.h>
 #include "registry.hh"
 #include "context.hh"
 
@@ -49,6 +49,9 @@ public:
 	// returns a version name
 	static
 	std::string version();
+
+	static PEP_STATUS messageToSend(void* obj, const message* msg);
+	static PEP_STATUS showHandshake(void* obj, const pEp_identity* self, const pEp_identity* partner);
 
 private:
 	struct Internal;

@@ -427,7 +427,33 @@ struct JsonAdapter::Internal
 	evutil_socket_t sock      = -1;
 	bool        running = false;
 	ThreadPool  threads;
+
+	PEP_STATUS messageToSend(const message* msg)
+	{
+		// TODO: implement event delivery to all registered listeners
+		return PEP_STATUS_OK;
+	}
+	
+	PEP_STATUS showHandshake(const pEp_identity* self, const pEp_identity* partner)
+	{
+		// TODO: implement event delivery to all registered listeners
+		return PEP_STATUS_OK;
+	}
 };
+
+
+PEP_STATUS JsonAdapter::messageToSend(void* obj, const message* msg)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja->i->messageToSend(msg);
+}
+
+
+PEP_STATUS JsonAdapter::showHandshake(void* obj, const pEp_identity* self, const pEp_identity* partner)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja->i->showHandshake(self, partner);
+}
 
 
 JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port)
@@ -477,6 +503,9 @@ try
 				
 				session_registry.emplace( id, session);
 				std::cerr << "\tcreated new session for this thread: " << static_cast<void*>(session) << ".\n";
+				
+				register_sync_callbacks( session, this, &messageToSend, &showHandshake );
+
 			}else{
 				std::cerr << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
 			}
