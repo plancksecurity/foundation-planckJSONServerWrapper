@@ -4,11 +4,7 @@
 #include <cstdint>
 #include <set>
 
-// TODO: These sets should be filled by code generated automatically
-// from Unicode's DerivedNormalizationProps.txt
-extern const std::set<unsigned> NFC_No;
-extern const std::set<unsigned> NFC_Maybe;
-
+#include "nfc_sets.hh"
 
 namespace
 {
