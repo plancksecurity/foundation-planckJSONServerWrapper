@@ -23,7 +23,10 @@ protected:
 
 // return No or Maybe, if at least one character with NFC_Quickcheck class is "No" or "Maybe"
 // might throw illegal_utf8 exception
-IsNFC isNFC(const std::string& s);
+IsNFC isNFC_quick_check(const std::string& s);
+
+// runs first quick check and a deep test if quick check returns "Maybe".
+bool isNFC(const std::string& s);
 
 // converts a C++ string (in UTF-8) into NFC form
 // s is ''moved'' to the return value if possible so no copy is done here.

@@ -159,7 +159,7 @@ illegal_utf8::illegal_utf8( const std::string& msg )
 {}
 
 
-IsNFC isNFC(const std::string& s)
+IsNFC isNFC_quick_check(const std::string& s)
 {
 	const char* begin = s.data();
 	const char* const end = s.data() + s.size();
@@ -180,15 +180,29 @@ IsNFC isNFC(const std::string& s)
 	return IsNFC::Yes;
 }
 
+
+bool isNFC(const std::string& s)
+{
+	switch( isNFC_quick_check(s) )
+	{
+		case IsNFC::Yes : return true;
+		case IsNFC::No  : return false;
+		case IsNFC::Maybe:
+			{
+				throw std::logic_error("Deep NGC check is not yet implemented. Sorry.");
+			}
+	}
+	
+	throw -1; // could never happen, but compiler is too dumb to see this.
+}
+
+
 // s is ''moved'' to the return value if possible so no copy is done here.
 std::string toNFC(std::string s)
 {
-	if(isNFC(s)==IsNFC::Yes)
+	if(isNFC(s))
 		return s;
 	
-	std::string ret;
-	
 	// TODO:
-	
-	return ret;
+	throw std::logic_error("NFC normalization is necessary, but unimplemented. Sorry.");
 }
