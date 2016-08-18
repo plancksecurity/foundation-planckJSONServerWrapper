@@ -2,38 +2,49 @@
 
 #include "nfc.hh"
 #include <cstdint>
+#include <set>
 
+#include "nfc_sets.hh"
 
 namespace
 {
-
-	class cont_without_start
+	class utf8_exception
 	{
 	public:
-		cont_without_start(uint8_t u) : octet(u) {}
+		utf8_exception(uint8_t u) : octet(u) {}
+		virtual ~utf8_exception() = default;
+		virtual const char* reason() const = 0;
 		uint8_t octet;
 	};
 
 
-	class overlong_sequence
+	class cont_without_start : public utf8_exception
 	{
 	public:
-		overlong_sequence(uint8_t u) : octet(u) {}
-		uint8_t octet;
+		cont_without_start(uint8_t u) : utf8_exception(u) {}
+		const char* reason() const override { return "Continuation octet without start octet"; }
 	};
 
-	class unexpected_end
+
+	class overlong_sequence : public utf8_exception
 	{
 	public:
-		unexpected_end(uint8_t u) : octet(u) {}
-		uint8_t octet;
+		overlong_sequence(uint8_t u) : utf8_exception(u) {}
+		const char* reason() const override { return "Overlong sequence"; }
+	};
+
+	class unexpected_end : public utf8_exception
+	{
+	public:
+		unexpected_end(uint8_t u) : utf8_exception(u) {}
+		const char* reason() const override { return "Unexpected end of string"; }
 	};
 	
-	class no_unicode
+	class no_unicode : public utf8_exception
 	{
 	public:
-		no_unicode(uint8_t u) : octet(u) {}
-		uint8_t octet;
+		no_unicode(uint8_t u) : utf8_exception(u) {}
+		const char* reason() const override { return "Octet illegal in UTF-8"; }
 	};
 
 
@@ -138,8 +149,8 @@ namespace
 } // end of anonymous namespace
 
 
-illegal_utf8::illegal_utf8( const std::string& s, unsigned position)
-: std::runtime_error( "Illegal UTF-8 string \"" + escape(s) + "\" at position " + std::to_string(position) + "." )
+illegal_utf8::illegal_utf8( const std::string& s, unsigned position, const char* reason)
+: std::runtime_error( "Illegal UTF-8 string \"" + escape(s) + "\" at position " + std::to_string(position) + ": " + reason  )
 {}
 
 
@@ -148,18 +159,43 @@ illegal_utf8::illegal_utf8( const std::string& msg )
 {}
 
 
-bool isNFC(const std::string& s)
+IsNFC isNFC_quick_check(const std::string& s)
 {
 	const char* begin = s.data();
 	const char* const end = s.data() + s.size();
-	while(begin<end)
+	try
 	{
-		const uint32_t u = getUni(begin, end);
-		if(u>=0x300 && u<0x30A) return false; // That's bullshit. Use a better algorithm!
-		++begin;
+		while(begin<end)
+		{
+			const uint32_t u = getUni(begin, end);
+			if(NFC_No.count(u)) return IsNFC::No;
+			if(NFC_Maybe.count(u)) return IsNFC::Maybe;
+			++begin;
+		}
 	}
-	return true;
+	catch(const utf8_exception& e)
+	{
+		throw illegal_utf8(s, e.octet, e.reason());
+	}
+	return IsNFC::Yes;
 }
+
+
+bool isNFC(const std::string& s)
+{
+	switch( isNFC_quick_check(s) )
+	{
+		case IsNFC::Yes : return true;
+		case IsNFC::No  : return false;
+		case IsNFC::Maybe:
+			{
+				throw std::logic_error("Deep NGC check is not yet implemented. Sorry.");
+			}
+	}
+	
+	throw -1; // could never happen, but compiler is too dumb to see this.
+}
+
 
 // s is ''moved'' to the return value if possible so no copy is done here.
 std::string toNFC(std::string s)
@@ -167,9 +203,6 @@ std::string toNFC(std::string s)
 	if(isNFC(s))
 		return s;
 	
-	std::string ret;
-	
 	// TODO:
-	
-	return ret;
+	throw std::logic_error("NFC normalization is necessary, but unimplemented. Sorry.");
 }
