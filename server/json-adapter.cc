@@ -412,13 +412,19 @@ typedef std::vector<ThreadPtr> ThreadPool;
 
 typedef std::pair<std::string, unsigned> EventListenerKey;
 
+struct EventListenerValue
+{
+	std::string securityContext;
+	std::unique_ptr<evhttp_connection, decltype(&evhttp_connection_free)> connection = { nullptr, &evhttp_connection_free};
+};
+
 struct JsonAdapter::Internal
 {
 	std::unique_ptr<event_base, decltype(&event_base_free)> eventBase = {nullptr, &event_base_free};
 	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
 	std::string address;
 	std::string token;
-	std::map<EventListenerKey, std::string> eventListener;
+	std::map<EventListenerKey, EventListenerValue> eventListener;
 	
 	unsigned    start_port    = 0;
 	unsigned    end_port      = 0;
@@ -505,7 +511,6 @@ try
 				std::cerr << "\tcreated new session for this thread: " << static_cast<void*>(session) << ".\n";
 				
 				register_sync_callbacks( session, this, &messageToSend, &showHandshake );
-
 			}else{
 				std::cerr << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
 			}
@@ -616,12 +621,13 @@ void JsonAdapter::registerEventListener(const std::string& address, unsigned por
 {
 	const auto key = std::make_pair(address, port);
 	const auto q = i->eventListener.find(key);
-	if( q != i->eventListener.end() && q->second != securityContext)
+	if( q != i->eventListener.end() && q->second.securityContext != securityContext)
 	{
 		throw std::runtime_error("EventListener at host \"" + address + "\":" + std::to_string(port) + " is already registered with different securityContext." );
 	}
 	
-	i->eventListener[key] = securityContext;
+	i->eventListener[key].securityContext = securityContext;
+	// TODO: make connection to the given address:port
 }
 
 
@@ -629,7 +635,7 @@ void JsonAdapter::unregisterEventListener(const std::string& address, unsigned p
 {
 	const auto key = std::make_pair(address, port);
 	const auto q = i->eventListener.find(key);
-	if( q == i->eventListener.end() || q->second != securityContext)
+	if( q == i->eventListener.end() || q->second.securityContext != securityContext)
 	{
 		throw std::runtime_error("Cannot unregister EventListener at host \"" + address + "\":" + std::to_string(port) + ". Not registered or wrong securityContext." );
 	}
