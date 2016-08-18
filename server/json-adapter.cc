@@ -626,8 +626,10 @@ void JsonAdapter::registerEventListener(const std::string& address, unsigned por
 		throw std::runtime_error("EventListener at host \"" + address + "\":" + std::to_string(port) + " is already registered with different securityContext." );
 	}
 	
-	i->eventListener[key].securityContext = securityContext;
-	// TODO: make connection to the given address:port
+	EventListenerValue v;
+	v.securityContext = securityContext;
+	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
+	i->eventListener[key] = std::move(v);
 }
 
 
