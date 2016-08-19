@@ -339,6 +339,12 @@ void OnApiRequest(evhttp_request* req, void* obj)
 };
 
 
+PEP_STATUS deliverRequest( evhttp_connection* conn, const js::Object& request)
+{
+	return PEP_STATUS_OK;
+}
+
+
 } // end of anonymous namespace
 
 
@@ -436,8 +442,23 @@ struct JsonAdapter::Internal
 
 	PEP_STATUS messageToSend(const message* msg)
 	{
-		// TODO: implement event delivery to all registered listeners
-		return PEP_STATUS_OK;
+		js::Value js_msg = to_json(msg);
+		js::Array param;
+		param.push_back( std::move(js_msg) );
+		
+		PEP_STATUS status = PEP_STATUS_OK;
+		
+		for(const auto& e : eventListener)
+		{
+			js::Object request = make_request( "messageToSend", param, e.second.securityContext );
+			const PEP_STATUS s2 = deliverRequest( e.second.connection.get(), request );
+			if(s2!=PEP_STATUS_OK)
+			{
+				status = s2;
+			}
+		}
+		
+		return status;
 	}
 	
 	PEP_STATUS showHandshake(const pEp_identity* self, const pEp_identity* partner)

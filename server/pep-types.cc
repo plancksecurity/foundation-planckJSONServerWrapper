@@ -232,7 +232,7 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 
 
 template<>
-js::Value to_json<message*>(message* const& msg)
+js::Value to_json<message const*>(message const* const& msg)
 {
 	if(msg == nullptr)
 	{
@@ -268,6 +268,12 @@ js::Value to_json<message*>(message* const& msg)
 	to_json_object(o, "enc_format", msg->enc_format);
 	
 	return js::Value( std::move(o) );
+}
+
+template<>
+js::Value to_json<message*>(message* const& msg)
+{
+	return to_json( const_cast<const message*>(msg) );
 }
 
 
