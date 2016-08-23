@@ -339,12 +339,6 @@ void OnApiRequest(evhttp_request* req, void* obj)
 };
 
 
-PEP_STATUS deliverRequest( evhttp_connection* conn, const js::Object& request)
-{
-	return PEP_STATUS_OK;
-}
-
-
 } // end of anonymous namespace
 
 
@@ -440,6 +434,27 @@ struct JsonAdapter::Internal
 	bool        running = false;
 	ThreadPool  threads;
 
+	static
+	void requestDone(evhttp_request* req, void* userdata)
+	{
+		// Hum, what is to do here?
+	}
+
+	PEP_STATUS deliverRequest(std::pair<const EventListenerKey,EventListenerValue>& e, const js::Object& request)
+	{
+		const std::string uri = "http://" + e.first.first + ":" + std::to_string(e.first.second) + "/";
+		const std::string request_s = js::write(request, js::raw_utf8);
+		evhttp_request* ereq = evhttp_request_new( &requestDone, &e ); // ownership goes to the connection in evhttp_make_request() below.
+		evhttp_add_header(ereq->output_headers, "Host", e.first.first.c_str());
+		evhttp_add_header(ereq->output_headers, "Content-Length", std::to_string(request_s.length()).c_str());
+		auto output_buffer = evhttp_request_get_output_buffer(ereq);
+		evbuffer_add(output_buffer, request_s.data(), request_s.size());
+		
+		const int ret = evhttp_make_request(e.second.connection.get(), ereq, EVHTTP_REQ_POST, uri.c_str() );
+		
+		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
+	}
+
 	PEP_STATUS messageToSend(const message* msg)
 	{
 		js::Value js_msg = to_json(msg);
@@ -448,10 +463,10 @@ struct JsonAdapter::Internal
 		
 		PEP_STATUS status = PEP_STATUS_OK;
 		
-		for(const auto& e : eventListener)
+		for(auto& e : eventListener)
 		{
 			js::Object request = make_request( "messageToSend", param, e.second.securityContext );
-			const PEP_STATUS s2 = deliverRequest( e.second.connection.get(), request );
+			const PEP_STATUS s2 = deliverRequest( e, request );
 			if(s2!=PEP_STATUS_OK)
 			{
 				status = s2;
