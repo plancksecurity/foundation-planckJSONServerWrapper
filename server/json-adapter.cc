@@ -478,8 +478,24 @@ struct JsonAdapter::Internal
 	
 	PEP_STATUS showHandshake(const pEp_identity* self, const pEp_identity* partner)
 	{
-		// TODO: implement event delivery to all registered listeners
-		return PEP_STATUS_OK;
+		// TODO: eliminate redundancy to messageToSend() above
+		js::Array param;
+		param.emplace_back( to_json(self) );
+		param.emplace_back( to_json(partner) );
+		
+		PEP_STATUS status = PEP_STATUS_OK;
+		
+		for(auto& e : eventListener)
+		{
+			js::Object request = make_request( "showHandshake", param, e.second.securityContext );
+			const PEP_STATUS s2 = deliverRequest( e, request );
+			if(s2!=PEP_STATUS_OK)
+			{
+				status = s2;
+			}
+		}
+		
+		return status;
 	}
 };
 
