@@ -27,6 +27,21 @@
 #include "json_spirit/json_spirit_utils.h"
 
 
+template<>
+In<Context*, false>::~In()
+{
+	// do nothing
+}
+
+template<>
+In<Context*, false>::In(const js::Value&, Context* ctx)
+: value( ctx )
+{
+
+}
+
+
+
 namespace {
 
 static const unsigned API_VERSION = 0x0002;
@@ -79,15 +94,28 @@ PEP_STATUS get_gpg_path(const char** path)
 }
 
 
-PEP_STATUS registerEventListener(std::string address, unsigned port, std::string securityContext)
+
+PEP_STATUS registerEventListener(Context* ctx, std::string address, unsigned port, std::string securityContext)
 {
-	// TODO: implement it!
+	JsonAdapter* ja = dynamic_cast<JsonAdapter*>(ctx);
+	if(!ja)
+	{
+		return PEP_STATUS(-42);
+	}
+	
+	ja->registerEventListener(address, port, securityContext);
 	return PEP_STATUS_OK;
 }
 
-PEP_STATUS unregisterEventListener(std::string address, unsigned port, std::string securityContext)
+PEP_STATUS unregisterEventListener(Context* ctx, std::string address, unsigned port, std::string securityContext)
 {
-	// TODO: implement it!
+	JsonAdapter* ja = dynamic_cast<JsonAdapter*>(ctx);
+	if(!ja)
+	{
+		return PEP_STATUS(-42);
+	}
+	
+	ja->unregisterEventListener(address, port, securityContext);
 	return PEP_STATUS_OK;
 }
 
@@ -98,44 +126,44 @@ const FunctionMap functions = {
 		
 		// from message_api.h
 		FP( "—— Message API ——", new Separator ),
-		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>>( &encrypt_message ) ),
-		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_color>, Out<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
-		FP( "outgoing_message_color", new Func<PEP_STATUS, In<PEP_SESSION>, In<message*>, Out<PEP_color>>( &outgoing_message_color ) ),
-		FP( "identity_color" , new Func<PEP_STATUS, In<PEP_SESSION>, In<pEp_identity*>, Out<PEP_color>>( &identity_color) ),
+		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>>( &encrypt_message ) ),
+		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_color>, Out<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
+		FP( "outgoing_message_color", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, Out<PEP_color>>( &outgoing_message_color ) ),
+		FP( "identity_color" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_color>>( &identity_color) ),
 		FP( "get_gpg_path",    new Func<PEP_STATUS, Out<const char*>>(&get_gpg_path) ),
 		
 		FP( "—— pEp Engine Core API ——", new Separator),
-		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
-		FP( "trustwords", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, Out<char*>, Out<size_t>, In<int>>( &trustwords) ),
-		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION>, Out<char*>>( &get_languagelist) ),
-		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<int>, Out<char*>> ( &get_phrase) ),
+		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
+		FP( "trustwords", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, Out<char*>, Out<size_t>, In<int>>( &trustwords) ),
+		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<char*>>( &get_languagelist) ),
+		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<int>, Out<char*>> ( &get_phrase) ),
 		FP( "get_engine_version", new Func<const char*> ( &get_engine_version) ),
 		
 		FP( "—— Identity Management API ——", new Separator),
-		FP( "get_identity"       , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>, Out<pEp_identity*>>( &get_identity) ),
-		FP( "set_identity"       , new Func<PEP_STATUS, In<PEP_SESSION>, In<pEp_identity*>> ( &set_identity) ),
-		FP( "mark_as_comprimized", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>> ( &mark_as_compromized) ),
+		FP( "get_identity"       , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, Out<pEp_identity*>>( &get_identity) ),
+		FP( "set_identity"       , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>> ( &set_identity) ),
+		FP( "mark_as_comprimized", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &mark_as_compromized) ),
 		
 		FP( "—— Low level Key Management API ——", new Separator),
-		FP( "generate_keypair", new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &generate_keypair) ),
-		FP( "delete_keypair", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>> ( &delete_keypair) ),
-		FP( "import_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<std::size_t>, Out<identity_list*>> ( &import_key) ),
-		FP( "export_key"    , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<char*>, Out<std::size_t>> ( &export_key) ),
-		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
-		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION>, InOut<pEp_identity*>> ( &get_trust) ),
-		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
-		FP( "own_key_retrieve" , new Func<PEP_STATUS, In<PEP_SESSION>, Out<stringlist_t*>> ( &own_key_retrieve) ),
+		FP( "generate_keypair", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &generate_keypair) ),
+		FP( "delete_keypair", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &delete_keypair) ),
+		FP( "import_key"    , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<std::size_t>, Out<identity_list*>> ( &import_key) ),
+		FP( "export_key"    , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<char*>, Out<std::size_t>> ( &export_key) ),
+		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
+		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &get_trust) ),
+		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
+		FP( "own_key_retrieve" , new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<stringlist_t*>> ( &own_key_retrieve) ),
 		
-		FP( "least_trust"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<PEP_comm_type>> ( &least_trust) ),
-		FP( "get_key_rating", new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, Out<PEP_comm_type>> ( &get_key_rating) ),
-		FP( "renew_key"     , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const timestamp*>> ( &renew_key) ),
-		FP( "revoke"        , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<const char*>> ( &revoke_key) ),
-		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION>, In<const char*>, In<time_t>, Out<bool>> ( &key_expired) ),
+		FP( "least_trust"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<PEP_comm_type>> ( &least_trust) ),
+		FP( "get_key_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<PEP_comm_type>> ( &get_key_rating) ),
+		FP( "renew_key"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const timestamp*>> ( &renew_key) ),
+		FP( "revoke"        , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>> ( &revoke_key) ),
+		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<time_t>, Out<bool>> ( &key_expired) ),
 		
 		FP( "-- Event Listener & Results", new Separator ),
-		FP( "registerEventListener"  , new Func<PEP_STATUS, In<std::string>, In<unsigned>, In<std::string>> ( &registerEventListener) ),
-		FP( "unregisterEventListener", new Func<PEP_STATUS, In<std::string>, In<unsigned>, In<std::string>> ( &unregisterEventListener) ),
-		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In<PEP_SESSION>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
+		FP( "registerEventListener"  , new Func<PEP_STATUS, In<Context*, false>, In<std::string>, In<unsigned>, In<std::string>> ( &registerEventListener) ),
+		FP( "unregisterEventListener", new Func<PEP_STATUS, In<Context*, false>, In<std::string>, In<unsigned>, In<std::string>> ( &unregisterEventListener) ),
+		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),
@@ -279,7 +307,7 @@ void OnApiRequest(evhttp_request* req, void* obj)
 	try
 	{
 	
-	const JsonAdapter* ja = static_cast<const JsonAdapter*>(obj);
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	
 	std::vector<char> data(length);
 	ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
@@ -291,7 +319,7 @@ void OnApiRequest(evhttp_request* req, void* obj)
 		if(p.type() == js::obj_type)
 		{
 			const js::Object& request = p.get_obj();
-			answer = call( functions, request, ja->sec_token() );
+			answer = call( functions, request, ja );
 		}else{
 			answer = make_error( JSON_RPC::PARSE_ERROR, "evbuffer_copyout does not return a JSON string. b=" + std::to_string(b), js::Value{data_string}, 42 );
 		}
@@ -382,6 +410,13 @@ auto ThreadDeleter = [](std::thread *t)
 typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
 
+typedef std::pair<std::string, unsigned> EventListenerKey;
+
+struct EventListenerValue
+{
+	std::string securityContext;
+	std::unique_ptr<evhttp_connection, decltype(&evhttp_connection_free)> connection = { nullptr, &evhttp_connection_free};
+};
 
 struct JsonAdapter::Internal
 {
@@ -389,6 +424,7 @@ struct JsonAdapter::Internal
 	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
 	std::string address;
 	std::string token;
+	std::map<EventListenerKey, EventListenerValue> eventListener;
 	
 	unsigned    start_port    = 0;
 	unsigned    end_port      = 0;
@@ -397,7 +433,85 @@ struct JsonAdapter::Internal
 	evutil_socket_t sock      = -1;
 	bool        running = false;
 	ThreadPool  threads;
+
+	static
+	void requestDone(evhttp_request* req, void* userdata)
+	{
+		// Hum, what is to do here?
+	}
+
+	PEP_STATUS deliverRequest(std::pair<const EventListenerKey,EventListenerValue>& e, const js::Object& request)
+	{
+		const std::string uri = "http://" + e.first.first + ":" + std::to_string(e.first.second) + "/";
+		const std::string request_s = js::write(request, js::raw_utf8);
+		evhttp_request* ereq = evhttp_request_new( &requestDone, &e ); // ownership goes to the connection in evhttp_make_request() below.
+		evhttp_add_header(ereq->output_headers, "Host", e.first.first.c_str());
+		evhttp_add_header(ereq->output_headers, "Content-Length", std::to_string(request_s.length()).c_str());
+		auto output_buffer = evhttp_request_get_output_buffer(ereq);
+		evbuffer_add(output_buffer, request_s.data(), request_s.size());
+		
+		const int ret = evhttp_make_request(e.second.connection.get(), ereq, EVHTTP_REQ_POST, uri.c_str() );
+		
+		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
+	}
+
+	PEP_STATUS messageToSend(const message* msg)
+	{
+		js::Value js_msg = to_json(msg);
+		js::Array param;
+		param.push_back( std::move(js_msg) );
+		
+		PEP_STATUS status = PEP_STATUS_OK;
+		
+		for(auto& e : eventListener)
+		{
+			js::Object request = make_request( "messageToSend", param, e.second.securityContext );
+			const PEP_STATUS s2 = deliverRequest( e, request );
+			if(s2!=PEP_STATUS_OK)
+			{
+				status = s2;
+			}
+		}
+		
+		return status;
+	}
+	
+	PEP_STATUS showHandshake(const pEp_identity* self, const pEp_identity* partner)
+	{
+		// TODO: eliminate redundancy to messageToSend() above
+		js::Array param;
+		param.emplace_back( to_json(self) );
+		param.emplace_back( to_json(partner) );
+		
+		PEP_STATUS status = PEP_STATUS_OK;
+		
+		for(auto& e : eventListener)
+		{
+			js::Object request = make_request( "showHandshake", param, e.second.securityContext );
+			const PEP_STATUS s2 = deliverRequest( e, request );
+			if(s2!=PEP_STATUS_OK)
+			{
+				status = s2;
+			}
+		}
+		
+		return status;
+	}
 };
+
+
+PEP_STATUS JsonAdapter::messageToSend(void* obj, const message* msg)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja->i->messageToSend(msg);
+}
+
+
+PEP_STATUS JsonAdapter::showHandshake(void* obj, const pEp_identity* self, const pEp_identity* partner)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja->i->showHandshake(self, partner);
+}
 
 
 JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port)
@@ -447,6 +561,8 @@ try
 				
 				session_registry.emplace( id, session);
 				std::cerr << "\tcreated new session for this thread: " << static_cast<void*>(session) << ".\n";
+				
+				register_sync_callbacks( session, this, &messageToSend, &showHandshake );
 			}else{
 				std::cerr << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
 			}
@@ -542,18 +658,42 @@ void JsonAdapter::shutdown(timeval* t)
 }
 
 
-const std::string& JsonAdapter::sec_token() const
-{
-	return i->token;
-}
-
-
 // returns 'true' if 's' is the security token created by the function above.
 bool JsonAdapter::verify_security_token(const std::string& s) const
 {
 	if(s!=i->token)
 	{
-		std::cerr << "sec_token=\"" << i->token << "\" is unequal to \"" << s << "\"!\n";
+		std::cerr << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!\n";
 	}
 	return s == i->token;
 }
+
+
+void JsonAdapter::registerEventListener(const std::string& address, unsigned port, const std::string& securityContext)
+{
+	const auto key = std::make_pair(address, port);
+	const auto q = i->eventListener.find(key);
+	if( q != i->eventListener.end() && q->second.securityContext != securityContext)
+	{
+		throw std::runtime_error("EventListener at host \"" + address + "\":" + std::to_string(port) + " is already registered with different securityContext." );
+	}
+	
+	EventListenerValue v;
+	v.securityContext = securityContext;
+	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
+	i->eventListener[key] = std::move(v);
+}
+
+
+void JsonAdapter::unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext)
+{
+	const auto key = std::make_pair(address, port);
+	const auto q = i->eventListener.find(key);
+	if( q == i->eventListener.end() || q->second.securityContext != securityContext)
+	{
+		throw std::runtime_error("Cannot unregister EventListener at host \"" + address + "\":" + std::to_string(port) + ". Not registered or wrong securityContext." );
+	}
+	
+	i->eventListener.erase(q);
+}
+

@@ -50,7 +50,7 @@ std::string status_to_string(PEP_STATUS status)
 
 
 template<>
-In<PEP_SESSION>::~In()
+In<PEP_SESSION, false>::~In()
 {
 	// no automatic release!
 }
@@ -226,13 +226,14 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 		free(lang);
 	}
 	ident->me = from_json_object<bool, js::bool_type>(o, "me");
+	ident->flags = from_json_object<unsigned, js::int_type>(o, "flags");
 	
 	return ident;
 }
 
 
 template<>
-js::Value to_json<message*>(message* const& msg)
+js::Value to_json<message const*>(message const* const& msg)
 {
 	if(msg == nullptr)
 	{
@@ -268,6 +269,12 @@ js::Value to_json<message*>(message* const& msg)
 	to_json_object(o, "enc_format", msg->enc_format);
 	
 	return js::Value( std::move(o) );
+}
+
+template<>
+js::Value to_json<message*>(message* const& msg)
+{
+	return to_json( const_cast<const message*>(msg) );
 }
 
 
@@ -449,7 +456,7 @@ js::Value to_json<stringlist_t*>(stringlist_t* const& osl)
 
 
 template<>
-js::Value to_json<pEp_identity*>(pEp_identity* const& id)
+js::Value to_json<const pEp_identity*>(const pEp_identity* const& id)
 {
 	if(id == nullptr)
 	{
@@ -468,9 +475,16 @@ js::Value to_json<pEp_identity*>(pEp_identity* const& id)
 	if(id->lang[0] && id->lang[1])
 		o.emplace_back( "lang", js::Value( std::string( id->lang, id->lang+2) ));
 	
-	o.emplace_back( "me", js::Value( id->me ));
+	o.emplace_back( "me", bool( id->me ));
+	o.emplace_back( "flags", uint64_t( id->me ));
 	
 	return js::Value( std::move(o) );
+}
+
+template<>
+js::Value to_json<pEp_identity*>(pEp_identity* const& id)
+{
+	return to_json( const_cast<const pEp_identity*>(id) );
 }
 
 
