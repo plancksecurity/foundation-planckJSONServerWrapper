@@ -7,13 +7,13 @@ ifeq ($(BUILD_ON),Darwin)
 ifeq ($(BUILD_FOR),Darwin)
 
 CXXFLAGS = -I/opt/local/include -I$(HOME)/include -Ijson_spirit
-LDFLAGS  = -L/opt/local/lib -L$(HOME)/lib -lpthread -levent -lpEpEngine -lgpgme-pthread -letpan -lboost_system-mt -lboost_filesystem-mt
+LDFLAGS  = -L/opt/local/lib -L$(HOME)/lib -lpthread -levent -lpEpEngine -luuid -lgpgme-pthread -letpan -lboost_system-mt -lboost_filesystem-mt
 endif
 
 else
 
 CXXFLAGS = -I$(HOME)/include -I$(HOME)/local/include/ -Ijson_spirit
-LDFLAGS  = -L$(HOME)/lib -L$(HOME)/local/lib -lpthread -levent -lpEpEngine -lgpgme-pthread -letpan -lboost_system -lboost_filesystem
+LDFLAGS  = -L$(HOME)/lib -L$(HOME)/local/lib -lpthread -levent -lpEpEngine -luuid -lgpgme-pthread -letpan -lboost_system -lboost_filesystem
 
 endif
 
@@ -22,7 +22,7 @@ endif
 all: mt-server
 
 mt-server: main.o libjson-adapter.a
-	$(CXX) $(CXXFLAGS)  -o $@ $^ $(LDFLAGS) ../../pEpEngine/asn.1/libasn1.a
+	$(CXX) $(CXXFLAGS)  -o $@ $^ ../../pEpEngine/asn.1/libasn1.a  $(LDFLAGS)
 
 
 libjson-adapter.a: json-adapter.o registry.o nfc.o json_rpc.o \

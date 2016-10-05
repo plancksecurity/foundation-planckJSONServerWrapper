@@ -140,7 +140,7 @@ Out<_message*>::~Out()
 
 
 template<>
-Out<PEP_color>::~Out()
+Out<PEP_rating>::~Out()
 {
 	delete value;
 }
@@ -506,10 +506,10 @@ js::Value to_json<identity_list*>(identity_list* const& idl)
 
 
 template<>
-js::Value to_json<PEP_color>(const PEP_color& color)
+js::Value to_json<PEP_rating>(const PEP_rating& rating)
 {
 	js::Object o;
-	o.emplace_back( "color", int(color) );
+	o.emplace_back( "color", int(rating) );
 	return o;
 }
 
@@ -588,7 +588,7 @@ template<>
 js::Value Type2String<_stringlist_t*>::get()  { return "StringList"; }
 
 template<>
-js::Value Type2String<_PEP_color>::get()  { return "PEP_color"; }
+js::Value Type2String<_PEP_rating>::get()  { return "PEP_rating"; }
 
 template<>
 js::Value Type2String<_PEP_enc_format>::get()  { return "PEP_enc_format"; }

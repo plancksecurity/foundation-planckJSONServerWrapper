@@ -126,10 +126,10 @@ const FunctionMap functions = {
 		
 		// from message_api.h
 		FP( "—— Message API ——", new Separator ),
-		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>>( &encrypt_message ) ),
-		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_color>, Out<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
-		FP( "outgoing_message_color", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, Out<PEP_color>>( &outgoing_message_color ) ),
-		FP( "identity_color" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_color>>( &identity_color) ),
+		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
+		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
+		FP( "outgoing_message_color", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, Out<PEP_rating>>( &outgoing_message_rating ) ),
+		FP( "identity_color" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "get_gpg_path",    new Func<PEP_STATUS, Out<const char*>>(&get_gpg_path) ),
 		
 		FP( "—— pEp Engine Core API ——", new Separator),
@@ -152,7 +152,6 @@ const FunctionMap functions = {
 		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &get_trust) ),
 		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
-		FP( "own_key_retrieve" , new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<stringlist_t*>> ( &own_key_retrieve) ),
 		
 		FP( "least_trust"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<PEP_comm_type>> ( &least_trust) ),
 		FP( "get_key_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<PEP_comm_type>> ( &get_key_rating) ),
@@ -163,7 +162,7 @@ const FunctionMap functions = {
 		FP( "-- Event Listener & Results", new Separator ),
 		FP( "registerEventListener"  , new Func<PEP_STATUS, In<Context*, false>, In<std::string>, In<unsigned>, In<std::string>> ( &registerEventListener) ),
 		FP( "unregisterEventListener", new Func<PEP_STATUS, In<Context*, false>, In<std::string>, In<unsigned>, In<std::string>> ( &unregisterEventListener) ),
-		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
+		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),
@@ -455,7 +454,7 @@ struct JsonAdapter::Internal
 		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
 	}
 
-	PEP_STATUS messageToSend(const message* msg)
+	PEP_STATUS messageToSend(message* msg)
 	{
 		js::Value js_msg = to_json(msg);
 		js::Array param;
@@ -473,10 +472,11 @@ struct JsonAdapter::Internal
 			}
 		}
 		
+		free_message(msg);
 		return status;
 	}
 	
-	PEP_STATUS showHandshake(const pEp_identity* self, const pEp_identity* partner)
+	PEP_STATUS showHandshake(pEp_identity* self, pEp_identity* partner)
 	{
 		// TODO: eliminate redundancy to messageToSend() above
 		js::Array param;
@@ -495,19 +495,22 @@ struct JsonAdapter::Internal
 			}
 		}
 		
+		free_identity(self);
+		free_identity(partner);
+		
 		return status;
 	}
 };
 
 
-PEP_STATUS JsonAdapter::messageToSend(void* obj, const message* msg)
+PEP_STATUS JsonAdapter::messageToSend(void* obj, message* msg)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	return ja->i->messageToSend(msg);
 }
 
 
-PEP_STATUS JsonAdapter::showHandshake(void* obj, const pEp_identity* self, const pEp_identity* partner)
+PEP_STATUS JsonAdapter::showHandshake(void* obj, pEp_identity* self, pEp_identity* partner)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	return ja->i->showHandshake(self, partner);
@@ -562,7 +565,8 @@ try
 				session_registry.emplace( id, session);
 				std::cerr << "\tcreated new session for this thread: " << static_cast<void*>(session) << ".\n";
 				
-				register_sync_callbacks( session, this, &messageToSend, &showHandshake );
+				// TODO: 5th parameter inject_sync_msg_t, and 6th parameter retrieve_next_sync_msg_t missing*
+				register_sync_callbacks( session, this, &messageToSend, &showHandshake, nullptr, nullptr );
 			}else{
 				std::cerr << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
 			}
