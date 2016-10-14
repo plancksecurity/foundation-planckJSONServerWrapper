@@ -24,7 +24,7 @@ enum class JSON_RPC
 js::Object call(const FunctionMap& fm, const js::Object& request, Context* context);
 
 // create a JSON-RPC 2.0 compatible result response object
-js::Object make_result(const js::Value& result, int id);
+//js::Object make_result(const js::Value& result, int id);
 
 // create a JSON-RPC 2.0 compatible error response object
 js::Object make_error(JSON_RPC error_code, const std::string& error_message, const js::Value& data, int id);

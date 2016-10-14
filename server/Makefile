@@ -1,7 +1,7 @@
 BUILD_ON=$(shell uname)
 BUILD_FOR=$(BUILD_ON)
 
-CXX = c++ -std=c++11 -Wall -O0 -g -fstack-protector-all
+CXX = c++ -std=c++11 -Wall -O3 -g -fstack-protector-all
 
 ifeq ($(BUILD_ON),Darwin)
 ifeq ($(BUILD_FOR),Darwin)

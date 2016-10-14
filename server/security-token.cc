@@ -65,7 +65,11 @@ std::string create_security_token(const std::string& server_address, unsigned po
 	o.emplace_back("security_token", sec_token );
 	
 	const std::string content = js::write( o, js::pretty_print | js::raw_utf8 ) + '\n';
-	write(fd, content.data(), content.size());
+	const ssize_t ss = write(fd, content.data(), content.size());
+	if(ss<0 || uint64_t(ss)!=content.size())
+	{
+		throw std::runtime_error("Cannot write into security token file \"" + filename + "\": " + std::to_string(errno));
+	}
 	close(fd);
 	
 	return sec_token;
