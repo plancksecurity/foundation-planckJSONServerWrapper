@@ -20,6 +20,7 @@
 #include "security-token.hh"
 
 #include <pEp/message_api.h>
+#include <pEp/mime.h>
 
 #include <boost/filesystem.hpp>
 #include "json_spirit/json_spirit_writer.h"
@@ -123,7 +124,9 @@ PEP_STATUS unregisterEventListener(Context* ctx, std::string address, unsigned p
 
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
-		
+		// from mime.h
+    FP("mime_encode_message", new Func<PEP_STATUS, In<message*>, In<int>, Out<char *>>(&mime_encode_message)),
+    FP("mime_decode_message", new Func<PEP_STATUS, In<const char*>, In<std::size_t>, Out<message*>>(&mime_decode_message)),
 		// from message_api.h
 		FP( "—— Message API ——", new Separator ),
 		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
