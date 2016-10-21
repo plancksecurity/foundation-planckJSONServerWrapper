@@ -566,7 +566,7 @@ try
 				std::cerr << "\tcreated new session for this thread: " << static_cast<void*>(session) << ".\n";
 				
 				// TODO: 5th parameter inject_sync_msg_t, and 6th parameter retrieve_next_sync_msg_t missing*
-				register_sync_callbacks( session, this, &messageToSend, &showHandshake, nullptr, nullptr );
+				//register_sync_callbacks( session, this, &messageToSend, &showHandshake, nullptr, nullptr );
 			}else{
 				std::cerr << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
 			}
