@@ -16,6 +16,7 @@ for MacPorts, and for building the engine. You also need to accept Xcode's EULA.
 ```
 sudo port install openssl
 sudo port install boost
+sudo port install ossp-uuid
 ```
 
 ## libevent
