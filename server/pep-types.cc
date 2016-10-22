@@ -3,6 +3,9 @@
 
 #include <iostream> // Just to print debug stuff to std::cerr
 
+#include <boost/archive/iterators/base64_from_binary.hpp>
+#include <boost/archive/iterators/insert_linebreaks.hpp>
+#include <boost/archive/iterators/transform_width.hpp>
 
 namespace
 {
@@ -353,8 +356,27 @@ js::Value to_json<_bloblist_t*>(_bloblist_t* const& bl)
 	while(b)
 	{
 		js::Object o;
-		if(b->value)
-			o.emplace_back( "value", std::string(b->value, b->value + b->size) );
+        if(b->value){
+            unsigned int overflow = b->size % 3;
+            unsigned int padding = overflow ? 3 - overflow : 0;
+
+            typedef boost::archive::iterators::base64_from_binary<
+                        boost::archive::iterators::transform_width<
+                            const unsigned char *,6 ,8>> b64T;
+
+#ifdef BOOST_NEEDS_PADDED_INPUT
+            std::vector<unsigned char> padded(b->size + padding, 0)
+            std::copy(b->value, b->value + b->size, padded.begin());
+            std::string b64String(b64T(padded.begin()), b64T(padded.begin() + b->size));
+#else
+            std::string b64String(b64T(b->value), b64T(b->value + b->size));
+#endif
+
+            for(unsigned int i = 0; i < padding; i++)
+                b64String.push_back('=');
+
+            o.emplace_back( "value", b64String);
+        }
 		
 		o.emplace_back( "size", boost::uint64_t(b->size) );
 		
