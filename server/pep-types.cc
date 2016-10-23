@@ -4,6 +4,7 @@
 #include <iostream> // Just to print debug stuff to std::cerr
 
 #include <boost/archive/iterators/base64_from_binary.hpp>
+#include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/insert_linebreaks.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 
@@ -23,6 +24,21 @@ namespace
 			);
 	}
 	
+	std::string base64_from_json_object(const js::Object& obj, const std::string& key){
+        typedef boost::archive::iterators::transform_width<
+                    boost::archive::iterators::binary_from_base64< 
+                        const char *>, 8, 6> from_base64;
+
+        std::string b64String = from_json_object<std::string, js::str_type> (obj, key);
+
+        if(b64String.length() % 4 != 0) 
+            throw std::runtime_error("JSON object has a member for key \"" + key + "\""
+                " with incompatible size for base64 decoding. Base64 strings must be padded.");
+
+        std::string res(from_base64(b64String.data()), from_base64(b64String.data() + b64String.length()));
+        return res;
+    }
+
 	template<class T>
 	void to_json_object(js::Object& obj, const std::string& key, const T& value)
 	{
@@ -32,6 +48,28 @@ namespace
 		}
 	}
 
+	void to_base64_json_object(js::Object& obj, const std::string& key, char *value, size_t size)
+    {
+            unsigned int overflow = size % 3;
+            unsigned int padding = overflow ? 3 - overflow : 0;
+
+            typedef boost::archive::iterators::base64_from_binary<
+                        boost::archive::iterators::transform_width<
+                            const unsigned char *,6 ,8>> to_base64;
+
+#ifdef BOOST_NEEDS_PADDED_INPUT
+            std::vector<unsigned char> padded(size + padding, 0)
+            std::copy(value, value + size, padded.begin());
+            std::string b64String(to_base64(padded.begin()), to_base64(padded.begin() + size));
+#else
+            std::string b64String(to_base64(value), to_base64(value + size));
+#endif
+
+            for(unsigned int i = 0; i < padding; i++)
+                b64String.push_back('=');
+
+            obj.emplace_back(key, b64String);
+    }
 }
 
 
@@ -323,24 +361,27 @@ _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 		return nullptr;
 	
 	auto element = a.begin();
-	const auto oelem = element->get_obj();
-	_bloblist_t* bl = new_bloblist
-		(
-			from_json_object<char*, js::str_type>      (oelem, "value"),
-			from_json_object<size_t, js::int_type>     (oelem, "size"),
+	_bloblist_t* bl = NULL;
+
+    for(; element!=a.end(); ++element)
+	{
+		const auto oelem = element->get_obj();
+        
+        std::string v = base64_from_json_object(oelem, "value");
+        size_t vs = v.size();
+		char* vc = (char*)malloc(vs + 1);
+        if(vc == NULL) 
+            throw std::runtime_error("Out of memory while allocating blob");
+		memcpy(vc, v.c_str(), vs + 1 );
+
+		bl = bloblist_add(bl, 
+	        vc, vs,
 			from_json_object<const char*, js::str_type>(oelem, "mime_type"),
 			from_json_object<const char*, js::str_type>(oelem, "filename")
 		);
 
-	for(; element!=a.end(); ++element)
-	{
-		const auto oelem = element->get_obj();
-		bl = bloblist_add(bl, 
-			from_json_object<char*, js::str_type>      (oelem, "value"),
-			from_json_object<size_t, js::int_type>     (oelem, "size"),
-			from_json_object<const char*, js::str_type>(oelem, "mime_type"),
-			from_json_object<const char*, js::str_type>(oelem, "filename")
-		);
+        if(bl == NULL)
+            throw std::runtime_error("Couldn't add blob to bloblist");
 	}
 
 	return bl;
@@ -356,27 +397,8 @@ js::Value to_json<_bloblist_t*>(_bloblist_t* const& bl)
 	while(b)
 	{
 		js::Object o;
-        if(b->value){
-            unsigned int overflow = b->size % 3;
-            unsigned int padding = overflow ? 3 - overflow : 0;
-
-            typedef boost::archive::iterators::base64_from_binary<
-                        boost::archive::iterators::transform_width<
-                            const unsigned char *,6 ,8>> b64T;
-
-#ifdef BOOST_NEEDS_PADDED_INPUT
-            std::vector<unsigned char> padded(b->size + padding, 0)
-            std::copy(b->value, b->value + b->size, padded.begin());
-            std::string b64String(b64T(padded.begin()), b64T(padded.begin() + b->size));
-#else
-            std::string b64String(b64T(b->value), b64T(b->value + b->size));
-#endif
-
-            for(unsigned int i = 0; i < padding; i++)
-                b64String.push_back('=');
-
-            o.emplace_back( "value", b64String);
-        }
+        if(b->value)
+	        to_base64_json_object(o, "value", b->value, b->size);
 		
 		o.emplace_back( "size", boost::uint64_t(b->size) );
 		
