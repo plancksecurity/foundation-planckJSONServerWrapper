@@ -52,6 +52,12 @@ public:
 
 	static PEP_STATUS messageToSend(void* obj, message* msg);
 	static PEP_STATUS showHandshake(void* obj, pEp_identity* self, pEp_identity* partner);
+    static int injectSyncMsg(void* obj, void *msg);
+    static void *retrieveNextSyncMsg(void* obj);
+    static void *syncThreadRoutine(void *arg);
+
+    void startSync(void);
+    void stopSync(void);
 
 private:
 	struct Internal;

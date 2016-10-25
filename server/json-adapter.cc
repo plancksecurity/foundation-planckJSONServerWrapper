@@ -18,6 +18,7 @@
 #include "pep-types.hh"
 #include "json_rpc.hh"
 #include "security-token.hh"
+#include "pep-utils.hh"
 
 #include <pEp/message_api.h>
 #include <pEp/mime.h>
@@ -44,6 +45,7 @@ In<Context*, false>::In(const js::Value&, Context* ctx)
 
 
 namespace {
+    using namespace pEp::utility;
 
 static const unsigned API_VERSION = 0x0002;
 
@@ -401,6 +403,7 @@ auto ThreadDeleter = [](std::thread *t)
 	const auto q = session_registry.find( id );
 	if(q != session_registry.end())
 	{
+        detach_sync_session(q->second);
 		release(q->second);
 		session_registry.erase( q );
 	}
@@ -435,6 +438,11 @@ struct JsonAdapter::Internal
 	evutil_socket_t sock      = -1;
 	bool        running = false;
 	ThreadPool  threads;
+
+    // Sync
+    locked_queue< sync_msg_t * > *sync_queue;
+    PEP_SESSION sync_session;
+    pthread_t sync_thread;
 
 	static
 	void requestDone(evhttp_request* req, void* userdata)
@@ -503,8 +511,38 @@ struct JsonAdapter::Internal
 		
 		return status;
 	}
-};
 
+    int injectSyncMsg(void *msg)
+    {
+        sync_queue->push_back((sync_msg_t *)msg);
+        return 0;
+    }
+
+    void *retrieveNextSyncMsg()
+    {
+        while (!sync_queue->size())
+            // TODO: add blocking dequeue 
+            usleep(100000);
+
+        void *msg = sync_queue->front();
+        sync_queue->pop_front();
+        return msg;
+    }
+
+    void *syncThreadRoutine(void *arg)
+    {
+        PEP_STATUS status = do_sync_protocol(sync_session, arg);
+
+        while (sync_queue->size()) {
+            sync_msg_t *msg = sync_queue->front();
+            sync_queue->pop_front();
+            free_sync_msg(msg);
+        }
+
+        return (void *) status;
+    }
+
+};
 
 PEP_STATUS JsonAdapter::messageToSend(void* obj, message* msg)
 {
@@ -519,6 +557,59 @@ PEP_STATUS JsonAdapter::showHandshake(void* obj, pEp_identity* self, pEp_identit
 	return ja->i->showHandshake(self, partner);
 }
 
+int JsonAdapter::injectSyncMsg(void* obj, void *msg)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja->i->injectSyncMsg(msg);
+}
+
+void *JsonAdapter::retrieveNextSyncMsg(void* obj)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja->i->retrieveNextSyncMsg();
+}
+
+void *JsonAdapter::syncThreadRoutine(void *arg)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(arg);
+	return ja->i->syncThreadRoutine(arg);
+}
+
+void JsonAdapter::startSync(void)
+{
+    PEP_STATUS status = init(&i->sync_session);
+    if(status != PEP_STATUS_OK || i->sync_session==nullptr)
+    {
+        throw std::runtime_error("Cannot create sync session! status: " + status_to_string(status));
+    }
+
+    i->sync_queue = new locked_queue< sync_msg_t * >();
+
+    status = register_sync_callbacks(i->sync_session,
+                                     (void *) this,
+                                     JsonAdapter::messageToSend,
+                                     JsonAdapter::showHandshake, 
+                                     JsonAdapter::injectSyncMsg,
+                                     JsonAdapter::retrieveNextSyncMsg);
+    if (status != PEP_STATUS_OK)
+        throw std::runtime_error("Cannot register sync callbacks! status: " + status_to_string(status));
+
+    if(pthread_create(&i->sync_thread, NULL, JsonAdapter::syncThreadRoutine, (void *) this) != 0)
+        throw std::runtime_error("Cannot create sync session thread !");
+}
+
+void JsonAdapter::stopSync(void)
+{  
+
+    i->sync_queue->push_front(NULL);
+    pthread_join(i->sync_thread, NULL);
+
+    unregister_sync_callbacks(i->sync_session);
+
+    delete i->sync_queue;
+
+    release(i->sync_session);
+}
 
 JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port)
 : i(new Internal)
@@ -534,11 +625,14 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 	i->address    = address;
 	i->start_port = start_port;
 	i->end_port   = end_port;
+
+    startSync();
 }
 
 
 JsonAdapter::~JsonAdapter()
 {
+    stopSync();
 	delete i;
 }
 
@@ -559,7 +653,7 @@ try
 			if(q==session_registry.end())
 			{
 				PEP_SESSION session = nullptr;
-				const PEP_STATUS status = init(&session); // release(status) in ThreadDeleter
+				PEP_STATUS status = init(&session); // release(status) in ThreadDeleter
 				if(status != PEP_STATUS_OK || session==nullptr)
 				{
 					throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
@@ -568,8 +662,10 @@ try
 				session_registry.emplace( id, session);
 				std::cerr << "\tcreated new session for this thread: " << static_cast<void*>(session) << ".\n";
 				
-				// TODO: 5th parameter inject_sync_msg_t, and 6th parameter retrieve_next_sync_msg_t missing*
-				//register_sync_callbacks( session, this, &messageToSend, &showHandshake, nullptr, nullptr );
+                status = attach_sync_session(session, i->sync_session);
+                if(status != PEP_STATUS_OK)
+                    throw std::runtime_error("Cannot attach to sync session! status: " + status_to_string(status));
+
 			}else{
 				std::cerr << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
 			}
