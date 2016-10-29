@@ -76,7 +76,8 @@ const std::string server_version =
 //	"(12) Kreuz Köln Süd";   // support for attachments, so encrypt_message() works now! :-) but we have memory corruption, hence the FIXME in pep-types.cc :-(
 //	"(13) Köln-Poll";        // refactoring to avoid copying of parameters. Fixes the memory corruption. Some other clean-ups
 //	"(!4) Köln-Gremberg";    // refactoring to use JSON-Adapter as a library
-	"(15) Dreieck Heumar";   // PEP_SESSIONs are now handled internally, so the adapter's users don't have to care about anymore. :-)
+//	"(15) Dreieck Heumar";   // PEP_SESSIONs are now handled internally, so the adapter's users don't have to care about anymore. :-)
+	"(16) Kreuz Köln Ost";   // mime_encode_message(), mime_decode_message(), blob_t are base64-encoded.
 
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
@@ -127,8 +128,9 @@ PEP_STATUS unregisterEventListener(Context* ctx, std::string address, unsigned p
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 		// from mime.h
-    FP("mime_encode_message", new Func<PEP_STATUS, In<message*>, In<int>, Out<char *>>(&mime_encode_message)),
-    FP("mime_decode_message", new Func<PEP_STATUS, In<const char*>, In<std::size_t>, Out<message*>>(&mime_decode_message)),
+		FP("mime_encode_message", new Func<PEP_STATUS, In<message*>, In<int>, Out<char *>>(&mime_encode_message)),
+		FP("mime_decode_message", new Func<PEP_STATUS, In<const char*>, In<std::size_t>, Out<message*>>(&mime_decode_message)),
+		
 		// from message_api.h
 		FP( "—— Message API ——", new Separator ),
 		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),

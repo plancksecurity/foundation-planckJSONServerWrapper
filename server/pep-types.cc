@@ -2,11 +2,7 @@
 #include "json_spirit/json_spirit_utils.h"
 
 #include <iostream> // Just to print debug stuff to std::cerr
-
-#include <boost/archive/iterators/base64_from_binary.hpp>
-#include <boost/archive/iterators/binary_from_base64.hpp>
-#include <boost/archive/iterators/insert_linebreaks.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
+#include "base64.hh"
 
 namespace
 {
@@ -24,20 +20,11 @@ namespace
 			);
 	}
 	
-	std::string base64_from_json_object(const js::Object& obj, const std::string& key){
-        typedef boost::archive::iterators::transform_width<
-                    boost::archive::iterators::binary_from_base64< 
-                        const char *>, 8, 6> from_base64;
-
-        std::string b64String = from_json_object<std::string, js::str_type> (obj, key);
-
-        if(b64String.length() % 4 != 0) 
-            throw std::runtime_error("JSON object has a member for key \"" + key + "\""
-                " with incompatible size for base64 decoding. Base64 strings must be padded.");
-
-        std::string res(from_base64(b64String.data()), from_base64(b64String.data() + b64String.length()));
-        return res;
-    }
+	std::string base64_from_json_object(const js::Object& obj, const std::string& key)
+	{
+		const std::string b64String = from_json_object<std::string, js::str_type> (obj, key);
+		return base64_decode(b64String);
+	}
 
 	template<class T>
 	void to_json_object(js::Object& obj, const std::string& key, const T& value)
@@ -49,27 +36,13 @@ namespace
 	}
 
 	void to_base64_json_object(js::Object& obj, const std::string& key, char *value, size_t size)
-    {
-            unsigned int overflow = size % 3;
-            unsigned int padding = overflow ? 3 - overflow : 0;
-
-            typedef boost::archive::iterators::base64_from_binary<
-                        boost::archive::iterators::transform_width<
-                            const unsigned char *,6 ,8>> to_base64;
-
-#ifdef BOOST_NEEDS_PADDED_INPUT
-            std::vector<unsigned char> padded(size + padding, 0)
-            std::copy(value, value + size, padded.begin());
-            std::string b64String(to_base64(padded.begin()), to_base64(padded.begin() + size));
-#else
-            std::string b64String(to_base64(value), to_base64(value + size));
-#endif
-
-            for(unsigned int i = 0; i < padding; i++)
-                b64String.push_back('=');
-
-            obj.emplace_back(key, b64String);
-    }
+	{
+		if(value != nullptr && size>0)
+		{
+			const std::string raw_string(value, value+size);
+			obj.emplace_back( key, js::Value( base64_encode( raw_string ) ) );
+		}
+	}
 }
 
 
