@@ -22,13 +22,10 @@ namespace json_spirit
 {
     inline char to_hex_char( unsigned int c )
     {
+        static const char* const hex_digits = "0123456789ABCDEF";
+
         assert( c <= 0xF );
-
-        const char ch = static_cast< char >( c );
-
-        if( ch < 10 ) return '0' + ch;
-
-        return 'A' - 10 + ch;
+        return hex_digits[c];
     }
 
     template< class String_type >
@@ -60,6 +57,14 @@ namespace json_spirit
             case '\n': s += to_str< String_type >( "\\n"  ); return true;
             case '\r': s += to_str< String_type >( "\\r"  ); return true;
             case '\t': s += to_str< String_type >( "\\t"  ); return true;
+            case '\177': s += to_str< String_type >( "\\u007f"  ); return true;
+        }
+
+        // _always_ convert all remaining ASCII control characters into \uXXXX form:
+        if( unsigned(c) < 32 )
+        {
+            s += non_printable_to_string<String_type>( c );
+            return true;
         }
 
         return false;
@@ -79,7 +84,8 @@ namespace json_spirit
         {
             const Char_type c( *i );
 
-            if( add_esc_char( c, result ) ) continue;
+            if( add_esc_char( c, result ) )
+                continue;
 
             if( raw_utf8 )
             {

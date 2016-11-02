@@ -39,5 +39,6 @@ libjson-adapter.a: json-adapter.o registry.o nfc.o json_rpc.o \
 clean:
 	rm -vf mt-server
 	rm -vf *.o
+	rm -vf json_spirit/*.o
 	rm -vf *.a
 
