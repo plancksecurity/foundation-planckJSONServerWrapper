@@ -78,7 +78,9 @@ const std::string server_version =
 //	"(!4) Köln-Gremberg";    // refactoring to use JSON-Adapter as a library
 //	"(15) Dreieck Heumar";   // PEP_SESSIONs are now handled internally, so the adapter's users don't have to care about anymore. :-)
 //	"(16) Kreuz Köln Ost";   // mime_encode_message(), mime_decode_message(), blob_t are base64-encoded.
-	"(17) Köln Mehrheim";    // MIME_encrypt_message() and MIME_decrypt_message() instead, because the other two were internal functions
+//	"(17) Köln Mehrheim";    // MIME_encrypt_message() and MIME_decrypt_message() instead, because the other two were internal functions
+	"(18) Refrath";          // add trust_personal_key(), key_mistrusted(), key_reset_trust()
+
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
 
@@ -159,6 +161,10 @@ const FunctionMap functions = {
 		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &get_trust) ),
 		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
+		
+		FP( "trust_personal_key", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>>( &trust_personal_key) ),
+		FP( "key_mistrusted",     new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>>( &key_mistrusted) ),
+		FP( "key_reset_trust",    new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>>( &key_reset_trust) ),
 		
 		FP( "least_trust"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<PEP_comm_type>> ( &least_trust) ),
 		FP( "get_key_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<PEP_comm_type>> ( &get_key_rating) ),
