@@ -1,4 +1,6 @@
 #include "json-adapter.hh"
+#include "daemonize.hh"
+
 #include <iostream>
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
@@ -16,6 +18,7 @@ void print_version()
 		"\tpEpEngine version " << get_engine_version() << "\n"
 		"\n";
 }
+
 
 int main(int argc, char** argv)
 try
@@ -45,25 +48,30 @@ try
 		return 0;
 	}
 
-	if( vm.count("debug"))
+	if( !debug_mode )
 	{
-		JsonAdapter ja( address, start_port, end_port, !debug_mode );
-		ja.run();
-		
+		daemonize();
+	}
+
+	JsonAdapter ja( address, start_port, end_port, !debug_mode );
+	ja.run();
+
+	if( debug_mode )
+	{
+		// run until "Q" from stdin
 		int input = 0;
 		do{
 			std::cout << "Press <Q> <Enter> to quit." << std::endl;
 			input = std::cin.get();
 			std::cout << "Oh, I got a '" << input << "'. \n";
 		}while(input != 'q' && input != 'Q');
-		
-		ja.shutdown(nullptr);
-		std::cout << "Good bye. :-)" << std::endl;
 	}else{
-	
-		
-	
+		do{
+			sleep(3);
+		}while(ja.running());
 	}
+	ja.shutdown(nullptr);
+	ja.Log() << "Good bye. :-)" << std::endl;
 }
 catch (std::exception const &e)
 {

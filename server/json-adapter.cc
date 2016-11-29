@@ -80,7 +80,8 @@ const std::string server_version =
 //	"(15) Dreieck Heumar";   // PEP_SESSIONs are now handled internally, so the adapter's users don't have to care about anymore. :-)
 //	"(16) Kreuz Köln Ost";   // mime_encode_message(), mime_decode_message(), blob_t are base64-encoded.
 //	"(17) Köln Mehrheim";    // MIME_encrypt_message() and MIME_decrypt_message() instead, because the other two were internal functions
-	"(18) Refrath";          // add trust_personal_key(), key_mistrusted(), key_reset_trust()
+//	"(18) Refrath";          // add trust_personal_key(), key_mistrusted(), key_reset_trust()
+	"(19) Bensberg";         // command-line parameters, daemonize(), silent all output in daemon mode
 
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
@@ -830,3 +831,8 @@ std::ostream& JsonAdapter::Log() const
 	return i->Log;
 }
 
+
+bool JsonAdapter::running() const
+{
+	return i->running;
+}
