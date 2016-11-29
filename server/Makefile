@@ -30,6 +30,7 @@ libjson-adapter.a: json-adapter.o registry.o nfc.o json_rpc.o \
     security-token.o \
     nfc_sets.o base64.o \
     nulllogger.o \
+    daemonize.o \
     json_spirit/json_spirit_reader.o json_spirit/json_spirit_value.o json_spirit/json_spirit_writer.o 
 	ar rcs $@ $^
 
