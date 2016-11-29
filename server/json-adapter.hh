@@ -9,8 +9,9 @@ class JsonAdapter : public Context
 {
 public:
 	// creates an instance of the JSON adapter. It tries to bind the first available port in the given range
+	// if chatty==true there is some debug output on stderr, if chatty==false the server is silent.
 	// throws std::runtime_error if no port cannot be bound.
-	JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port);
+	JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool chatty);
 	
 	// calls abort() on the instance if it is still running().
 	virtual ~JsonAdapter();
@@ -52,12 +53,15 @@ public:
 
 	static PEP_STATUS messageToSend(void* obj, message* msg);
 	static PEP_STATUS showHandshake(void* obj, pEp_identity* self, pEp_identity* partner);
-    static int injectSyncMsg(void* obj, void *msg);
-    static void *retrieveNextSyncMsg(void* obj);
-    static void *syncThreadRoutine(void *arg);
-
-    void startSync(void);
-    void stopSync(void);
+	static int injectSyncMsg(void* obj, void* msg);
+	static void *retrieveNextSyncMsg(void* obj);
+	static void *syncThreadRoutine(void* arg);
+	
+	void startSync(void);
+	void stopSync(void);
+	
+	// returns the associated log stream (either std::cerr or nulllogger)
+	std::ostream& Log() const;
 
 private:
 	struct Internal;
