@@ -13,7 +13,7 @@ endif
 else
 
 CXXFLAGS = -I$(HOME)/include -I$(HOME)/local/include/ -Ijson_spirit
-LDFLAGS  = -L$(HOME)/lib -L$(HOME)/local/lib -lpthread -levent -lpEpEngine -luuid -lgpgme-pthread -letpan -lboost_system -lboost_filesystem
+LDFLAGS  = -L$(HOME)/lib -L$(HOME)/local/lib -lpthread -levent -lpEpEngine -luuid -lgpgme-pthread -letpan -lboost_system -lboost_filesystem -lboost_program_options
 
 endif
 
@@ -29,6 +29,7 @@ libjson-adapter.a: json-adapter.o registry.o nfc.o json_rpc.o \
     function_map.o pep-types.o \
     security-token.o \
     nfc_sets.o base64.o \
+    nulllogger.o \
     json_spirit/json_spirit_reader.o json_spirit/json_spirit_value.o json_spirit/json_spirit_writer.o 
 	ar rcs $@ $^
 
