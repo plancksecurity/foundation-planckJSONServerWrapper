@@ -102,7 +102,6 @@ PEP_STATUS get_gpg_path(const char** path)
 }
 
 
-
 PEP_STATUS registerEventListener(Context* ctx, std::string address, unsigned port, std::string securityContext)
 {
 	JsonAdapter* ja = dynamic_cast<JsonAdapter*>(ctx);
@@ -115,6 +114,7 @@ PEP_STATUS registerEventListener(Context* ctx, std::string address, unsigned por
 	return PEP_STATUS_OK;
 }
 
+
 PEP_STATUS unregisterEventListener(Context* ctx, std::string address, unsigned port, std::string securityContext)
 {
 	JsonAdapter* ja = dynamic_cast<JsonAdapter*>(ctx);
@@ -126,7 +126,6 @@ PEP_STATUS unregisterEventListener(Context* ctx, std::string address, unsigned p
 	ja->unregisterEventListener(address, port, securityContext);
 	return PEP_STATUS_OK;
 }
-
 
 
 // these are the pEp functions that are callable by the client
@@ -452,8 +451,8 @@ struct JsonAdapter::Internal
 	ThreadPool  threads;
 	
 	// Sync
-	locked_queue< sync_msg_t* >* sync_queue = nullptr;
-	PEP_SESSION sync_session;
+	locked_queue< sync_msg_t* >  sync_queue;
+	PEP_SESSION sync_session = nullptr;
 	pthread_t sync_thread;
 	
 	Internal(std::ostream& logger) : Log(logger) {}
@@ -478,24 +477,29 @@ struct JsonAdapter::Internal
 		
 		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
 	}
-
-	PEP_STATUS messageToSend(message* msg)
+	
+	PEP_STATUS makeAndDeliverRequest(const char* function_name, const js::Array& params)
 	{
-		js::Value js_msg = to_json(msg);
-		js::Array param;
-		param.push_back( std::move(js_msg) );
-		
 		PEP_STATUS status = PEP_STATUS_OK;
-		
 		for(auto& e : eventListener)
 		{
-			js::Object request = make_request( "messageToSend", param, e.second.securityContext );
+			js::Object request = make_request( function_name, params, e.second.securityContext );
 			const PEP_STATUS s2 = deliverRequest( e, request );
 			if(s2!=PEP_STATUS_OK)
 			{
 				status = s2;
 			}
 		}
+		return status;
+	}
+	
+	PEP_STATUS messageToSend(message* msg)
+	{
+		js::Value js_msg = to_json(msg);
+		js::Array param;
+		param.push_back( std::move(js_msg) );
+		
+		PEP_STATUS status = makeAndDeliverRequest("messageToSend", param);
 		
 		free_message(msg);
 		return status;
@@ -503,22 +507,11 @@ struct JsonAdapter::Internal
 	
 	PEP_STATUS showHandshake(pEp_identity* self, pEp_identity* partner)
 	{
-		// TODO: eliminate redundancy to messageToSend() above
 		js::Array param;
 		param.emplace_back( to_json(self) );
 		param.emplace_back( to_json(partner) );
 		
-		PEP_STATUS status = PEP_STATUS_OK;
-		
-		for(auto& e : eventListener)
-		{
-			js::Object request = make_request( "showHandshake", param, e.second.securityContext );
-			const PEP_STATUS s2 = deliverRequest( e, request );
-			if(s2!=PEP_STATUS_OK)
-			{
-				status = s2;
-			}
-		}
+		PEP_STATUS status = makeAndDeliverRequest("showHandshake", param);
 		
 		free_identity(self);
 		free_identity(partner);
@@ -528,18 +521,18 @@ struct JsonAdapter::Internal
 	
 	int injectSyncMsg(void* msg)
 	{
-		sync_queue->push_back((sync_msg_t*)msg);
+		sync_queue.push_back((sync_msg_t*)msg);
 		return 0;
 	}
 	
 	void* retrieveNextSyncMsg()
 	{
-		while (!sync_queue->size())
+		while (sync_queue.empty())
 		// TODO: add blocking dequeue 
 			usleep(100000);
 		
-		void* msg = sync_queue->front();
-		sync_queue->pop_front();
+		void* msg = sync_queue.front();
+		sync_queue.pop_front();
 		return msg;
 	}
 	
@@ -547,10 +540,10 @@ struct JsonAdapter::Internal
 	{
 		PEP_STATUS status = do_sync_protocol(sync_session, arg);
 		
-		while (sync_queue->size())
+		while (sync_queue.size())
 		{
-			sync_msg_t* msg = sync_queue->front();
-			sync_queue->pop_front();
+			sync_msg_t* msg = sync_queue.front();
+			sync_queue.pop_front();
 			free_sync_msg(msg);
 		}
 		
@@ -602,7 +595,7 @@ void JsonAdapter::startSync()
 		throw std::runtime_error("Cannot create sync session! status: " + status_to_string(status));
 	}
 	
-	i->sync_queue = new locked_queue< sync_msg_t* >();
+	i->sync_queue.clear();
 	
 	status = register_sync_callbacks(i->sync_session,
 	                                 (void*) this,
@@ -620,12 +613,11 @@ void JsonAdapter::startSync()
 
 void JsonAdapter::stopSync()
 {
-	i->sync_queue->push_front(NULL);
+	i->sync_queue.push_front(NULL);
 	pthread_join(i->sync_thread, NULL);
 	
 	unregister_sync_callbacks(i->sync_session);
-	delete i->sync_queue;
-	i->sync_queue = nullptr;
+	i->sync_queue.clear();
 	
 	release(i->sync_session);
 }
