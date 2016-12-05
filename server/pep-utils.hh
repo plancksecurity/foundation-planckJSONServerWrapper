@@ -64,6 +64,11 @@ namespace pEp {
                 lock_guard<mutex> lg(_mtx);
                 return _q.front();
             }
+            void clear()
+            {
+                lock_guard<mutex> lg(_mtx);
+                _q.clear();
+            }
             void pop_back()
             {
                 lock_guard<mutex> lg(_mtx);
@@ -88,6 +93,11 @@ namespace pEp {
             {
                 lock_guard<mutex> lg(_mtx);
                 return _q.size();
+            }
+            bool empty()
+            {
+                lock_guard<mutex> lg(_mtx);
+                return _q.empty();
             }
         };
     }
