@@ -47,7 +47,7 @@ struct In
 	
 	js::Value to_json() const
 	{
-		throw std::logic_error( std::string(typeid(T).name()) + " is not for output!" );
+		return ::to_json<T>(value);
 	}
 	
 	T value;

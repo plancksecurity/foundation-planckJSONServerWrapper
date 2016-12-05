@@ -493,30 +493,22 @@ struct JsonAdapter::Internal
 		return status;
 	}
 	
-	PEP_STATUS messageToSend(message* msg)
+	
+	static void addToArray(js::Array&) { /* do nothing */ }
+	
+	template<class T, class... Rest>
+	static void addToArray(js::Array& a, const In<T>& in, Rest&&... rest)
 	{
-		js::Value js_msg = to_json(msg);
-		js::Array param;
-		param.push_back( std::move(js_msg) );
-		
-		PEP_STATUS status = makeAndDeliverRequest("messageToSend", param);
-		
-		free_message(msg);
-		return status;
+		a.push_back( in.to_json() );
+		addToArray( a, rest... );
 	}
 	
-	PEP_STATUS showHandshake(pEp_identity* self, pEp_identity* partner)
+	template<class... Params>
+	PEP_STATUS makeAndDeliverRequest2(const char* msg_name, Params&&... params)
 	{
 		js::Array param;
-		param.emplace_back( to_json(self) );
-		param.emplace_back( to_json(partner) );
-		
-		PEP_STATUS status = makeAndDeliverRequest("showHandshake", param);
-		
-		free_identity(self);
-		free_identity(partner);
-		
-		return status;
+		addToArray( param, params...);
+		return makeAndDeliverRequest(msg_name, param);
 	}
 	
 	int injectSyncMsg(void* msg)
@@ -555,14 +547,14 @@ struct JsonAdapter::Internal
 PEP_STATUS JsonAdapter::messageToSend(void* obj, message* msg)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja->i->messageToSend(msg);
+	return ja->i->makeAndDeliverRequest2("messageToSend", In<message*>(msg) );
 }
 
 
 PEP_STATUS JsonAdapter::showHandshake(void* obj, pEp_identity* self, pEp_identity* partner)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja->i->showHandshake(self, partner);
+	return ja->i->makeAndDeliverRequest2("showHandshake", In<pEp_identity*>(self), In<pEp_identity*>(partner) );
 }
 
 
