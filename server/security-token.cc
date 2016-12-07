@@ -1,4 +1,4 @@
-#include "security-token.hh"
+#incalude "security-token.hh"
 #include "json_spirit/json_spirit_value.h"
 #include "json_spirit/json_spirit_writer.h"
 #include <random>
@@ -10,6 +10,7 @@
 #include <sys/types.h> // for creat()
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h> // for unlink()
 
 namespace
 {
@@ -75,3 +76,9 @@ std::string create_security_token(const std::string& server_address, unsigned po
 	return sec_token;
 }
 
+
+void remove_token_file()
+{
+	const std::string filename = get_token_filename();
+	unlink(filename.c_str());
+}
