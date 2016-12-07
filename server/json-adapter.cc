@@ -406,13 +406,13 @@ unsigned JsonAdapter::apiVersion()
 }
 
 
-auto ThreadDeleter = [](std::thread *t)
+auto ThreadDeleter = [](std::thread* t)
 {
 	const auto id = t->get_id();
 	const auto q = session_registry.find( id );
 	if(q != session_registry.end())
 	{
-        detach_sync_session(q->second);
+		detach_sync_session(q->second);
 		release(q->second);
 		session_registry.erase( q );
 	}
@@ -453,7 +453,7 @@ struct JsonAdapter::Internal
 	// Sync
 	locked_queue< sync_msg_t* >  sync_queue;
 	PEP_SESSION sync_session = nullptr;
-	pthread_t sync_thread;
+	ThreadPtr   sync_thread{nullptr, ThreadDeleter};
 	
 	Internal(std::ostream& logger) : Log(logger) {}
 	
@@ -598,15 +598,14 @@ void JsonAdapter::startSync()
 	if (status != PEP_STATUS_OK)
 		throw std::runtime_error("Cannot register sync callbacks! status: " + status_to_string(status));
 	
-	if(pthread_create(&i->sync_thread, NULL, JsonAdapter::syncThreadRoutine, (void*) this) != 0)
-		throw std::runtime_error("Cannot create sync session thread !");
+	i->sync_thread.reset( new std::thread( JsonAdapter::syncThreadRoutine, (void*)this ) );
 }
 
 
 void JsonAdapter::stopSync()
 {
 	i->sync_queue.push_front(NULL);
-	pthread_join(i->sync_thread, NULL);
+	i->sync_thread->join();
 	
 	unregister_sync_callbacks(i->sync_session);
 	i->sync_queue.clear();
