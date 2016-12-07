@@ -81,7 +81,8 @@ const std::string server_version =
 //	"(16) Kreuz Köln Ost";   // mime_encode_message(), mime_decode_message(), blob_t are base64-encoded.
 //	"(17) Köln Mehrheim";    // MIME_encrypt_message() and MIME_decrypt_message() instead, because the other two were internal functions
 //	"(18) Refrath";          // add trust_personal_key(), key_mistrusted(), key_reset_trust()
-	"(19) Bensberg";         // command-line parameters, daemonize(), silent all output in daemon mode
+//	"(19) Bensberg";         // command-line parameters, daemonize(), silent all output in daemon mode
+	"(20) Moitzfeld";        // showHandshake() -> notifyHandshake() and other Engine's API changes
 
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
@@ -517,7 +518,7 @@ struct JsonAdapter::Internal
 		return 0;
 	}
 	
-	void* retrieveNextSyncMsg()
+	void* retrieveNextSyncMsg(time_t* timeout)
 	{
 		while (sync_queue.empty())
 		// TODO: add blocking dequeue 
@@ -551,10 +552,10 @@ PEP_STATUS JsonAdapter::messageToSend(void* obj, message* msg)
 }
 
 
-PEP_STATUS JsonAdapter::showHandshake(void* obj, pEp_identity* self, pEp_identity* partner)
+PEP_STATUS JsonAdapter::notifyHandshake(void* obj, pEp_identity* self, pEp_identity* partner, sync_handshake_signal sig)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja->i->makeAndDeliverRequest2("showHandshake", In<pEp_identity*>(self), In<pEp_identity*>(partner) );
+	return ja->i->makeAndDeliverRequest2("notifyHandshake", In<pEp_identity*>(self), In<pEp_identity*>(partner), In<sync_handshake_signal>(sig) );
 }
 
 
@@ -565,10 +566,10 @@ int JsonAdapter::injectSyncMsg(void* obj, void* msg)
 }
 
 
-void* JsonAdapter::retrieveNextSyncMsg(void* obj)
+void* JsonAdapter::retrieveNextSyncMsg(void* obj, time_t* timeout)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja->i->retrieveNextSyncMsg();
+	return ja->i->retrieveNextSyncMsg(timeout);
 }
 
 
@@ -592,7 +593,7 @@ void JsonAdapter::startSync()
 	status = register_sync_callbacks(i->sync_session,
 	                                 (void*) this,
 	                                 JsonAdapter::messageToSend,
-	                                 JsonAdapter::showHandshake, 
+	                                 JsonAdapter::notifyHandshake,
 	                                 JsonAdapter::injectSyncMsg,
 	                                 JsonAdapter::retrieveNextSyncMsg);
 	if (status != PEP_STATUS_OK)

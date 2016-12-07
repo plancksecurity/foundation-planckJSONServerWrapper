@@ -2,6 +2,7 @@
 #define JSON_ADAPTER_HH
 
 #include <pEp/message.h>
+#include <pEp/sync.h>
 #include "registry.hh"
 #include "context.hh"
 
@@ -52,9 +53,9 @@ public:
 	std::string version();
 
 	static PEP_STATUS messageToSend(void* obj, message* msg);
-	static PEP_STATUS showHandshake(void* obj, pEp_identity* self, pEp_identity* partner);
+	static PEP_STATUS notifyHandshake(void* obj, pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal);
 	static int injectSyncMsg(void* obj, void* msg);
-	static void *retrieveNextSyncMsg(void* obj);
+	static void *retrieveNextSyncMsg(void* obj, time_t* timeout);
 	static void *syncThreadRoutine(void* arg);
 	
 	void startSync(void);

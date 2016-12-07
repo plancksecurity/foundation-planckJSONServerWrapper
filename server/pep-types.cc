@@ -123,6 +123,14 @@ In<PEP_enc_format>::~In()
 	// nothing to do here. :-)
 }
 
+
+template<>
+In<sync_handshake_signal>::~In()
+{
+	// nothing to do here. :-)
+}
+
+
 template<>
 In<sync_handshake_result>::~In()
 {
@@ -565,6 +573,14 @@ template<>
 js::Value to_json<PEP_msg_direction>(const PEP_msg_direction& v)
 {
 	return js::Value( int(v) );
+}
+
+template<>
+js::Value to_json<sync_handshake_signal>(const sync_handshake_signal& s)
+{
+	js::Object o;
+	o.emplace_back( "sync_handshake_signal", int(s) );
+	return o;
 }
 
 template<>
