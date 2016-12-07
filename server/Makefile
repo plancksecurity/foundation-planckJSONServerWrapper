@@ -13,7 +13,7 @@ endif
 else
 
 CXXFLAGS = -I$(HOME)/include -I$(HOME)/local/include/ -Ijson_spirit
-LDFLAGS  = -L$(HOME)/lib -L$(HOME)/local/lib -lpthread -levent -lpEpEngine -luuid -lgpgme-pthread -letpan -lboost_system -lboost_filesystem -lboost_program_options
+LDFLAGS  = -L$(HOME)/lib -L$(HOME)/local/lib -lpthread -levent -lpEpEngine -luuid -lgpgme-pthread -letpan -lboost_system -lboost_filesystem -lboost_program_options -lboost_thread
 
 endif
 

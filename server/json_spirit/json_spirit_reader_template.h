@@ -13,7 +13,7 @@
 #include "json_spirit_value.h"
 #include "json_spirit_error_position.h"
 
-//#define BOOST_SPIRIT_THREADSAFE  // uncomment for multithreaded use, requires linking to boost.thread
+#define BOOST_SPIRIT_THREADSAFE  // uncomment for multithreaded use, requires linking to boost.thread
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -69,7 +69,7 @@ namespace json_spirit
         const Char_type c2( *( ++begin ) );
 
         return ( hex_to_num( c1 ) << 4 ) + hex_to_num( c2 );
-    }       
+    }
 
     template< class Char_type, class Iter_type >
     Char_type unicode_str_to_char( Iter_type& begin )
@@ -91,7 +91,7 @@ namespace json_spirit
                                         typename String_type::const_iterator end )
     {
         typedef typename String_type::value_type Char_type;
-             
+        
         const Char_type c2( *begin );
 
         switch( c2 )
@@ -108,7 +108,7 @@ namespace json_spirit
             {
                 if( end - begin >= 3 )  //  expecting "xHH..."
                 {
-                    s += hex_str_to_char< Char_type >( begin );  
+                    s += hex_str_to_char< Char_type >( begin );
                 }
                 break;
             }
@@ -116,7 +116,7 @@ namespace json_spirit
             {
                 if( end - begin >= 5 )  //  expecting "uHHHH..."
                 {
-                    s += unicode_str_to_char< Char_type >( begin );  
+                    s += unicode_str_to_char< Char_type >( begin );
                 }
                 break;
             }
@@ -125,7 +125,7 @@ namespace json_spirit
 
     template< class String_type >
     String_type substitute_esc_chars( typename String_type::const_iterator begin, 
-                                   typename String_type::const_iterator end )
+                                      typename String_type::const_iterator end )
     {
         typedef typename String_type::const_iterator Iter_type;
 
@@ -147,7 +147,7 @@ namespace json_spirit
                 result.append( substr_start, i );
 
                 ++i;  // skip the '\'
-             
+
                 append_esc_char_and_incr_iter( result, i, end );
 
                 substr_start = i + 1;
@@ -161,7 +161,7 @@ namespace json_spirit
 
     template< class String_type >
     String_type get_str_( typename String_type::const_iterator begin, 
-                       typename String_type::const_iterator end )
+                          typename String_type::const_iterator end )
     {
         assert( end - begin >= 2 );
 
@@ -182,7 +182,7 @@ namespace json_spirit
     {
         return get_str_< std::wstring >( begin, end );
     }
-    
+
     template< class String_type, class Iter_type >
     String_type get_str( Iter_type begin, Iter_type end )
     {
@@ -216,35 +216,30 @@ namespace json_spirit
         void begin_obj( Char_type c )
         {
             assert( c == '{' );
-
             begin_compound< Object_type >();
         }
 
         void end_obj( Char_type c )
         {
             assert( c == '}' );
-
             end_compound();
         }
 
         void begin_array( Char_type c )
         {
             assert( c == '[' );
-     
             begin_compound< Array_type >();
         }
 
         void end_array( Char_type c )
         {
             assert( c == ']' );
-
             end_compound();
         }
 
         void new_name( Iter_type begin, Iter_type end )
         {
             assert( current_p_->type() == obj_type );
-
             name_ = get_str< String_type >( begin, end );
         }
 
@@ -256,21 +251,18 @@ namespace json_spirit
         void new_true( Iter_type begin, Iter_type end )
         {
             assert( is_eq( begin, end, "true" ) );
-
             add_to_current( true );
         }
 
         void new_false( Iter_type begin, Iter_type end )
         {
             assert( is_eq( begin, end, "false" ) );
-
             add_to_current( false );
         }
 
         void new_null( Iter_type begin, Iter_type end )
         {
             assert( is_eq( begin, end, "null" ) );
-
             add_to_current( Value_type() );
         }
 
@@ -384,32 +376,32 @@ namespace json_spirit
 
         static void throw_not_value( Iter_type begin, Iter_type end )
         {
-    	    throw_error( begin, "not a value" );
+            throw_error( begin, "not a value" );
         }
 
         static void throw_not_array( Iter_type begin, Iter_type end )
         {
-    	    throw_error( begin, "not an array" );
+            throw_error( begin, "not an array" );
         }
 
         static void throw_not_object( Iter_type begin, Iter_type end )
         {
-    	    throw_error( begin, "not an object" );
+            throw_error( begin, "not an object" );
         }
 
         static void throw_not_pair( Iter_type begin, Iter_type end )
         {
-    	    throw_error( begin, "not a pair" );
+            throw_error( begin, "not a pair" );
         }
 
         static void throw_not_colon( Iter_type begin, Iter_type end )
         {
-    	    throw_error( begin, "no colon in pair" );
+            throw_error( begin, "no colon in pair" );
         }
 
         static void throw_not_string( Iter_type begin, Iter_type end )
         {
-    	    throw_error( begin, "not a string" );
+            throw_error( begin, "not a string" );
         }
 
         template< typename ScannerT >
