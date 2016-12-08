@@ -452,7 +452,7 @@ struct JsonAdapter::Internal
 	ThreadPool  threads;
 	
 	// Sync
-	locked_queue< sync_msg_t* >  sync_queue;
+	locked_queue< sync_msg_t*, &free_sync_msg>  sync_queue;
 	PEP_SESSION sync_session = nullptr;
 	ThreadPtr   sync_thread{nullptr, ThreadDeleter};
 	
@@ -514,32 +514,27 @@ struct JsonAdapter::Internal
 	
 	int injectSyncMsg(void* msg)
 	{
-		sync_queue.push_back((sync_msg_t*)msg);
+		sync_queue.push_back( static_cast<sync_msg_t*>(msg) );
 		return 0;
 	}
 	
 	void* retrieveNextSyncMsg(time_t* timeout)
 	{
-		while (sync_queue.empty())
-		// TODO: add blocking dequeue 
-			usleep(100000);
-		
-		void* msg = sync_queue.front();
-		sync_queue.pop_front();
+		const std::chrono::milliseconds timeout_ms(1000*long(*timeout)); 
+		sync_msg_t* msg = nullptr;
+		const bool success = sync_queue.try_pop_front(msg, timeout_ms);
+		if(!success)
+		{
+			*timeout = 0;
+			return nullptr;
+		}
 		return msg;
 	}
 	
 	void* syncThreadRoutine(void* arg)
 	{
-		PEP_STATUS status = do_sync_protocol(sync_session, arg);
-		
-		while (sync_queue.size())
-		{
-			sync_msg_t* msg = sync_queue.front();
-			sync_queue.pop_front();
-			free_sync_msg(msg);
-		}
-		
+		PEP_STATUS status = do_sync_protocol(sync_session, arg); // does the whole work
+		sync_queue.clear(); // remove remaining messages
 		return (void*) status;
 	}
 };
