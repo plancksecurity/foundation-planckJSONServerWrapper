@@ -19,10 +19,13 @@ endif
 
 .PHONY: all clear
 
-all: mt-server
+all: mt-server servertest
 
 mt-server: main.o libjson-adapter.a
 	$(CXX) $(CXXFLAGS)  -o $@ $^ ../../pEpEngine/asn.1/libasn1.a  $(LDFLAGS)
+
+servertest: servertest.o 
+	$(CXX) $(CXXFLAGS)  -o $@ $^   $(LDFLAGS)
 
 
 libjson-adapter.a: json-adapter.o registry.o nfc.o json_rpc.o \
@@ -39,7 +42,7 @@ libjson-adapter.a: json-adapter.o registry.o nfc.o json_rpc.o \
 	$(CXX) $(CXXFLAGS) -c $<
 
 clean:
-	rm -vf mt-server
+	rm -vf mt-server servertest
 	rm -vf *.o
 	rm -vf json_spirit/*.o
 	rm -vf *.a
