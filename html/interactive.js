@@ -11,7 +11,7 @@ function genInput(id, size, direction, value, onchange)
 		+ (direction == "Out" ? ' readonly' : '')
 		+ ' value="' + value + '"'
 		+ (onchange != undefined ? ' onChange="' + onchange + '"' : '')
-		+ ' >';
+		+ ' ><input type="checkbox" id="' + id + '_chk" name="' + id + '_chk"> <small>parse esc seq.</small>';
 }
 
 
@@ -134,6 +134,63 @@ var Param2Form =
 					}
 	};
 
+function fromHex(charCode)
+{
+	if(charCode>=48 && charCode<=57)
+		return charCode-48;
+	
+	if(charCode>=65 && charCode<=70)
+		return charCode-65+10;
+	
+	if(charCode>=97 && charCode<=102)
+		return charCode-97+10;
+	
+	return 0;
+}
+
+function de_backslash(input)
+{
+	var ret = "";
+	for(var i=0; i<input.length; ++i)
+	{
+		var c = input.charAt(i);
+		if(c=="\\")
+		{
+			++i;
+			var e = input.charAt(i);
+			switch(e)
+			{
+				case '0' : ret += "\000"; break;
+				case 'a' : ret += "\a"; break;
+				case 'b' : ret += "\b"; break;
+				case 'f' : ret += "\f"; break;
+				case 'n' : ret += "\n"; break;
+				case 'r' : ret += "\r"; break;
+				case 't' : ret += "\t"; break;
+				case 'v' : ret += "\v"; break;
+				case "\\" : ret += "\\"; break;
+				case "\"" : ret += "\""; break;
+				case "?"  : ret += "\177"; break;
+				case 'u' : 
+					{
+						++i;
+						var code = input.charCodeAt(i)*256*256*256
+						         + input.charCodeAt(i+1)*256*256
+						         + input.charCodeAt(i+2)*256
+						         + input.charCodeAt(i+3);
+						i+=4;
+						ret += String.fromCharCode(code);
+						break;
+					}
+			}
+		}else{
+			ret += c;
+		}
+	}
+	
+	return ret;
+}
+
 // fetches the form data and return appropriate JSON object
 var Form2Param =
 	{
@@ -143,7 +200,13 @@ var Form2Param =
 					},
 		String : function(nr, pp, value)
 					{
-						return document.getElementById( 'inp_param_' + nr ).value;
+						var s = document.getElementById( 'inp_param_' + nr ).value
+						if(document.getElementById( 'inp_param_' + nr + '_chk').checked)
+						{
+							return de_backslash(s);
+						}else{
+							return s;
+						}
 					},
 		Integer: function(nr, pp, value)
 					{
