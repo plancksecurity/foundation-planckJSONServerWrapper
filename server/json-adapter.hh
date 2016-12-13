@@ -14,7 +14,7 @@ public:
 	// throws std::runtime_error if no port cannot be bound.
 	JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool chatty);
 	
-	// calls abort() on the instance if it is still running().
+	// calls shutdown() on the instance if it is still running().
 	virtual ~JsonAdapter();
 	
 	// don't allow copies
@@ -32,7 +32,7 @@ public:
 	void shutdown(struct timeval* tv);
 	
 	// exit immediately or after the currently processed event has been finished.
-	void abort();
+	//void abort();
 	
 	// returns "true" after run() was called, until shutdown() or abort() is called.
 	bool running() const;

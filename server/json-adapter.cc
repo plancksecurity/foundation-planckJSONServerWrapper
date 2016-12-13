@@ -418,7 +418,6 @@ auto ThreadDeleter = [](std::thread* t)
 		session_registry.erase( q );
 	}
 	
-	t->join();
 	delete t;
 };
 
@@ -632,7 +631,8 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 
 JsonAdapter::~JsonAdapter()
 {
-    stopSync();
+	stopSync();
+	shutdown(nullptr);
 	delete i;
 }
 
@@ -714,7 +714,7 @@ try_next_port:
 				//event_base_loop(i->eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
 				
 				// for libevent 2.0:
-				event_base_loop(i->eventBase.get(), 0);
+				event_base_loop(i->eventBase.get(), EVLOOP_NONBLOCK);
 				std::this_thread::sleep_for(std::chrono::milliseconds(333));
 				Log() << "\r" << ++numnum << ".   ";
 			}
@@ -745,7 +745,11 @@ try_next_port:
 		}
 		i->threads.push_back(std::move(thread));
 	}
-	Log() << "All " << SrvThreadCount << " thread(s) started.\n";
+	Log() << "All " << SrvThreadCount << " thread(s) started:\n";
+	for(const auto& t:i->threads)
+	{
+		Log() << "\tthread_id()=" << t->get_id() << ".\n";
+	}
 }
 catch (std::exception const &e)
 {
@@ -756,12 +760,21 @@ catch (std::exception const &e)
 
 void JsonAdapter::shutdown(timeval* t)
 {
+	Log() << "JS::shutdown() was called.\n";
 	i->running = false;
 	const int ret = event_base_loopexit(i->eventBase.get(), t);
 	if(ret!=0)
 	{
 		throw std::runtime_error("JsonAdapter::shutdown() failed.");
 	}
+	Log() << "JS::shutdown(): event_base loop is finished.\n";
+	Log() << "\t there are " << i->threads.size() << " threads remaining in the threadpool.\n";
+	for(const auto& t : i->threads)
+	{
+		Log() << "\t\tjoin() on id=" << t->get_id() << "....\n";
+		t->join();
+	}
+	i->threads.clear();
 }
 
 
