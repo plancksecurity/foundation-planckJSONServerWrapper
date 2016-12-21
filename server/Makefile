@@ -35,7 +35,7 @@ libjson-adapter.a: \
     security-token.o \
     nfc_sets.o base64.o \
     nulllogger.o \
-    daemonize.o \
+    daemonize.o
 	ar rcs $@ $^
 
 
