@@ -1,7 +1,7 @@
 BUILD_ON=$(shell uname)
 BUILD_FOR=$(BUILD_ON)
 
-CXX = c++ -std=c++11 -Wall -O3 -g -fstack-protector-all
+CXX = c++ -std=c++11 -Wall -O0 -g -fstack-protector-all
 
 ifeq ($(BUILD_ON),Darwin)
 ifeq ($(BUILD_FOR),Darwin)
@@ -28,13 +28,14 @@ servertest: servertest.o
 	$(CXX) $(CXXFLAGS)  -o $@ $^   $(LDFLAGS)
 
 
-libjson-adapter.a: json-adapter.o registry.o nfc.o json_rpc.o \
+libjson-adapter.a: \
+    json_spirit/json_spirit_reader.o json_spirit/json_spirit_value.o json_spirit/json_spirit_writer.o \
+    json-adapter.o registry.o nfc.o json_rpc.o \
     function_map.o pep-types.o \
     security-token.o \
     nfc_sets.o base64.o \
     nulllogger.o \
     daemonize.o \
-    json_spirit/json_spirit_reader.o json_spirit/json_spirit_value.o json_spirit/json_spirit_writer.o 
 	ar rcs $@ $^
 
 
