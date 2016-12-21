@@ -163,6 +163,7 @@ const FunctionMap functions = {
 		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &get_trust) ),
 		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
+		FP( "own_identities_retrieve", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<identity_list*>>( &own_identities_retrieve ) ),
 		
 		FP( "trust_personal_key", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>>( &trust_personal_key) ),
 		FP( "key_mistrusted",     new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>>( &key_mistrusted) ),
@@ -631,8 +632,16 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 
 JsonAdapter::~JsonAdapter()
 {
+	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered.\n";
 	stopSync();
 	shutdown(nullptr);
+	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered.\n";
+	for(auto& s : session_registry)
+	{
+		release(s.second);
+	}
+	session_registry.clear();
+	
 	delete i;
 }
 
@@ -653,7 +662,7 @@ try
 			if(q==session_registry.end())
 			{
 				PEP_SESSION session = nullptr;
-				PEP_STATUS status = init(&session); // release(status) in ThreadDeleter
+				PEP_STATUS status = init(&session); // release(session) in ThreadDeleter
 				if(status != PEP_STATUS_OK || session==nullptr)
 				{
 					throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
