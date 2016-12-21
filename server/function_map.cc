@@ -209,3 +209,6 @@ js::Value Type2String<unsigned long long>::get()  { return "Integer"; }
 
 template<>
 js::Value Type2String<bool>::get()  { return "Bool"; }
+
+template<>
+js::Value Type2String<void>::get()  { return "Void"; }
