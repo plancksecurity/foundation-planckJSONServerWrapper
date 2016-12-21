@@ -82,7 +82,8 @@ const std::string server_version =
 //	"(17) Köln Mehrheim";    // MIME_encrypt_message() and MIME_decrypt_message() instead, because the other two were internal functions
 //	"(18) Refrath";          // add trust_personal_key(), key_mistrusted(), key_reset_trust()
 //	"(19) Bensberg";         // command-line parameters, daemonize(), silent all output in daemon mode
-	"(20) Moitzfeld";        // showHandshake() -> notifyHandshake() and other Engine's API changes
+//	"(20) Moitzfeld";        // showHandshake() -> notifyHandshake() and other Engine's API changes
+	"(21) Untereschbach";    // JSON-11: replace trustwords() by get_trustwords()
 
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
@@ -145,7 +146,7 @@ const FunctionMap functions = {
 		
 		FP( "—— pEp Engine Core API ——", new Separator),
 		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
-		FP( "trustwords", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, Out<char*>, Out<size_t>, In<int>>( &trustwords) ),
+		FP( "get_trustwords", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const pEp_identity*>, In<const pEp_identity*>, In<const char*>, Out<char*>, Out<size_t>, In<bool>>( &get_trustwords) ),
 		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<char*>>( &get_languagelist) ),
 		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<int>, Out<char*>> ( &get_phrase) ),
 		FP( "get_engine_version", new Func<const char*> ( &get_engine_version) ),

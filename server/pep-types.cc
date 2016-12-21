@@ -97,6 +97,12 @@ In<pEp_identity*>::~In()
 }
 
 template<>
+In<const pEp_identity*>::~In()
+{
+	free_identity(const_cast<pEp_identity*>(value));
+}
+
+template<>
 Out<pEp_identity*>::~Out()
 {
 	if(value)
@@ -251,6 +257,12 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 	ident->flags = from_json_object<unsigned, js::int_type>(o, "flags");
 	
 	return ident;
+}
+
+template<>
+const pEp_identity* from_json<const pEp_identity*>(const js::Value& v)
+{
+	return from_json<const pEp_identity*>(v);
 }
 
 
@@ -613,6 +625,8 @@ js::Value Type2String<const timestamp*>::get()  { return "Timestamp"; }
 
 template<>
 js::Value Type2String<pEp_identity*>::get()  { return "Identity"; }
+template<>
+js::Value Type2String<const pEp_identity*>::get()  { return "Identity"; }
 
 template<>
 js::Value Type2String<identity_list*>::get()  { return "IdentityList"; }
