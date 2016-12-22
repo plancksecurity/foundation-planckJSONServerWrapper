@@ -162,7 +162,7 @@ const FunctionMap functions = {
 		FP( "mark_as_comprimized", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &mark_as_compromized) ),
 		FP( "identity_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "outgoing_message_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, Out<PEP_rating>>( &outgoing_message_rating) ),
-		
+		FP( "set_identity_flags", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, In<identity_flags_t>>( &set_identity_flags) ),
 		
 		FP( "—— Low level Key Management API ——", new Separator),
 		FP( "generate_keypair", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &generate_keypair) ),
