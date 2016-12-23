@@ -152,6 +152,13 @@ Out<stringlist_t*>::~Out()
 	delete value;
 }
 
+template<>
+Out<stringpair_list_t*>::~Out()
+{
+	if(value) free_stringpair_list(*value);
+	delete value;
+}
+
 
 template<>
 Out<_message*>::~Out()
@@ -635,6 +642,9 @@ template<>
 js::Value Type2String<_stringlist_t*>::get()  { return "StringList"; }
 
 template<>
+js::Value Type2String<stringpair_list_t*>::get()  { return "StringPairList"; }
+
+template<>
 js::Value Type2String<_PEP_rating>::get()  { return "PEP_rating"; }
 
 template<>
@@ -648,4 +658,5 @@ js::Value Type2String<_PEP_comm_type>::get()  { return "PEP_comm_type"; }
 
 template<>
 js::Value Type2String<PEP_STATUS>::get()  { return "PEP_STATUS"; }
+
 
