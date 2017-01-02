@@ -1,5 +1,14 @@
 #include "daemonize.hh"
 
+#ifdef _WIN32
+
+	void daemonize()
+	{
+		// do nothing
+	}
+
+#else
+
 // Unix/Linux implementation
 #include <cstdlib>
 #include <unistd.h>
@@ -49,3 +58,5 @@ void daemonize()
 		}
 	}
 }
+
+#endif // ! _WIN32

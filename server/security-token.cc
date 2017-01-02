@@ -38,6 +38,12 @@ namespace
 namespace js = json_spirit;
 
 // platform dependent:
+#ifdef _WIN32
+
+	#error "Please implement get_token_filename() for Win32"
+
+#else
+// version for POSIX-compliant systems:
 std::string get_token_filename()
 {
 	const char* const temp_dir = getenv("TEMP");
@@ -46,6 +52,8 @@ std::string get_token_filename()
 	const std::string ret = std::string(temp_dir ? temp_dir : "/tmp") + "/pEp-json-token-" + std::string( user_name ? user_name : "XXX" ); 
 	return ret;
 }
+
+#endif // ! _WIN32
 
 // creates a file with restrictive access rights that contains a security token.
 std::string create_security_token(const std::string& server_address, unsigned port_nr, const std::string& path)
