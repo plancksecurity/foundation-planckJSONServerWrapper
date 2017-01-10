@@ -204,7 +204,7 @@ const FunctionMap functions = {
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),
 		FP( "version",     new Func<std::string>( &JsonAdapter::version ) ),
-		FP( "apiVversion", new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
+		FP( "apiVersion", new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
 	};
 
 
