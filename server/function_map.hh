@@ -50,6 +50,8 @@ struct In
 		return ::to_json<T>(value);
 	}
 	
+	c_type get_value() const { return value; }
+	
 	T value;
 };
 
@@ -77,6 +79,8 @@ struct InRaw
 	{
 		throw std::logic_error( std::string(typeid(T).name()) + " is not for output!" );
 	}
+	
+	c_type get_value() const { return value; }
 	
 	js::Value value;
 };
@@ -138,6 +142,8 @@ struct Out
 		return ::to_json<T>(*value);
 	}
 	
+	c_type get_value() const { return value; }
+	
 	T* value = nullptr;
 	
 	friend
@@ -198,7 +204,7 @@ public:
 
 	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
-		return to_json( fn(args.value...) );
+		return to_json( fn(args.get_value()...) );
 	}
 };
 
@@ -218,7 +224,7 @@ public:
 
 	static js::Value call( const std::function<void(typename Args::c_type...)>& fn, Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
-		fn(args.value...);
+		fn(args.get_value()...);
 		return js::Value{};
 	}
 };

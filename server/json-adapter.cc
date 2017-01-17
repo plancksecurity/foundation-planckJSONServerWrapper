@@ -86,7 +86,8 @@ const std::string server_version =
 //	"(19) Bensberg";         // command-line parameters, daemonize(), silent all output in daemon mode
 //	"(20) Moitzfeld";        // showHandshake() -> notifyHandshake() and other Engine's API changes
 //	"(21) Untereschbach";    // JSON-11: replace trustwords() by get_trustwords()
-	"(22) Overath";          // add blacklist_retrieve(), rename identity_color() and outgoing_message_color() into ..._rating().
+//	"(22) Overath";          // add blacklist_retrieve(), rename identity_color() and outgoing_message_color() into ..._rating().
+	"(23) Engelskirchen";    // fix JSON-19. Support "Bool" and "Language" as separate data types in JavaScript.
 
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
@@ -150,9 +151,9 @@ const FunctionMap functions = {
 		
 		FP( "—— pEp Engine Core API ——", new Separator),
 		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
-		FP( "get_trustwords", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const pEp_identity*>, In<const pEp_identity*>, In<const char*>, Out<char*>, Out<size_t>, In<bool>>( &get_trustwords) ),
+		FP( "get_trustwords", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const pEp_identity*>, In<const pEp_identity*>, In<Language>, Out<char*>, Out<size_t>, In<bool>>( &get_trustwords) ),
 		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<char*>>( &get_languagelist) ),
-		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<int>, Out<char*>> ( &get_phrase) ),
+		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<Language>, In<int>, Out<char*>> ( &get_phrase) ),
 		FP( "get_engine_version", new Func<const char*> ( &get_engine_version) ),
 		FP( "config_passive_mode", new Func<void, In<PEP_SESSION,false>, In<bool>>( &config_passive_mode) ),
 		FP( "config_unencrypted_subject", new Func<void, In<PEP_SESSION,false>, In<bool>>( &config_unencrypted_subject) ),

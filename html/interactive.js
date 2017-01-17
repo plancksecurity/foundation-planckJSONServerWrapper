@@ -101,7 +101,26 @@ var Param2Form =
 							return 'Bool: <input type="checkbox" id="inp_param_' + nr + '" value="' + value + '" >';
 						}
 					},
-		
+		Language : function(nr, pp, value)
+					{
+						if(pp.direction=="Out")
+						{
+							return 'Language output';
+						}else{
+							return '<label>Language: <select id="inp_param_' + nr + '" size="1">'
+							/* TODO: generate that list dynamically via get_languagelist() */
+									+ '<option value="ca">Català</option>'
+									+ '<option value="de">Deutsch</option>'
+									+ '<option value="en">English</option>'
+									+ '<option value="es">Español</option>'
+									+ '<option value="fr">Français</option>'
+									+ '<option value="tr">Türkçe</option>'
+									+ '<option value="ru">Русский</option>'// russian - no trustwords, yet
+									+ '<option value="zh">中文</option>'   // chinese - no trustwords, yet
+								+ '</select></label>';
+						}
+						
+					},
 		StringList : function(nr, pp, value)
 					{
 						if(pp.direction=="Out")
@@ -245,6 +264,10 @@ var Form2Param =
 		Bool: function(nr, pp, value)
 					{
 						return document.getElementById( 'inp_param_' + nr ).checked;
+					},
+		Language: function(nr, pp, value)
+					{
+						return document.getElementById( 'inp_param_' + nr ).value;
 					},
 		StringList : function(nr, pp, value)
 					{

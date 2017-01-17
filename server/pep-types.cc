@@ -43,7 +43,8 @@ namespace
 			obj.emplace_back( key, js::Value( base64_encode( raw_string ) ) );
 		}
 	}
-}
+
+} // end of anonymous namespace
 
 
 // in pEpEngine.h positive values are hex, negative are decimal. :-o
@@ -659,4 +660,5 @@ js::Value Type2String<_PEP_comm_type>::get()  { return "PEP_comm_type"; }
 template<>
 js::Value Type2String<PEP_STATUS>::get()  { return "PEP_STATUS"; }
 
-
+template<>
+js::Value Type2String<Language>::get()  { return "Language"; }
