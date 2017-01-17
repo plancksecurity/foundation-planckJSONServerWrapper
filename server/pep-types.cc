@@ -269,7 +269,7 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 template<>
 const pEp_identity* from_json<const pEp_identity*>(const js::Value& v)
 {
-	return from_json<const pEp_identity*>(v);
+	return from_json<pEp_identity*>(v);
 }
 
 
