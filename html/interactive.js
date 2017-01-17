@@ -5,13 +5,24 @@ var func_params = [];
 
 var OutputParam = ["OP"];
 
-function genInput(id, size, direction, value, onchange)
+function genInput(id, type, direction, value, onchange)
 {
-	return '<input type="text" size="' + size + '" id="' + id + '"'
+	var size=25;
+	var aux='';
+	
+	switch(type)
+	{
+		case 'text' : size=30; aux='<input type="checkbox" id="' + id + '_chk" name="' + id + '_chk"> <small>parse esc seq.</small>';
+			break;
+		case 'number' : size=20;
+			break;
+	}
+	
+	return '<input type="text" type="' + type + '" id="' + id + '"'
 		+ (direction == "Out" ? ' readonly' : '')
 		+ ' value="' + value + '"'
 		+ (onchange != undefined ? ' onChange="' + onchange + '"' : '')
-		+ ' ><input type="checkbox" id="' + id + '_chk" name="' + id + '_chk"> <small>parse esc seq.</small>';
+		+ ' >' + aux;
 }
 
 
@@ -65,11 +76,30 @@ var Param2Form =
 					},
 		String : function(nr, pp, value)
 					{
-						return genInput('inp_param_' + nr , 25, pp.direction, value);
+						if(pp.direction=="Out")
+						{
+							return 'String output';
+						}else{
+							return genInput('inp_param_' + nr , 'text', pp.direction, value);
+						}
 					},
 		Integer : function(nr, pp, value)
 					{
-						return genInput('inp_param_' + nr , 25, pp.direction, value);
+						if(pp.direction=="Out")
+						{
+							return 'Integer output';
+						}else{
+							return genInput('inp_param_' + nr , 'number', pp.direction, value);
+						}
+					},
+		Bool : function(nr, pp, value)
+					{
+						if(pp.direction=="Out")
+						{
+							return 'Bool output';
+						}else{
+							return 'Bool: <input type="checkbox" id="inp_param_' + nr + '" value="' + value + '" >';
+						}
 					},
 		
 		StringList : function(nr, pp, value)
@@ -211,6 +241,10 @@ var Form2Param =
 		Integer: function(nr, pp, value)
 					{
 						return parseInt( document.getElementById( 'inp_param_' + nr ).value );
+					},
+		Bool: function(nr, pp, value)
+					{
+						return document.getElementById( 'inp_param_' + nr ).checked;
 					},
 		StringList : function(nr, pp, value)
 					{
