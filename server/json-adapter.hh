@@ -54,7 +54,9 @@ public:
 
 	static PEP_STATUS messageToSend(void* obj, message* msg);
 	static PEP_STATUS notifyHandshake(void* obj, pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal);
-	static int injectSyncMsg(void* obj, void* msg);
+
+	// BEWARE: msg is 1st parameter, obj is second!!!
+	static int injectSyncMsg(void* msg void* obj);
 	static void *retrieveNextSyncMsg(void* obj, time_t* timeout);
 	static void *syncThreadRoutine(void* arg);
 	

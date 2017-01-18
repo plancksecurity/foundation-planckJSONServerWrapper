@@ -578,7 +578,8 @@ PEP_STATUS JsonAdapter::notifyHandshake(void* obj, pEp_identity* self, pEp_ident
 }
 
 
-int JsonAdapter::injectSyncMsg(void* obj, void* msg)
+// BEWARE: msg is 1st parameter, obj is second!!!
+int JsonAdapter::injectSyncMsg(void* msg, void* obj)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	return ja->i->injectSyncMsg(msg);
