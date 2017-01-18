@@ -32,6 +32,7 @@ libjson-adapter.a: \
     json_spirit/json_spirit_reader.o json_spirit/json_spirit_value.o json_spirit/json_spirit_writer.o \
     json-adapter.o registry.o nfc.o json_rpc.o \
     function_map.o pep-types.o \
+    gpg_environment.o \
     security-token.o \
     nfc_sets.o base64.o \
     nulllogger.o \

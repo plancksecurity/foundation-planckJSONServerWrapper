@@ -20,6 +20,7 @@
 #include "nulllogger.hh"
 #include "security-token.hh"
 #include "pep-utils.hh"
+#include "gpg_environment.hh"
 
 #include <pEp/message_api.h>
 #include <pEp/blacklist.h>
@@ -205,7 +206,8 @@ const FunctionMap functions = {
 		// my own example function that does something useful. :-)
 		FP( "—— Other ——", new Separator ),
 		FP( "version",     new Func<std::string>( &JsonAdapter::version ) ),
-		FP( "apiVersion", new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
+		FP( "apiVersion",  new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
+		FP( "getGpgEnvironment", new Func<GpgEnvironment>( &getGpgEnvironment ) ),
 	};
 
 
