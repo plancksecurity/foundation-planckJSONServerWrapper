@@ -22,7 +22,7 @@ GpgEnvironment getGpgEnvironment()
 	}
 
 	const char* ai = std::getenv("GPG_AGENT_INFO");
-	if(home)
+	if(ai)
 	{
 		ge.gpg_agent_info = std::string(ai);
 	}
