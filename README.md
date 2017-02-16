@@ -30,12 +30,18 @@ Maybe Debian Jessie's version 2.0 also works well, I never tried.
  3. Running
 ============
 
-* run ./mt-server
+* run ./pep-json-server
 
-* visit http://127.0.0.1:4223/ in your javascript-enabled web browser to see
+* it creates a file, readable only by the current user,
+    /tmp/pEp-json-token-${USER}
+  that contains the address and port the JSON adapter is listening on, normally 127.0.0.1:4223
+  and a "security-token" that must be given in each function call to authenticate you as the valid user.
+
+* visit that address (normally http://127.0.0.1:4223/) in your javascript-enabled web browser to see
   the test JavaScript client
 
-* call some functions ("version()" or "get_gpg_path()" should work just fine)
+* call some functions ("version()" or "get_gpg_path()" should work just fine),
+  Don't forget to call them with the right security token!
 
 
  4. Extending / Customizing
@@ -64,6 +70,10 @@ Maybe Debian Jessie's version 2.0 also works well, I never tried.
 
  5. TODO
 =========
+
+* Windows build:
+   * implement get_token_filename() for MS Windows (security-token.cc line 43
+   * do the windows-specific stuff to build the software on Windows
 
 * Add unit tests (I'd suggest GoogleTest/gtest? Any complaints?)
 
