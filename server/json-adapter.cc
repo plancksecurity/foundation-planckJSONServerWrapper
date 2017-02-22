@@ -88,7 +88,8 @@ const std::string server_version =
 //	"(20) Moitzfeld";        // showHandshake() -> notifyHandshake() and other Engine's API changes
 //	"(21) Untereschbach";    // JSON-11: replace trustwords() by get_trustwords()
 //	"(22) Overath";          // add blacklist_retrieve(), rename identity_color() and outgoing_message_color() into ..._rating().
-	"(23) Engelskirchen";    // fix JSON-19. Support "Bool" and "Language" as separate data types in JavaScript.
+//	"(23) Engelskirchen";    // fix JSON-19. Support "Bool" and "Language" as separate data types in JavaScript.
+	"(24) Bielstein";        // add MIME_encrypt_message_ex() and MIME_decrypt_message_ex() as a HACK.
 
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
@@ -135,13 +136,52 @@ PEP_STATUS unregisterEventListener(Context* ctx, std::string address, unsigned p
 }
 
 
+// HACK: because "auto sessions" are per TCP connections, add a parameter to set passive_mode each time again
+PEP_STATUS MIME_encrypt_message_ex(
+    PEP_SESSION session,
+    const char *mimetext,
+    size_t size,
+    stringlist_t* extra,
+    bool passive_mode,   // <-- guess what
+    char** mime_ciphertext,
+    PEP_enc_format enc_format,
+    PEP_encrypt_flags_t flags
+)
+{
+	config_passive_mode(session, passive_mode);
+	return MIME_encrypt_message(session, mimetext, size, extra, mime_ciphertext, enc_format, flags);
+}
+
+PEP_STATUS MIME_decrypt_message_ex(
+    PEP_SESSION session,
+    const char *mimetext,
+    size_t size,
+    bool passive_mode, // <-- guess what
+    char** mime_plaintext,
+    stringlist_t **keylist,
+    PEP_rating *rating,
+    PEP_decrypt_flags_t *flags
+)
+{
+	config_passive_mode(session, passive_mode);
+	return MIME_decrypt_message(session, mimetext, size, mime_plaintext, keylist, rating, flags);
+}
+
+
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 		// from message_api.h
 		FP( "—— Message API ——", new Separator ),
-		FP( "MIME_encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>, In<stringlist_t*>, Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message ) ),
-		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>, 
+		FP( "MIME_encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>, In<stringlist_t*>,
+			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message ) ),
+		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>,
 			Out<char*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>( &MIME_decrypt_message ) ),
+		
+		// HACK: because "auto sessions" are per TCP connections, add a parameter to set passive_mode each time again
+		FP( "MIME_encrypt_message_ex", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>, In<stringlist_t*>, In<bool>,
+			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message_ex ) ),
+		FP( "MIME_decrypt_message_ex", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>, In<bool>,
+			Out<char*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>( &MIME_decrypt_message_ex ) ),
 		
 		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
 		FP( "encrypt_message_for_self", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<pEp_identity*>, In<message*>, Out<message*>, In<PEP_enc_format>>( &encrypt_message_for_self ) ),
