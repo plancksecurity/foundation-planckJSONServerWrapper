@@ -554,7 +554,7 @@ template<>
 js::Value to_json<PEP_rating>(const PEP_rating& rating)
 {
 	js::Object o;
-	o.emplace_back( "color", int(rating) );
+	o.emplace_back( "rating", int(rating) );
 	return o;
 }
 
