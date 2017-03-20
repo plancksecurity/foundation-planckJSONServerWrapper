@@ -1,45 +1,59 @@
-# Notes for OS X
+# Building for OS X/macOS
+Please see also README.md, these are only OS X specific instructions. Especially note the remarks on running the server.
 
-Please see also the README.md, these are only OS X specific instructions.
-You'll need some special environment to run the server, see "Running the server".
-
-# Building libevent on OS X
-
-## MacPorts
-
-Install [MacPorts](https://www.macports.org/) for your
-[version of OS X/macOS](https://www.macports.org/install.php).
-
-Note that you need [Xcode installed](https://www.macports.org/install.php)
-for MacPorts, and for building the engine. You also need to accept Xcode's EULA.
+For compiling pEp Engine Server Adapter and its dependencies, make sure you have the LANG variable set.
 
 ```
-sudo port install openssl
-sudo port install boost
-sudo port install ossp-uuid
+export LANG=en_US.UTF-8
 ```
 
-## libevent
+## Dependencies
+
+### MacPorts
+[Install MacPorts](https://www.macports.org/install.php) for your version of OS X/macOS.
+
+If MacPorts is already installed on your machine, but was installed by a different user, make sure your `PATH` variable is set as follows in `~/.profile`:
 
 ```
+export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
+```
+
+Install dependencies packaged with MacPorts as follows.
+
+```
+sudo port install openssl boost ossp-uuid
+```
+
+### Other Dependencies
+
+#### libevent
+
+```
+cd libevent-2.0.22-stable
 export LDFLAGS=-L/opt/local
 export CFLAGS=-I/opt/local/include
 
-./configure --prefix $HOME
+./configure --prefix "$HOME"
 
 make
 make install
 ```
 
-## server/Makefile
+## Building pEp JSON Server Adapter
 
 ```
 cd server
 make
 ```
 
-# Running the server
+# Running pEp JSON Server Adapter
 
 ```
-LD_LIBRARY_PATH=/opt/local/lib ./mt-server
+./pep-json-server
+```
+
+# Testing pEp JSON Server Adapter
+
+```
+./servertest
 ```

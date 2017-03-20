@@ -7,7 +7,7 @@ ifeq ($(BUILD_ON),Darwin)
 ifeq ($(BUILD_FOR),Darwin)
 
 CXXFLAGS = -I/opt/local/include -I$(HOME)/include -Ijson_spirit
-LDFLAGS  = -L/opt/local/lib -L$(HOME)/lib -lpthread -levent -lpEpEngine -luuid -lgpgme-pthread -letpan -lboost_system-mt -lboost_filesystem-mt
+LDFLAGS  = -L/opt/local/lib -L$(HOME)/lib -lpthread -levent -lpEpEngine -luuid -lgpgme -letpan -lboost_system-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_thread-mt
 endif
 
 else
@@ -17,7 +17,7 @@ LDFLAGS  = -L$(HOME)/lib -L$(HOME)/local/lib -lpthread -levent -lpEpEngine -luui
 
 endif
 
-.PHONY: all clear
+.PHONY: all clean
 
 all: pep-json-server servertest
 
