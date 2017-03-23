@@ -1,6 +1,8 @@
 #include "json-adapter.hh"
 #include "daemonize.hh"
 
+#include <thread>
+#include <chrono>
 #include <iostream>
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
@@ -67,7 +69,7 @@ try
 		}while(input != 'q' && input != 'Q');
 	}else{
 		do{
-			sleep(3);
+			std::this_thread::sleep_for(std::chrono::seconds(3));
 		}while(ja.running());
 	}
 	ja.shutdown(nullptr);
