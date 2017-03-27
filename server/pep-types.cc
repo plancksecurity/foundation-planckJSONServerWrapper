@@ -363,28 +363,28 @@ _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 	
 	auto element = a.begin();
 	_bloblist_t* bl = NULL;
-
-    for(; element!=a.end(); ++element)
+	
+	for(; element!=a.end(); ++element)
 	{
 		const auto oelem = element->get_obj();
-        
-        std::string v = base64_from_json_object(oelem, "value");
-        size_t vs = v.size();
+		std::string v = base64_from_json_object(oelem, "value");
+		size_t vs = v.size();
 		char* vc = (char*)malloc(vs + 1);
-        if(vc == NULL) 
-            throw std::runtime_error("Out of memory while allocating blob");
+		if(vc == NULL) 
+			throw std::runtime_error("Out of memory while allocating blob");
+		
 		memcpy(vc, v.c_str(), vs + 1 );
-
+		
 		bl = bloblist_add(bl, 
-	        vc, vs,
+			vc, vs,
 			from_json_object<const char*, js::str_type>(oelem, "mime_type"),
 			from_json_object<const char*, js::str_type>(oelem, "filename")
 		);
-
-        if(bl == NULL)
-            throw std::runtime_error("Couldn't add blob to bloblist");
+		
+		if(bl == NULL)
+		throw std::runtime_error("Couldn't add blob to bloblist");
 	}
-
+	
 	return bl;
 }
 
@@ -398,16 +398,21 @@ js::Value to_json<_bloblist_t*>(_bloblist_t* const& bl)
 	while(b)
 	{
 		js::Object o;
-        if(b->value)
-	        to_base64_json_object(o, "value", b->value, b->size);
-		
+		if(b->value)
+		{
+			to_base64_json_object(o, "value", b->value, b->size);
+		}
 		o.emplace_back( "size", boost::uint64_t(b->size) );
 		
 		if(b->mime_type)
+		{
 			o.emplace_back( "mime_type", b->mime_type );
+		}
 		
 		if(b->filename)
+		{
 			o.emplace_back( "filename", b->filename );
+		}
 		
 		a.push_back( std::move(o) );
 		b = b->next;
@@ -415,6 +420,7 @@ js::Value to_json<_bloblist_t*>(_bloblist_t* const& bl)
 	
 	return js::Value( std::move(a) );
 }
+
 
 template<>
 stringpair_t* from_json<stringpair_t*>(const js::Value& v)
