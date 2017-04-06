@@ -116,7 +116,7 @@ struct Out
 	typedef T* c_type; // the according type in C function parameter
 	enum { is_output = true, need_input = NeedInput }; // if need_input=false it would no longer consume an element in the input parameter array.
 	
-	explicit Out() : value{ new T{} }
+	Out() : value{ new T{} }
 	{
 		if(typeid(T)==typeid(_message*))
 		{
