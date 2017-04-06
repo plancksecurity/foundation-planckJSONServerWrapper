@@ -497,8 +497,13 @@ js::Value to_json<stringlist_t*>(stringlist_t* const& osl)
 	
 	while(sl)
 	{
-		std::string value = sl->value;
-		a.push_back( std::move(value) );
+		if(sl->value)
+		{
+			std::string value = sl->value;
+			a.push_back( std::move(value) );
+		}else{
+			a.push_back( js::Value{} ); // add 'null' value, might fix JSON-24.
+		}
 		sl = sl->next;
 	}
 	
