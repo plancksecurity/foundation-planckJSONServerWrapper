@@ -5,6 +5,10 @@
 #include <algorithm>
 #include <iterator>
 
+#include <cstdlib>     // for getenv()
+#include <boost/filesystem.hpp>
+
+namespace fs = boost::filesystem;
 
 namespace
 {
@@ -31,52 +35,56 @@ namespace
 // platform dependent:
 #ifdef _WIN32
 
-	#error "Please implement get_token_filename() and write_security_file() for Win32!"
+fs::path get_token_filename()
+{
+	const char* const dir = getenv("LOCALAPPDATA");
+	return dir / fs::path("pEp") / fs::path("json-token");
+}
+
+void write_security_file(const std::string& content)
+{
+	const fs::path filename = get_token_filename();
+	const fs::path parent = filename.parent_path();
+	fs::create_directories(parent);
+	fs::ofstream secfile(filename);
+	secfile << content;
+	secfile.close();
+}
 
 #else
 
 // version for POSIX-compliant systems:
-
-#include <cstdlib>     // for getenv()
 #include <sys/types.h> // for creat()
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h> // for unlink()
 
-std::string get_token_filename()
+fs::path get_token_filename()
 {
 	const char* const temp_dir = getenv("TEMP");
 	const char* const user_name = getenv("USER");
 	
-	const std::string ret = std::string(temp_dir ? temp_dir : "/tmp") + "/pEp-json-token-" + std::string( user_name ? user_name : "XXX" ); 
-	return ret;
+	return fs::path(temp_dir ? temp_dir : "/tmp") / fs::path( std::string("/pEp-json-token-") + ( user_name ? user_name : "XXX" )); 
 }
 
 
 void write_security_file(const std::string& content)
 {
-	const std::string filename = get_token_filename();
+	const fs::path filename = get_token_filename();
+	
+	// TODO: how to atomically create a file with restricted permissions using boost::filesystem?
 	int fd = creat( filename.c_str(), S_IRUSR | S_IWUSR );
 	if(fd < 0)
 	{
-		throw std::runtime_error("Cannot create security token file \"" + filename + "\": " + std::to_string(errno) );
+		throw std::runtime_error("Cannot create security token file \"" + filename.string() + "\": " + std::to_string(errno) );
 	}
 	
 	const ssize_t ss = write(fd, content.data(), content.size());
 	if(ss<0 || uint64_t(ss)!=content.size())
 	{
-		throw std::runtime_error("Cannot write into security token file \"" + filename + "\": " + std::to_string(errno));
+		throw std::runtime_error("Cannot write into security token file \"" + filename.string() + "\": " + std::to_string(errno));
 	}
 	close(fd);
 }
-
-/*
-void remove_token_file()
-{
-	const std::string filename = get_token_filename();
-	unlink(filename.c_str());
-}
-*/
 
 #endif // ! _WIN32
 
@@ -84,8 +92,6 @@ void remove_token_file()
 
 
 namespace js = json_spirit;
-
-
 
 // creates a file with restrictive access rights that contains a security token.
 std::string create_security_token(const std::string& server_address, unsigned port_nr, const std::string& path)
@@ -105,3 +111,8 @@ std::string create_security_token(const std::string& server_address, unsigned po
 }
 
 
+void remove_token_file()
+{
+	const fs::path filename = get_token_filename();
+	fs::remove(filename.c_str());
+}
