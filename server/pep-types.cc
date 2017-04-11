@@ -465,10 +465,13 @@ js::Value to_json<stringpair_list_t*>(stringpair_list_t* const& osl)
 	
 	while(spl)
 	{
-		js::Object o;
-		o.emplace_back( "key", spl->value->key );
-		o.emplace_back( "value", spl->value->value );
-		a.push_back( std::move(o) );
+		if(spl->value)
+		{
+			js::Object o;
+			o.emplace_back( "key", spl->value->key );
+			o.emplace_back( "value", spl->value->value );
+			a.push_back( std::move(o) );
+		}
 		spl = spl->next;
 	}
 	
@@ -501,8 +504,6 @@ js::Value to_json<stringlist_t*>(stringlist_t* const& osl)
 		{
 			std::string value = sl->value;
 			a.push_back( std::move(value) );
-		}else{
-			a.push_back( js::Value{} ); // add 'null' value, might fix JSON-24.
 		}
 		sl = sl->next;
 	}
@@ -521,12 +522,12 @@ js::Value to_json<const pEp_identity*>(const pEp_identity* const& id)
 
 	js::Object o;
 	
-	to_json_object(o, "address", id->address);
-	to_json_object(o, "fpr", id->fpr);
-	to_json_object(o, "user_id", id->user_id);
+	to_json_object(o, "address" , id->address);
+	to_json_object(o, "fpr"     , id->fpr);
+	to_json_object(o, "user_id" , id->user_id);
 	to_json_object(o, "username", id->username);
-
-	o.emplace_back( "comm_type", js::Value( int( id->comm_type) ));
+	
+	o.emplace_back( "comm_type" , js::Value( int( id->comm_type) ));
 	
 	if(id->lang[0] && id->lang[1])
 		o.emplace_back( "lang", js::Value( std::string( id->lang, id->lang+2) ));
