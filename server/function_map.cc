@@ -113,7 +113,7 @@ FROM_TO_JSON_UINT64( unsigned long long )
 	TYPE from_json<TYPE>(const js::Value& v) \
 	{                                        \
 		const auto u = v.get_int64();        \
-		if( u > std::numeric_limits<TYPE>::max() || u < std::numeric_limits<TYP>::min() ) \
+		if( u > std::numeric_limits<TYPE>::max() || u < std::numeric_limits<TYPE>::min() ) \
 		{                                    \
 			throw std::runtime_error("Cannot convert " + std::to_string(u) + " into type " + typeid(TYPE).name() ); \
 		}                                    \
@@ -127,8 +127,8 @@ FROM_TO_JSON_UINT64( unsigned long long )
 		return js::Value(int64_t(t));        \
 	}
 
-FROM_TO_JSON_UINT64( long )
-FROM_TO_JSON_UINT64( long long )
+FROM_TO_JSON_INT64( long )
+FROM_TO_JSON_INT64( long long )
 
 
 template<>
