@@ -101,8 +101,8 @@ unsigned test_joggle()
 	
 	uint64_t counter = 0;
 	
-	for(uint64_t realm = 100; realm < 0xAAAA000011117777; realm = realm*1.123)
-	for(uint64_t u = 0; u < 0x9999ffff00009999; u*=1.171)
+	for(uint64_t realm = 100; realm < 0xAAAA000011117777; realm = uint64_t(realm*1.123))
+	for(uint64_t u = 0; u < 0x9999ffff00009999; u = uint64_t(u*1.171+1))
 	{
 		++counter;
 		const uint64_t j = joggle( realm, u );

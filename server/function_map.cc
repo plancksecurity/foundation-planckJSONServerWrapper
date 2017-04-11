@@ -88,7 +88,13 @@ bool from_json<bool>(const js::Value& v)
 	template<>                               \
 	TYPE from_json<TYPE>(const js::Value& v) \
 	{                                        \
-		return v.get_uint64();               \
+		const auto u = v.get_uint64();         \
+		if(u>std::numeric_limits<TYPE>::max()) \
+		{                                      \
+			throw std::runtime_error("Cannot convert " + std::to_string(u) + " into type " + typeid(TYPE).name() ); \
+		}                                    \
+		                                     \
+		return static_cast<TYPE>(u);         \
 	}                                        \
 	                                         \
 	template<>                               \
@@ -106,7 +112,13 @@ FROM_TO_JSON_UINT64( unsigned long long )
 	template<>                               \
 	TYPE from_json<TYPE>(const js::Value& v) \
 	{                                        \
-		return v.get_int64();                \
+		const auto u = v.get_int64();        \
+		if( u > std::numeric_limits<TYPE>::max() || u < std::numeric_limits<TYP>::min() ) \
+		{                                    \
+			throw std::runtime_error("Cannot convert " + std::to_string(u) + " into type " + typeid(TYPE).name() ); \
+		}                                    \
+		                                     \
+		return static_cast<TYPE>(u);         \
 	}                                        \
 	                                         \
 	template<>                               \
