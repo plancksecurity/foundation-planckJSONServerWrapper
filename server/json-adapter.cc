@@ -449,7 +449,7 @@ std::string getSessions()
 
 
 template<>
-PEP_SESSION from_json(const js::Value& v)
+PEP_SESSION from_json(const js::Value& /* not used */)
 {
 	const auto id = std::this_thread::get_id();
 	const auto q = session_registry.find( id );
@@ -863,6 +863,15 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 		Log() << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!\n";
 	}
 	return s == i->token;
+}
+
+
+void JsonAdapter::augment(json_spirit::Value& value)
+{
+	js::Object o = value.get_obj();
+	PEP_SESSION session = from_json<PEP_SESSION>(value);
+	auto errorstack = get_errorstack(session);
+	o.emplace_back( "errorstack", to_json(errorstack) );
 }
 
 
