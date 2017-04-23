@@ -336,6 +336,12 @@ stringlist_t* from_json<stringlist_t*>(const js::Value& v)
 	return sl;
 }
 
+template<>
+const stringlist_t* from_json<const stringlist_t*>(const js::Value& v)
+{
+	return const_cast<const stringlist_t*>( from_json<stringlist_t*>(v) );
+}
+
 
 template<>
 identity_list* from_json<identity_list*>(const js::Value& v)
@@ -493,9 +499,9 @@ const tm* from_json<const tm*>(const js::Value& v)
 
 
 template<>
-js::Value to_json<stringlist_t*>(stringlist_t* const& osl)
+js::Value to_json<const stringlist_t*>(const stringlist_t* const& osl)
 {
-	stringlist_t* sl = osl;
+	const stringlist_t* sl = osl;
 	js::Array a;
 	
 	while(sl)
@@ -511,6 +517,11 @@ js::Value to_json<stringlist_t*>(stringlist_t* const& osl)
 	return js::Value( std::move(a) );
 }
 
+template<>
+js::Value to_json<stringlist_t*>(stringlist_t* const& osl)
+{
+	return to_json<const stringlist_t*>(osl);
+}
 
 template<>
 js::Value to_json<const pEp_identity*>(const pEp_identity* const& id)
