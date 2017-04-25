@@ -65,7 +65,7 @@ namespace pEp
 			bool try_pop_back(T& out, std::chrono::steady_clock::time_point end_time)
 			{
 				Lock L(_mtx);
-				if(! _cv.wait_for(L, end_time, [this]{ return !_q.empty(); } ) )
+				if(! _cv.wait_until(L, end_time, [this]{ return !_q.empty(); } ) )
 				{
 					return false;
 				}
@@ -80,7 +80,7 @@ namespace pEp
 			bool try_pop_front(T& out, std::chrono::steady_clock::time_point end_time)
 			{
 				Lock L(_mtx);
-				if(! _cv.wait_for(L, end_time, [this]{ return !_q.empty(); } ) )
+				if(! _cv.wait_until(L, end_time, [this]{ return !_q.empty(); } ) )
 				{
 					return false;
 				}
