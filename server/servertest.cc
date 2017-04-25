@@ -33,7 +33,7 @@ void consu(unsigned nr)
 	while(! (finished && Q.empty()) )
 	{
 		uint64_t u = ~0ull;
-		if( !Q.try_pop_front(u, std::chrono::milliseconds(2*1000)) )
+		if( !Q.try_pop_front(u, std::chrono::steady_clock::now() + std::chrono::seconds(2)) )
 		{
 			std::cout << "Consumer #" << nr << " times out. Got " << v[nr].size() << " elements." << std::endl;
 			return;
