@@ -388,6 +388,9 @@ public:
 		out_params.reserve( 1 + Helper::nr_of_output_params );
 		
 		js::Value ret = Helper::call(fn, context, out_params, *p_params);
+		
+		context->augment(ret);  // used e.g. add some debug infos to the status return value
+		
 		out_params.push_back( ret );
 		return out_params;
 	}

@@ -45,6 +45,8 @@ public:
 	// returns 'true' if 's' is the security token created by the function above.
 	virtual bool verify_security_token(const std::string& s) const override;
 	
+	virtual void augment(json_spirit::Value& value) override;
+	
 	static
 	unsigned apiVersion();
 	
@@ -65,6 +67,7 @@ public:
 	
 	// returns the associated log stream (either std::cerr or nulllogger)
 	std::ostream& Log() const;
+	
 
 private:
 	struct Internal;
