@@ -90,8 +90,8 @@ const std::string server_version =
 //	"(22) Overath";          // add blacklist_retrieve(), rename identity_color() and outgoing_message_color() into ..._rating().
 //	"(23) Engelskirchen";    // fix JSON-19. Support "Bool" and "Language" as separate data types in JavaScript.
 //	"(24) Bielstein";        // add MIME_encrypt_message_ex() and MIME_decrypt_message_ex() as a HACK.
-	"(25) Gummersbach";      // JSON-22: add MIME_encrypt_message_for_self() and change API for encrypt_message_for_self().
-
+//	"(25) Gummersbach";      // JSON-22: add MIME_encrypt_message_for_self() and change API for encrypt_message_for_self().
+	"(26) Reichshof";        // change return type from JSON array into JSON object {"output":[...], "return":..., "errorstack":[...]}
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
 
@@ -866,12 +866,11 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 }
 
 
-void JsonAdapter::augment(json_spirit::Value& value)
+void JsonAdapter::augment(json_spirit::Object& returnObject)
 {
-	js::Object o = value.get_obj();
-	PEP_SESSION session = from_json<PEP_SESSION>(value);
+	PEP_SESSION session = from_json<PEP_SESSION>(returnObject); // the parameter is not used :-D
 	auto errorstack = get_errorstack(session);
-	o.emplace_back( "errorstack", to_json(errorstack) );
+	returnObject.emplace_back( "errorstack", to_json(errorstack) );
 }
 
 

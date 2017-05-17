@@ -10,7 +10,7 @@ public:
 	virtual ~Context() = default;
 	
 	virtual bool verify_security_token(const std::string& token) const = 0;
-	virtual void augment(json_spirit::Value& value) = 0;
+	virtual void augment(json_spirit::Object& returnObject) = 0;
 };
 
 #endif // JSON_ADAPTER_CONTEXT_HH

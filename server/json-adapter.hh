@@ -45,7 +45,7 @@ public:
 	// returns 'true' if 's' is the security token created by the function above.
 	virtual bool verify_security_token(const std::string& s) const override;
 	
-	virtual void augment(json_spirit::Value& value) override;
+	virtual void augment(json_spirit::Object& returnObject) override;
 	
 	static
 	unsigned apiVersion();

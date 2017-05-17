@@ -385,14 +385,16 @@ public:
 		// recursively extract the JSON parameters, call 'fn' and collect its return value
 		// and all output parameters into a tuple<> and return it as JSON array
 		js::Array out_params;
-		out_params.reserve( 1 + Helper::nr_of_output_params );
+		out_params.reserve( Helper::nr_of_output_params );
 		
 		js::Value ret = Helper::call(fn, context, out_params, *p_params);
 		
-		context->augment(ret);  // used e.g. add some debug infos to the status return value
+		js::Object rs;
+		rs.emplace_back("outParams", std::move(out_params));
+		rs.emplace_back("return", std::move(ret));
 		
-		out_params.push_back( ret );
-		return out_params;
+		context->augment(rs);  // used e.g. add some debug infos to the status return value
+		return rs;
 	}
 
 	void setJavaScriptSignature(js::Object& o) const override
