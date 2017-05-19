@@ -91,7 +91,8 @@ const std::string server_version =
 //	"(23) Engelskirchen";    // fix JSON-19. Support "Bool" and "Language" as separate data types in JavaScript.
 //	"(24) Bielstein";        // add MIME_encrypt_message_ex() and MIME_decrypt_message_ex() as a HACK.
 //	"(25) Gummersbach";      // JSON-22: add MIME_encrypt_message_for_self() and change API for encrypt_message_for_self().
-	"(26) Reichshof";        // change return type from JSON array into JSON object {"output":[...], "return":..., "errorstack":[...]}
+//	"(26) Reichshof";        // change return type from JSON array into JSON object {"output":[...], "return":..., "errorstack":[...]}
+	"(27) Eckenhagen";       // add command line switch  "--sync false"  to disable automatic start of keysync at startup
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
 
@@ -668,6 +669,10 @@ void JsonAdapter::startSync()
 
 void JsonAdapter::stopSync()
 {
+	// No sync session active
+	if(i->sync_session == nullptr)
+		return
+	
 	i->sync_queue.push_front(NULL);
 	i->sync_thread->join();
 	
@@ -678,7 +683,7 @@ void JsonAdapter::stopSync()
 }
 
 
-JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent)
+JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync)
 : i(new Internal( silent ? nulllogger : std::cerr ))
 {
 	i->eventBase.reset(event_base_new());
@@ -694,7 +699,8 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 	i->end_port   = end_port;
 	i->silent     = silent;
 	
-	startSync();
+	if(do_sync)
+		startSync();
 }
 
 

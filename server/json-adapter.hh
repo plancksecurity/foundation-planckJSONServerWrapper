@@ -11,8 +11,9 @@ class JsonAdapter : public Context
 public:
 	// creates an instance of the JSON adapter. It tries to bind the first available port in the given range
 	// if chatty==true there is some debug output on stderr, if chatty==false the server is silent.
+	// only if do_sync== true the keysync thread is stared and the keysync callbacks are registered.
 	// throws std::runtime_error if no port cannot be bound.
-	JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool chatty);
+	JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool chatty, bool do_sync);
 	
 	// calls shutdown() on the instance if it is still running().
 	virtual ~JsonAdapter();
