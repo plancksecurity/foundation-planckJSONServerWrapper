@@ -877,6 +877,7 @@ void JsonAdapter::augment(json_spirit::Object& returnObject)
 	PEP_SESSION session = from_json<PEP_SESSION>(returnObject); // the parameter is not used :-D
 	auto errorstack = get_errorstack(session);
 	returnObject.emplace_back( "errorstack", to_json(errorstack) );
+	clear_errorstack(session);
 }
 
 
