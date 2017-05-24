@@ -524,6 +524,11 @@ struct JsonAdapter::Internal
 	PEP_SESSION sync_session = nullptr;
 	ThreadPtr   sync_thread{nullptr, ThreadDeleter};
 	
+	// keyserver lookup
+	locked_queue< pEp_identity*, &free_identity> keyserver_lookup_queue;
+	PEP_SESSION keyserver_lookup_session = nullptr;
+	ThreadPtr   ksl_thread{nullptr, ThreadDeleter};
+	
 	Internal(std::ostream& logger) : Log(logger) {}
 	
 	static
@@ -586,6 +591,12 @@ struct JsonAdapter::Internal
 		return 0;
 	}
 	
+	int injectIdentity(pEp_identity* idy)
+	{
+		keyserver_lookup_queue.push_back(idy);
+		return 0;
+	}
+	
 	void* retrieveNextSyncMsg(time_t* timeout)
 	{
 		const std::chrono::milliseconds timeout_ms(1000*long(*timeout)); 
@@ -597,6 +608,11 @@ struct JsonAdapter::Internal
 			return nullptr;
 		}
 		return msg;
+	}
+	
+	pEp_identity* retrieveNextIdentity()
+	{
+		return keyserver_lookup_queue.pop_front();
 	}
 	
 	void* syncThreadRoutine(void* arg)
@@ -680,6 +696,20 @@ void JsonAdapter::stopSync()
 	i->sync_queue.clear();
 	
 	release(i->sync_session);
+}
+
+
+int JsonAdapter::examineIdentity(pEp_identity* idy, void* obj)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja->i->injectIdentity(idy);
+}
+
+
+pEp_identity* JsonAdapter::retrieveNextIdentity(void* obj)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja->i->retrieveNextIdentity();
 }
 
 
