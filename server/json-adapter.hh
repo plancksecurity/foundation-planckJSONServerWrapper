@@ -63,15 +63,18 @@ public:
 	static void* retrieveNextSyncMsg(void* obj, time_t* timeout);
 	static void* syncThreadRoutine(void* arg);
 	
-	void startSync(void);
-	void stopSync(void);
+	void startSync();
+	void stopSync();
+	
+	void startKeyserverLookup();
+	void stopKeyserverLookup();
 	
 	static int examineIdentity(pEp_identity*, void* obj);
 	static pEp_identity* retrieveNextIdentity(void* obj);
+	static void* keyserverLookupThreadRoutine(void* arg);
 	
 	// returns the associated log stream (either std::cerr or nulllogger)
 	std::ostream& Log() const;
-	
 
 private:
 	struct Internal;

@@ -527,7 +527,7 @@ struct JsonAdapter::Internal
 	// keyserver lookup
 	locked_queue< pEp_identity*, &free_identity> keyserver_lookup_queue;
 	PEP_SESSION keyserver_lookup_session = nullptr;
-	ThreadPtr   ksl_thread{nullptr, ThreadDeleter};
+	ThreadPtr   keyserver_lookup_thread{nullptr, ThreadDeleter};
 	
 	Internal(std::ostream& logger) : Log(logger) {}
 	
@@ -696,6 +696,43 @@ void JsonAdapter::stopSync()
 	i->sync_queue.clear();
 	
 	release(i->sync_session);
+	i->sync_session = nullptr;
+}
+
+
+void JsonAdapter::startKeyserverLookup()
+{
+	PEP_STATUS status = init(&i->keyserver_lookup_session);
+	if(status != PEP_STATUS_OK || i->keyserver_lookup_session==nullptr)
+	{
+		throw std::runtime_error("Cannot create keyserver lookup session! status: " + status_to_string(status));
+	}
+	
+	i->keyserver_lookup_queue.clear();
+	status = register_examine_function(i->sync_session,
+			JsonAdapter::examineIdentity,
+			(void*) this
+			);
+	if (status != PEP_STATUS_OK)
+		throw std::runtime_error("Cannot register keyserver lookup callbacks! status: " + status_to_string(status));
+	
+	i->keyserver_lookup_thread.reset( new std::thread( JsonAdapter::keyserverLookupThreadRoutine, (void*)this ) );
+}
+
+
+void JsonAdapter::stopKeyserverLookup()
+{
+	// No keyserver lookup session active
+	if(i->keyserver_lookup_session == nullptr)
+		return
+	
+	i->keyserver_lookup_queue.push_front(NULL);
+	i->keyserver_lookup_thread->join();
+
+	// there is no unregister_examine_callback() function. hum...
+	i->keyserver_lookup_queue.clear();
+	release(i->keyserver_lookup_session);
+	i->keyserver_lookup_session = nullptr;
 }
 
 
@@ -710,6 +747,15 @@ pEp_identity* JsonAdapter::retrieveNextIdentity(void* obj)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	return ja->i->retrieveNextIdentity();
+}
+
+
+void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(arg);
+	PEP_STATUS status = do_keymanagement(&JsonAdapter::retrieveNextIdentity, arg); // does the whole work
+	ja->i->keyserver_lookup_queue.clear();
+	return (void*) status;
 }
 
 
