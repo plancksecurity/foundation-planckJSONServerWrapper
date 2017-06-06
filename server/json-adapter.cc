@@ -588,15 +588,33 @@ struct JsonAdapter::Internal
 	
 	void* retrieveNextSyncMsg(time_t* timeout)
 	{
-		const std::chrono::milliseconds timeout_ms(1000*long(*timeout)); 
-		sync_msg_t* msg = nullptr;
-		const bool success = sync_queue.try_pop_front(msg, timeout_ms);
-		if(!success)
-		{
-			*timeout = 0;
-			return nullptr;
-		}
-		return msg;
+        sync_msg_t* msg = nullptr;
+        if(timeout && *timeout) {
+            std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now()
+                + std::chrono::seconds(*timeout);
+
+            const bool success = sync_queue.try_pop_front(msg, end_time);
+            if(!success)
+            {
+                // this is timeout occurrence
+                return nullptr;
+            }
+
+            // we got a message while waiting for timeout -> compute remaining time
+            std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+            if (now < end_time) 
+            {
+                *timeout = std::chrono::duration_cast<std::chrono::seconds>(end_time - now).count();
+            } 
+            else 
+            {
+                *timeout = 0;
+            }
+
+        }else{
+            msg = sync_queue.pop_front();
+        }
+        return msg;
 	}
 	
 	void* syncThreadRoutine(void* arg)
