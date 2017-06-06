@@ -62,10 +62,10 @@ namespace pEp
 			
 			// returns true and set a copy of the last element and pop it from queue if there is any
 			// returns false and leaves 'out' untouched if queue is empty even after 'timeout' milliseconds
-			bool try_pop_back(T& out, std::chrono::milliseconds timeout)
+			bool try_pop_back(T& out, std::chrono::steady_clock::time_point end_time)
 			{
 				Lock L(_mtx);
-				if(! _cv.wait_for(L, timeout, [this]{ return !_q.empty(); } ) )
+				if(! _cv.wait_until(L, end_time, [this]{ return !_q.empty(); } ) )
 				{
 					return false;
 				}
@@ -77,10 +77,10 @@ namespace pEp
 			
 			// returns true and set a copy of the first element and pop it from queue if there is any
 			// returns false and leaves 'out' untouched if queue is empty even after 'timeout' milliseconds
-			bool try_pop_front(T& out, std::chrono::milliseconds timeout)
+			bool try_pop_front(T& out, std::chrono::steady_clock::time_point end_time)
 			{
 				Lock L(_mtx);
-				if(! _cv.wait_for(L, timeout, [this]{ return !_q.empty(); } ) )
+				if(! _cv.wait_until(L, end_time, [this]{ return !_q.empty(); } ) )
 				{
 					return false;
 				}
