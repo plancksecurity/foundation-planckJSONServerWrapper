@@ -8,6 +8,7 @@
 namespace po = boost::program_options;
 
 bool debug_mode = false;
+bool do_sync    = false;
 std::string address = "127.0.0.1";
 unsigned start_port = 4223;
 unsigned end_port   = 9999;
@@ -29,7 +30,8 @@ try
 	desc.add_options()
 		("help,h", "print this help messages")
 		("version,v", "print program version")
-		("debug,d", po::value<bool>(&debug_mode)->default_value(false), "Run in debug mode, don't fork() in background")
+		("debug,d"  , po::value<bool>(&debug_mode)->default_value(false), "Run in debug mode, don't fork() in background: --debug true")
+		("sync"     , po::value<bool>(&do_sync)->default_value(true)    , "Start keysync in an asynchounous thread (default) or not (--sync false)")
 		("start-port,s", po::value<unsigned>(&start_port)->default_value(start_port),  "First port to bind on")
 		("end-port,e",   po::value<unsigned>(&end_port)->default_value(end_port),      "Last port to bind on")
 		("address,a",    po::value<std::string>(&address)->default_value(address),     "Address to bind on")
@@ -55,7 +57,7 @@ try
 		daemonize();
 	}
 
-	JsonAdapter ja( address, start_port, end_port, !debug_mode );
+	JsonAdapter ja( address, start_port, end_port, !debug_mode, do_sync );
 	ja.run();
 
 	if( debug_mode )

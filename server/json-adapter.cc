@@ -90,8 +90,9 @@ const std::string server_version =
 //	"(22) Overath";          // add blacklist_retrieve(), rename identity_color() and outgoing_message_color() into ..._rating().
 //	"(23) Engelskirchen";    // fix JSON-19. Support "Bool" and "Language" as separate data types in JavaScript.
 //	"(24) Bielstein";        // add MIME_encrypt_message_ex() and MIME_decrypt_message_ex() as a HACK.
-	"(25) Gummersbach";      // JSON-22: add MIME_encrypt_message_for_self() and change API for encrypt_message_for_self().
-
+//	"(25) Gummersbach";      // JSON-22: add MIME_encrypt_message_for_self() and change API for encrypt_message_for_self().
+//	"(26) Reichshof";        // change return type from JSON array into JSON object {"output":[...], "return":..., "errorstack":[...]}
+	"(27) Eckenhagen";       // add command line switch  "--sync false"  to disable automatic start of keysync at startup
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
 
@@ -441,7 +442,7 @@ std::string getSessions()
 
 
 template<>
-PEP_SESSION from_json(const js::Value& v)
+PEP_SESSION from_json(const js::Value& /* not used */)
 {
 	const auto id = std::this_thread::get_id();
 	const auto q = session_registry.find( id );
@@ -660,6 +661,10 @@ void JsonAdapter::startSync()
 
 void JsonAdapter::stopSync()
 {
+	// No sync session active
+	if(i->sync_session == nullptr)
+		return
+	
 	i->sync_queue.push_front(NULL);
 	i->sync_thread->join();
 	
@@ -670,7 +675,7 @@ void JsonAdapter::stopSync()
 }
 
 
-JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent)
+JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync)
 : i(new Internal( silent ? nulllogger : std::cerr ))
 {
 	i->eventBase.reset(event_base_new());
@@ -686,7 +691,8 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 	i->end_port   = end_port;
 	i->silent     = silent;
 	
-	startSync();
+	if(do_sync)
+		startSync();
 }
 
 
@@ -855,6 +861,15 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 		Log() << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!\n";
 	}
 	return s == i->token;
+}
+
+
+void JsonAdapter::augment(json_spirit::Object& returnObject)
+{
+	PEP_SESSION session = from_json<PEP_SESSION>(returnObject); // the parameter is not used :-D
+	auto errorstack = get_errorstack(session);
+	returnObject.emplace_back( "errorstack", to_json(errorstack) );
+	clear_errorstack(session);
 }
 
 
