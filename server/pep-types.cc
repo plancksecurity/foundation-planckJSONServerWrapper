@@ -132,6 +132,13 @@ In<PEP_enc_format>::~In()
 
 
 template<>
+In<PEP_rating>::~In()
+{
+	// nothing to do here. :-)
+}
+
+
+template<>
 In<sync_handshake_signal>::~In()
 {
 	// nothing to do here. :-)
@@ -585,6 +592,14 @@ js::Value to_json<PEP_rating>(const PEP_rating& rating)
 	js::Object o;
 	o.emplace_back( "rating", int(rating) );
 	return o;
+}
+
+
+template<>
+PEP_rating from_json<PEP_rating>(const js::Value& v)
+{
+	const js::Object& o = v.get_obj();
+	return from_json_object<PEP_rating, js::int_type>(o, "rating");
 }
 
 
