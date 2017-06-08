@@ -92,7 +92,9 @@ const std::string server_version =
 //	"(24) Bielstein";        // add MIME_encrypt_message_ex() and MIME_decrypt_message_ex() as a HACK.
 //	"(25) Gummersbach";      // JSON-22: add MIME_encrypt_message_for_self() and change API for encrypt_message_for_self().
 //	"(26) Reichshof";        // change return type from JSON array into JSON object {"output":[...], "return":..., "errorstack":[...]}
-	"(27) Eckenhagen";       // add command line switch  "--sync false"  to disable automatic start of keysync at startup
+//	"(27) Eckenhagen";       // add command line switch  "--sync false"  to disable automatic start of keysync at startup
+	"(28) Olpe-Süd";         // add re_evaluate_message_rating(). Jira: JSON-29
+
 
 typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
 
@@ -191,6 +193,7 @@ const FunctionMap functions = {
 		FP( "encrypt_message_for_self", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<pEp_identity*>, In<message*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_for_self ) ),
 		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
 		FP( "outgoing_message_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, Out<PEP_rating>>( &outgoing_message_rating ) ),
+		FP( "re_evaluate_message_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, In<stringlist_t*>, In<PEP_rating>, Out<PEP_rating>>( &re_evaluate_message_rating ) ),
 		FP( "identity_rating" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "get_gpg_path",    new Func<PEP_STATUS, Out<const char*>>(&get_gpg_path) ),
 		
