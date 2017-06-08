@@ -384,7 +384,8 @@ _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 		bl = bloblist_add(bl, 
 			vc, vs,
 			from_json_object<const char*, js::str_type>(oelem, "mime_type"),
-			from_json_object<const char*, js::str_type>(oelem, "filename")
+			from_json_object<const char*, js::str_type>(oelem, "filename"),
+			from_json_object<const char*, js::str_type>(oelem, "content_id")
 		);
 		
 		if(bl == NULL)
@@ -418,6 +419,11 @@ js::Value to_json<_bloblist_t*>(_bloblist_t* const& bl)
 		if(b->filename)
 		{
 			o.emplace_back( "filename", b->filename );
+		}
+		
+		if(b->content_id)
+		{
+			o.emplace_back( "content_id", b->content_id );
 		}
 		
 		a.push_back( std::move(o) );
