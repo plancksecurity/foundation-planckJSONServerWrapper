@@ -76,7 +76,7 @@ public:
 	// returns the associated log stream (either std::cerr or nulllogger)
 	std::ostream& Log() const;
 
-private:
+//private:
 	struct Internal;
 	Internal* i; // pimpl for stable interface.
 };
