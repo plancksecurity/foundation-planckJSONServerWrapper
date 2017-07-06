@@ -10,6 +10,10 @@ CXX = c++ -std=c++11 -Wall -O0 -g -fstack-protector-all
 
 # end of configuration options
 
+#order does matter, hence I have to split it for static builds:
+LIBS1 = -levent -lpEpEngine -lasn1 -luuid -lgpgme -letpan
+LIBS2 = -lpthread -lz -ldl
+
 BUILD_ON=$(shell uname)
 BUILD_FOR=$(BUILD_ON)
 
@@ -17,13 +21,13 @@ ifeq ($(BUILD_ON),Darwin)
 ifeq ($(BUILD_FOR),Darwin)
 
 CXXFLAGS = -I/opt/local/include -I$(HOME)/include -Ijson_spirit
-LDFLAGS  = -L/opt/local/lib -L$(HOME)/lib -lpthread -levent -lpEpEngine -luuid -lgpgme -letpan -lboost_system-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_thread-mt
+LDFLAGS  = -L/opt/local/lib -L$(HOME)/lib $(LIBS1) -lboost_system-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_thread-mt $(LIBS2)
 endif
 
 else
 
 CXXFLAGS = -I$(HOME)/include -I$(HOME)/local/include/ -Ijson_spirit
-LDFLAGS  = -L$(HOME)/lib -L$(HOME)/local/lib -lpthread -levent -lpEpEngine -luuid -lgpgme-pthread -letpan -lboost_system -lboost_filesystem -lboost_program_options -lboost_thread
+LDFLAGS  = -L$(HOME)/lib -L$(HOME)/local/lib $(LIBS1) -lboost_system -lboost_filesystem -lboost_program_options -lboost_thread $(LIBS2)
 
 endif
 
