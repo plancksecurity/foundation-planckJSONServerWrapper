@@ -31,7 +31,7 @@ LDFLAGS  = -L$(HOME)/lib -L$(HOME)/local/lib $(LIBS1) -lboost_system -lboost_fil
 
 endif
 
-.PHONY: all clean
+.PHONY: all clean install
 
 all: pep-json-server servertest
 
@@ -64,6 +64,10 @@ prefix-config.cc: Makefile
 
 %.o : %.cc  %.hh  Makefile
 	$(CXX) $(CXXFLAGS) -c $<
+
+install:
+	mkdir -v -p  $(HTML_DIRECTORY)
+	cp -v ../html/* $(HTML_DIRECTORY)
 
 clean:
 	rm -vf pep-json-server servertest
