@@ -21,6 +21,7 @@
 #include "security-token.hh"
 #include "pep-utils.hh"
 #include "gpg_environment.hh"
+#include "prefix-config.hh"
 
 #include <pEp/message_api.h>
 #include <pEp/blacklist.h>
@@ -46,6 +47,8 @@ In<Context*, false>::In(const js::Value&, Context* ctx)
 
 }
 
+
+namespace fs = boost::filesystem;
 
 
 namespace {
@@ -281,7 +284,7 @@ void sendReplyString(evhttp_request* req, const char* contentType, const std::st
 }
 
 
-void sendFile( evhttp_request* req, const std::string& mimeType, const std::string& fileName)
+void sendFile( evhttp_request* req, const std::string& mimeType, const fs::path& fileName)
 {
 	auto* outBuf = evhttp_request_get_output_buffer(req);
 	if (!outBuf)
@@ -295,10 +298,12 @@ void sendFile( evhttp_request* req, const std::string& mimeType, const std::stri
 }
 
 
+static const boost::filesystem::path  path_to_html = fs::path(html_directory);
+
 struct FileRequest
 {
 	std::string mimeType;
-	std::string fileName;
+	fs::path    fileName;
 };
 
 // catch-all callback
@@ -306,10 +311,10 @@ void OnOtherRequest(evhttp_request* req, void*)
 {
 	static const std::map<std::string, FileRequest > files =
 		{
-			{ "/"                , {"text/html"      , "../html/index.html"       } },
-			{ "/jquery.js"       , {"text/javascript", "../html/jquery-2.2.0.min.js"  } },
-			{ "/interactive.js"  , {"text/javascript", "../html/interactive.js"   } },
-			{ "/favicon.ico"     , {"image/vnd.microsoft.icon", "../html/json-test.ico"} },
+			{ "/"                , {"text/html"      , path_to_html / "index.html"            } },
+			{ "/jquery.js"       , {"text/javascript", path_to_html / "jquery-2.2.0.min.js"   } },
+			{ "/interactive.js"  , {"text/javascript", path_to_html / "interactive.js"        } },
+			{ "/favicon.ico"     , {"image/vnd.microsoft.icon", path_to_html / "json-test.ico"} },
 		};
 	
 	const evhttp_uri* uri = evhttp_request_get_evhttp_uri(req);
