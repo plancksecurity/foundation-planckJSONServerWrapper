@@ -66,8 +66,8 @@ public:
 	void startSync();
 	void stopSync();
 	
-	void startKeyserverLookup();
-	void stopKeyserverLookup();
+	static void startKeyserverLookup();
+	static void stopKeyserverLookup();
 	
 	static int examineIdentity(pEp_identity*, void* obj);
 	static pEp_identity* retrieveNextIdentity(void* obj);
