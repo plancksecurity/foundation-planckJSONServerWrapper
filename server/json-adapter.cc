@@ -485,6 +485,7 @@ struct JsonAdapter::Internal
 	unsigned    port          = 0;
 	unsigned    request_count = 0;
 	evutil_socket_t sock      = -1;
+	bool        shall_sync    = false; // just hold the value from config/command line.
 	bool        running = false;
 	bool        silent  = false;
 	ThreadPool  threads;
@@ -496,7 +497,11 @@ struct JsonAdapter::Internal
 	ThreadPtr   sync_thread{nullptr, ThreadDeleter};
 	
 	
-	explicit Internal(std::ostream& logger) : Log(logger) {}
+	explicit Internal(std::ostream& logger, bool _shall_sync)
+	: Log(logger)
+	, shall_sync(_shall_sync)
+	{}
+	
 	Internal(const Internal&) = delete;
 	void operator=(const Internal&) = delete;
 	
@@ -734,15 +739,16 @@ void* JsonAdapter::syncThreadRoutine(void* arg)
 
 void JsonAdapter::startSync()
 {
+	if(i->sync_session)
+	{
+		throw std::runtime_error("sync session already started!");
+	}
+	
 	PEP_STATUS status = init(&i->sync_session);
 	if(status != PEP_STATUS_OK || i->sync_session==nullptr)
 	{
 		throw std::runtime_error("Cannot create sync session! status: " + status_to_string(status));
 	}
-	
-	status = attach_sync_session(i->session, i->sync_session);
-	if(status != PEP_STATUS_OK)
-		throw std::runtime_error("Cannot attach to sync session! status: " + status_to_string(status));
 	
 	i->sync_queue.clear();
 	
@@ -754,6 +760,10 @@ void JsonAdapter::startSync()
 	                                 JsonAdapter::retrieveNextSyncMsg);
 	if (status != PEP_STATUS_OK)
 		throw std::runtime_error("Cannot register sync callbacks! status: " + status_to_string(status));
+	
+	status = attach_sync_session(i->session, i->sync_session);
+	if(status != PEP_STATUS_OK)
+		throw std::runtime_error("Cannot attach to sync session! status: " + status_to_string(status));
 	
 	i->sync_thread.reset( new std::thread( JsonAdapter::syncThreadRoutine, (void*)this ) );
 }
@@ -844,7 +854,7 @@ void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
 
 
 JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync)
-: i(new Internal( silent ? nulllogger : std::cerr ))
+: i(new Internal( silent ? nulllogger : std::cerr, do_sync ))
 {
 	i->eventBase.reset(event_base_new());
 	if (!i->eventBase)
@@ -858,9 +868,6 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 	i->start_port = start_port;
 	i->end_port   = end_port;
 	i->silent     = silent;
-	
-	if(do_sync)
-		startSync();
 }
 
 
@@ -900,7 +907,11 @@ try
 				
 				session_registry.emplace(id, ja);
 				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".\n";
-				
+				if(i->shall_sync)
+				{
+					Log() << "\tstartSync()...\n";
+					startSync();
+				}
 			}else{
 				Log() << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
 			}
