@@ -60,17 +60,23 @@ public:
 
 	// BEWARE: msg is 1st parameter, obj is second!!!
 	static int injectSyncMsg(void* msg, void* obj);
-	static void *retrieveNextSyncMsg(void* obj, time_t* timeout);
-	static void *syncThreadRoutine(void* arg);
+	static void* retrieveNextSyncMsg(void* obj, time_t* timeout);
+	static void* syncThreadRoutine(void* arg);
 	
-	void startSync(void);
-	void stopSync(void);
+	void startSync();
+	void stopSync();
+	
+	static void startKeyserverLookup();
+	static void stopKeyserverLookup();
+	
+	static int examineIdentity(pEp_identity*, void* obj);
+	static pEp_identity* retrieveNextIdentity(void* obj);
+	static void* keyserverLookupThreadRoutine(void* arg);
 	
 	// returns the associated log stream (either std::cerr or nulllogger)
 	std::ostream& Log() const;
-	
 
-private:
+//private:
 	struct Internal;
 	Internal* i; // pimpl for stable interface.
 };

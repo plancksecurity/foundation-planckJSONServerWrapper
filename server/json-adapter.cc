@@ -96,12 +96,34 @@ const std::string server_version =
 //	"(25) Gummersbach";      // JSON-22: add MIME_encrypt_message_for_self() and change API for encrypt_message_for_self().
 //	"(26) Reichshof";        // change return type from JSON array into JSON object {"output":[...], "return":..., "errorstack":[...]}
 //	"(27) Eckenhagen";       // add command line switch  "--sync false"  to disable automatic start of keysync at startup
-	"(28) Olpe-Süd";         // add re_evaluate_message_rating(). Jira: JSON-29
+//	"(28) Olpe-Süd";         // add re_evaluate_message_rating(). Jira: JSON-29
+	"(29) Wenden";           // {start|stop}{KeySync|KeyserverLookup}  JSON-28
 
 
-typedef std::map<std::thread::id, PEP_SESSION> SessionRegistry;
+typedef std::map<std::thread::id, JsonAdapter*> SessionRegistry;
 
 SessionRegistry session_registry;
+
+auto ThreadDeleter = [](std::thread* t)
+{
+	const auto id = t->get_id();
+	const auto q = session_registry.find( id );
+	if(q != session_registry.end())
+	{
+		delete q->second;
+	}
+	
+	delete t;
+};
+
+
+typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
+typedef std::vector<ThreadPtr> ThreadPool;
+
+// keyserver lookup
+locked_queue< pEp_identity*, &free_identity> keyserver_lookup_queue;
+PEP_SESSION keyserver_lookup_session = nullptr; // FIXME: what if another adapter started it already?
+ThreadPtr   keyserver_lookup_thread{nullptr, ThreadDeleter};
 
 
 PEP_STATUS get_gpg_path(const char** path)
@@ -191,6 +213,11 @@ const FunctionMap functions = {
 			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message_ex ) ),
 		FP( "MIME_decrypt_message_ex", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>, In<bool>,
 			Out<char*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>( &MIME_decrypt_message_ex ) ),
+		
+		FP( "startKeySync", new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::startSync) ),
+		FP( "stopKeySync",  new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::stopSync ) ),
+		FP( "startKeyserverLookup", new Func<void>( &JsonAdapter::startKeyserverLookup) ),
+		FP( "stopKeyserverLookup",  new Func<void>( &JsonAdapter::stopKeyserverLookup ) ),
 		
 		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
 		FP( "encrypt_message_for_self", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<pEp_identity*>, In<message*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_for_self ) ),
@@ -425,74 +452,6 @@ void OnApiRequest(evhttp_request* req, void* obj)
 } // end of anonymous namespace
 
 
-std::string getSessions()
-{
-	js::Array a;
-	a.reserve(session_registry.size());
-	for(const auto& s : session_registry)
-	{
-		std::stringstream ss;
-		js::Object o;
-		ss << s.first;
-		o.emplace_back("tid", ss.str() );
-		ss.str("");
-		ss << static_cast<void*>(s.second);
-		o.emplace_back("session", ss.str() );
-		if(s.first == std::this_thread::get_id())
-		{
-			o.emplace_back("mine", true);
-		}
-		a.push_back( std::move(o) );
-	}
-	
-	return js::write( a, js::pretty_print | js::raw_utf8 | js::single_line_arrays );
-}
-
-
-template<>
-PEP_SESSION from_json(const js::Value& /* not used */)
-{
-	const auto id = std::this_thread::get_id();
-	const auto q = session_registry.find( id );
-	if(q == session_registry.end())
-	{
-		std::stringstream ss;
-		ss << "There is no SESSION for this thread (" << id << ")!"; 
-		throw std::logic_error( ss.str() );
-	}
-	return q->second;
-}
-
-
-std::string JsonAdapter::version()
-{
-	return server_version;
-}
-
-
-unsigned JsonAdapter::apiVersion()
-{
-	return API_VERSION;
-}
-
-
-auto ThreadDeleter = [](std::thread* t)
-{
-	const auto id = t->get_id();
-	const auto q = session_registry.find( id );
-	if(q != session_registry.end())
-	{
-		detach_sync_session(q->second);
-		release(q->second);
-		session_registry.erase( q );
-	}
-	
-	delete t;
-};
-
-typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
-typedef std::vector<ThreadPtr> ThreadPool;
-
 typedef std::pair<std::string, unsigned> EventListenerKey;
 
 struct EventListenerValue
@@ -500,6 +459,9 @@ struct EventListenerValue
 	std::string securityContext;
 	std::unique_ptr<evhttp_connection, decltype(&evhttp_connection_free)> connection = { nullptr, &evhttp_connection_free};
 };
+
+
+
 
 struct JsonAdapter::Internal
 {
@@ -515,16 +477,34 @@ struct JsonAdapter::Internal
 	unsigned    port          = 0;
 	unsigned    request_count = 0;
 	evutil_socket_t sock      = -1;
+	bool        shall_sync    = false; // just hold the value from config/command line.
 	bool        running = false;
 	bool        silent  = false;
 	ThreadPool  threads;
+	PEP_SESSION session = nullptr;
 	
 	// Sync
 	locked_queue< sync_msg_t*, &free_sync_msg>  sync_queue;
 	PEP_SESSION sync_session = nullptr;
 	ThreadPtr   sync_thread{nullptr, ThreadDeleter};
 	
-	Internal(std::ostream& logger) : Log(logger) {}
+	
+	explicit Internal(std::ostream& logger, bool _shall_sync)
+	: Log(logger)
+	, shall_sync(_shall_sync)
+	{}
+	
+	Internal(const Internal&) = delete;
+	void operator=(const Internal&) = delete;
+	
+	~Internal()
+	{
+		stopSync();
+		release(session);
+		session=nullptr;
+	}
+	
+	void stopSync();
 	
 	static
 	void requestDone(evhttp_request* req, void* userdata)
@@ -575,14 +555,20 @@ struct JsonAdapter::Internal
 	template<class... Params>
 	PEP_STATUS makeAndDeliverRequest2(const char* msg_name, Params&&... params)
 	{
-		js::Array param;
-		addToArray( param, params...);
-		return makeAndDeliverRequest(msg_name, param);
+		js::Array param_array;
+		addToArray( param_array, params...);
+		return makeAndDeliverRequest(msg_name, param_array);
 	}
 	
 	int injectSyncMsg(void* msg)
 	{
 		sync_queue.push_back( static_cast<sync_msg_t*>(msg) );
+		return 0;
+	}
+	
+	int injectIdentity(pEp_identity* idy)
+	{
+		keyserver_lookup_queue.push_back(idy);
 		return 0;
 	}
 	
@@ -617,6 +603,11 @@ struct JsonAdapter::Internal
         return msg;
 	}
 	
+	pEp_identity* retrieveNextIdentity()
+	{
+		return keyserver_lookup_queue.pop_front();
+	}
+	
 	void* syncThreadRoutine(void* arg)
 	{
 		PEP_STATUS status = do_sync_protocol(sync_session, arg); // does the whole work
@@ -624,6 +615,82 @@ struct JsonAdapter::Internal
 		return (void*) status;
 	}
 };
+
+
+std::string getSessions()
+{
+	js::Array a;
+	a.reserve(session_registry.size());
+	for(const auto& s : session_registry)
+	{
+		std::stringstream ss;
+		js::Object o;
+		ss << s.first;
+		o.emplace_back("tid", ss.str() );
+		ss.str("");
+		ss << static_cast<void*>(s.second);
+		o.emplace_back("session", ss.str() );
+		if(s.first == std::this_thread::get_id())
+		{
+			o.emplace_back("mine", true);
+		}
+		a.push_back( std::move(o) );
+	}
+	
+	return js::write( a, js::pretty_print | js::raw_utf8 | js::single_line_arrays );
+}
+
+
+template<>
+PEP_SESSION from_json(const js::Value& /* not used */)
+{
+	const auto id = std::this_thread::get_id();
+	const auto q = session_registry.find( id );
+	if(q == session_registry.end())
+	{
+		std::stringstream ss;
+		ss << "There is no SESSION for this thread (" << id << ")!"; 
+		throw std::logic_error( ss.str() );
+	}
+	return q->second->i->session;
+}
+
+
+template<>
+JsonAdapter* from_json(const js::Value& /* not used */)
+{
+	const auto id = std::this_thread::get_id();
+	const auto q = session_registry.find( id );
+	if(q == session_registry.end())
+	{
+		std::stringstream ss;
+		ss << "There is no JsonAdapter registered for this thread (" << id << ")!"; 
+		throw std::logic_error( ss.str() );
+	}
+	return q->second;
+}
+
+
+template<>
+In<JsonAdapter*, false>::~In()
+{
+	// nothing to do here. :-D
+}
+
+
+std::string JsonAdapter::version()
+{
+	return server_version;
+}
+
+
+unsigned JsonAdapter::apiVersion()
+{
+	return API_VERSION;
+}
+
+
+
 
 
 PEP_STATUS JsonAdapter::messageToSend(void* obj, message* msg)
@@ -664,6 +731,11 @@ void* JsonAdapter::syncThreadRoutine(void* arg)
 
 void JsonAdapter::startSync()
 {
+	if(i->sync_session)
+	{
+		throw std::runtime_error("sync session already started!");
+	}
+	
 	PEP_STATUS status = init(&i->sync_session);
 	if(status != PEP_STATUS_OK || i->sync_session==nullptr)
 	{
@@ -681,28 +753,100 @@ void JsonAdapter::startSync()
 	if (status != PEP_STATUS_OK)
 		throw std::runtime_error("Cannot register sync callbacks! status: " + status_to_string(status));
 	
+	status = attach_sync_session(i->session, i->sync_session);
+	if(status != PEP_STATUS_OK)
+		throw std::runtime_error("Cannot attach to sync session! status: " + status_to_string(status));
+	
 	i->sync_thread.reset( new std::thread( JsonAdapter::syncThreadRoutine, (void*)this ) );
 }
 
 
 void JsonAdapter::stopSync()
 {
+	i->stopSync();
+}
+
+
+void JsonAdapter::Internal::stopSync()
+{
 	// No sync session active
-	if(i->sync_session == nullptr)
-		return
+	if(sync_session == nullptr)
+		return;
 	
-	i->sync_queue.push_front(NULL);
-	i->sync_thread->join();
+	sync_queue.push_front(NULL);
+	sync_thread->join();
 	
-	unregister_sync_callbacks(i->sync_session);
-	i->sync_queue.clear();
+	unregister_sync_callbacks(sync_session);
+	sync_queue.clear();
 	
-	release(i->sync_session);
+	release(sync_session);
+	sync_session = nullptr;
+}
+
+
+void JsonAdapter::startKeyserverLookup()
+{
+	if(keyserver_lookup_session)
+		throw std::runtime_error("KeyserverLookup already started.");
+
+	PEP_STATUS status = init(&keyserver_lookup_session);
+	if(status != PEP_STATUS_OK || keyserver_lookup_session==nullptr)
+	{
+		throw std::runtime_error("Cannot create keyserver lookup session! status: " + status_to_string(status));
+	}
+	
+	keyserver_lookup_queue.clear();
+	status = register_examine_function(keyserver_lookup_session,
+			JsonAdapter::examineIdentity,
+			&keyserver_lookup_session // nullptr is not accepted, so any dummy ptr is used here
+			);
+	if (status != PEP_STATUS_OK)
+		throw std::runtime_error("Cannot register keyserver lookup callbacks! status: " + status_to_string(status));
+	
+	keyserver_lookup_thread.reset( new std::thread( JsonAdapter::keyserverLookupThreadRoutine, &keyserver_lookup_session /* just a dummy */ ) );
+}
+
+
+void JsonAdapter::stopKeyserverLookup()
+{
+	// No keyserver lookup session active
+	if(keyserver_lookup_session == nullptr)
+		return;
+	
+	keyserver_lookup_queue.push_front(NULL);
+	keyserver_lookup_thread->join();
+
+	// there is no unregister_examine_callback() function. hum...
+	keyserver_lookup_queue.clear();
+	release(keyserver_lookup_session);
+	keyserver_lookup_session = nullptr;
+}
+
+
+int JsonAdapter::examineIdentity(pEp_identity* idy, void* obj)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja->i->injectIdentity(idy);
+}
+
+
+pEp_identity* JsonAdapter::retrieveNextIdentity(void* obj)
+{
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja->i->retrieveNextIdentity();
+}
+
+
+void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
+{
+	PEP_STATUS status = do_keymanagement(&JsonAdapter::retrieveNextIdentity, arg); // does the whole work
+	keyserver_lookup_queue.clear();
+	return (void*) status;
 }
 
 
 JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync)
-: i(new Internal( silent ? nulllogger : std::cerr ))
+: i(new Internal( silent ? nulllogger : std::cerr, do_sync ))
 {
 	i->eventBase.reset(event_base_new());
 	if (!i->eventBase)
@@ -716,9 +860,6 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 	i->start_port = start_port;
 	i->end_port   = end_port;
 	i->silent     = silent;
-	
-	if(do_sync)
-		startSync();
 }
 
 
@@ -726,15 +867,10 @@ JsonAdapter::~JsonAdapter()
 {
 	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered.\n";
 	stopSync();
-	shutdown(nullptr);
-	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered.\n";
-	for(auto& s : session_registry)
-	{
-		release(s.second);
-	}
-	session_registry.clear();
-	
+	this->shutdown(nullptr);
 	delete i;
+	i=nullptr;
+	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered.\n";
 }
 
 
@@ -742,6 +878,7 @@ void JsonAdapter::run()
 try
 {
 	Log() << "I have " << session_registry.size() << " registered session(s).\n";
+	JsonAdapter* ja = this;
 	
 	std::exception_ptr initExcept;
 	auto ThreadFunc = [&] ()
@@ -753,19 +890,20 @@ try
 			const auto q=session_registry.find(id);
 			if(q==session_registry.end())
 			{
-				PEP_SESSION session = nullptr;
-				PEP_STATUS status = init(&session); // release(session) in ThreadDeleter
-				if(status != PEP_STATUS_OK || session==nullptr)
+				i->session = nullptr;
+				PEP_STATUS status = init(&i->session); // release(session) in ThreadDeleter
+				if(status != PEP_STATUS_OK || i->session==nullptr)
 				{
 					throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
 				}
 				
-				session_registry.emplace( id, session);
-				Log() << "\tcreated new session for this thread: " << static_cast<void*>(session) << ".\n";
-				
-				status = attach_sync_session(session, i->sync_session);
-				if(status != PEP_STATUS_OK)
-					throw std::runtime_error("Cannot attach to sync session! status: " + status_to_string(status));
+				session_registry.emplace(id, ja);
+				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".\n";
+				if(i->shall_sync)
+				{
+					Log() << "\tstartSync()...\n";
+					startSync();
+				}
 			}else{
 				Log() << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
 			}
