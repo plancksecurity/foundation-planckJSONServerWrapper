@@ -268,7 +268,6 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 		strncpy(ident->lang, lang, 3);
 		free(lang);
 	}
-	ident->me = from_json_object<bool, js::bool_type>(o, "me");
 	ident->flags = from_json_object<unsigned, js::int_type>(o, "flags");
 	
 	return ident;
@@ -550,7 +549,6 @@ js::Value to_json<const pEp_identity*>(const pEp_identity* const& id)
 	if(id->lang[0] && id->lang[1])
 		o.emplace_back( "lang", js::Value( std::string( id->lang, id->lang+2) ));
 	
-	o.emplace_back( "me", bool( id->me ));
 	o.emplace_back( "flags", uint64_t( id->me ));
 	
 	return js::Value( std::move(o) );
