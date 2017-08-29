@@ -549,8 +549,6 @@ js::Value to_json<const pEp_identity*>(const pEp_identity* const& id)
 	if(id->lang[0] && id->lang[1])
 		o.emplace_back( "lang", js::Value( std::string( id->lang, id->lang+2) ));
 	
-	o.emplace_back( "flags", uint64_t( id->me ));
-	
 	return js::Value( std::move(o) );
 }
 
