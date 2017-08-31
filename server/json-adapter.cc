@@ -200,7 +200,7 @@ PEP_STATUS MIME_decrypt_message_ex(
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 		// from message_api.h
-		FP( "—— Message API ——", new Separator ),
+		FP( "Message API", new Separator ),
 		FP( "MIME_encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>, In<stringlist_t*>,
 			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message ) ),
 		FP( "MIME_encrypt_message_for_self", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<pEp_identity*>, In<const char*>, In<size_t>,
@@ -227,7 +227,7 @@ const FunctionMap functions = {
 		FP( "identity_rating" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "get_gpg_path",    new Func<PEP_STATUS, Out<const char*>>(&get_gpg_path) ),
 		
-		FP( "—— pEp Engine Core API ——", new Separator),
+		FP( "pEp Engine Core API", new Separator),
 		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
 		FP( "get_trustwords", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const pEp_identity*>, In<const pEp_identity*>, In<Language>, Out<char*>, Out<size_t>, In<bool>>( &get_trustwords) ),
 		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<char*>>( &get_languagelist) ),
@@ -236,7 +236,7 @@ const FunctionMap functions = {
 		FP( "config_passive_mode", new Func<void, In<PEP_SESSION,false>, In<bool>>( &config_passive_mode) ),
 		FP( "config_unencrypted_subject", new Func<void, In<PEP_SESSION,false>, In<bool>>( &config_unencrypted_subject) ),
 		
-		FP( "—— Identity Management API ——", new Separator),
+		FP( "Identity Management API", new Separator),
 		FP( "get_identity"       , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, Out<pEp_identity*>>( &get_identity) ),
 		FP( "set_identity"       , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>> ( &set_identity) ),
 		FP( "mark_as_comprimized", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &mark_as_compromized) ),
@@ -245,7 +245,7 @@ const FunctionMap functions = {
 		FP( "set_identity_flags", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, In<identity_flags_t>>( &set_identity_flags) ),
 		FP( "unset_identity_flags", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, In<identity_flags_t>>( &unset_identity_flags) ),
 		
-		FP( "—— Low level Key Management API ——", new Separator),
+		FP( "Low level Key Management API", new Separator),
 		FP( "generate_keypair", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &generate_keypair) ),
 		FP( "delete_keypair", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &delete_keypair) ),
 		FP( "import_key"    , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<std::size_t>, Out<identity_list*>> ( &import_key) ),
@@ -268,20 +268,20 @@ const FunctionMap functions = {
 		FP( "revoke"        , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>> ( &revoke_key) ),
 		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<time_t>, Out<bool>> ( &key_expired) ),
 		
-		FP( "—— from blacklist.h & OpenPGP_compat.h ——", new Separator),
+		FP( "from blacklist.h & OpenPGP_compat.h", new Separator),
 		FP( "blacklist_add"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &blacklist_add) ),
 		FP( "blacklist_delete", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &blacklist_delete) ),
 		FP( "blacklist_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<bool>> ( &blacklist_is_listed) ),
 		FP( "blacklist_retrieve" , new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<stringlist_t*>> ( &blacklist_retrieve) ),
 		FP( "OpenPGP_list_keyinfo", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<stringpair_list_t*>> ( &OpenPGP_list_keyinfo) ),
 		
-		FP( "-- Event Listener & Results", new Separator ),
+		FP( "Event Listener & Results", new Separator ),
 		FP( "registerEventListener"  , new Func<PEP_STATUS, In<Context*, false>, In<std::string>, In<unsigned>, In<std::string>> ( &registerEventListener) ),
 		FP( "unregisterEventListener", new Func<PEP_STATUS, In<Context*, false>, In<std::string>, In<unsigned>, In<std::string>> ( &unregisterEventListener) ),
 		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
 		
 		// my own example function that does something useful. :-)
-		FP( "—— Other ——", new Separator ),
+		FP( "Other", new Separator ),
 		FP( "version",     new Func<std::string>( &JsonAdapter::version ) ),
 		FP( "apiVersion",  new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
 		FP( "getGpgEnvironment", new Func<GpgEnvironment>( &getGpgEnvironment ) ),

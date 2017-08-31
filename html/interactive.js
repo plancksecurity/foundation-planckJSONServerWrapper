@@ -495,7 +495,7 @@ function init_pep_functions()
 	for(var i=0, len=pep_functions.length; i<len; ++i)
 	{
 		var f = pep_functions[i];
-		optionList += '<option' + (f.separator? ' disabled>':'>') + f.name + "</option>\n";
+		optionList += '<option' + (f.separator? ' disabled> —— ':'>') + f.name + "</option>\n";
 	}
 	document.getElementById("fn_name").innerHTML = optionList;
 	document.getElementById("spn_version").innerHTML = "version: " + server_version;
@@ -504,27 +504,36 @@ function init_pep_functions()
 
 function create_doc()
 {
-	var table_def = {
-		html : {    start : '<table class="dtable">',       end: '</table>\n',
-				header : '<tr><th>Function name</th><th>Return Type</th><th>Parameters</th></tr>\n',
-				line_start  : '<tr>', line_end  : '</tr>\n',
-				cell_start : '<td>' ,  cell_end : '</td>'
+	var format_def = {
+		html : {   section_start : '<h3>' ,    section_end : '</h3>\n',
+				subsection_start : '<h4>' , subsection_end : '</h4>\n',
+				b_start : '<b>', b_end : '</b>',
+				table_start  : '<table class="dtable">', table_end: '</table>\n',
+				table_header : '<tr><th>Function name</th><th>Return Type</th><th>Parameters</th></tr>\n',
+				line_start : '<tr>', line_end : '</tr>\n',
+				cell_start : '<td>', cell_end : '</td>'
 				},
-		md :   { start: '', end: '\n',
-				header : '| Function name | Return Type | Parameters |\n' +
-				         '|---------------|-------------|------------|\n',
-				line_start : '', line_end : '|\n',
+		md :   {   section_start : '### '  ,    section_end : ' ###\n',
+				subsection_start : '#### ' , subsection_end : ' ####\n',
+				b_start : ' **', b_end : '** ',
+				table_start : '', table_end: '\n',
+				table_header: '| Function name | Return Type | Parameters |\n' +
+				              '|---------------|-------------|------------|\n',
+				line_start : ''  , line_end: '|\n',
 				cell_start : '| ', cell_end: ' '
 				},
-		trac : { start: '', end: '\n',
-				header : '||= Function name =||= Return Type =||= Parameters =||\n',
-				line_start : '|', line_end : '|\n',
-				cell_start : '| ', cell_end: ' |'
+		trac : {   section_start : '=== '  ,    section_end : ' ===\n',
+				subsection_start : '==== ' , subsection_end : ' ====\n',
+				b_start : ' **', b_end : '** ',
+				table_start : ''  , table_end: '\n',
+				table_header: '||= Function name =||= Return Type =||= Parameters =||\n',
+				line_start : '|' , line_end : '|\n',
+				cell_start : '| ', cell_end : ' |'
 				}
 	};
 	
 	var format_name = document.getElementById('doc_format').value;
-	var format_def  = table_def[format_name];
+	var fd  = format_def[format_name];
 	var output = ""; 
 	
 	for(var i=0, len=pep_functions.length; i<len; ++i)
@@ -532,12 +541,17 @@ function create_doc()
 		var f = pep_functions[i];
 		if(f.separator)
 		{
-			output += format_def.end + "\n" + f.name + "\n" + format_def.start + format_def.header;
+			if(output.length > 0)
+			{
+				output += fd.table_end + "\n";
+			}
+			output += fd.subsection_start + f.name + fd.subsection_end
+			 + fd.table_start + fd.table_header;
 		}else{
-			output += format_def.line_start
-				+ format_def.cell_start + f.name + format_def.cell_end
-				+ format_def.cell_start + f["return"] + format_def.cell_end
-				+ format_def.cell_start ;
+			output += fd.line_start
+				+ fd.cell_start + f.name + fd.cell_end
+				+ fd.cell_start + f["return"] + fd.cell_end
+				+ fd.cell_start ;
 			
 			for( var p=0, plen = f.params.length; p<plen; ++p)
 			{
@@ -551,16 +565,19 @@ function create_doc()
 				}
 			}
 			
-			output += format_def.cell_end + format_def.line_end;
+			output += fd.cell_end + fd.line_end;
 			
 		}
 	}
 	
+	output =
+		fd.section_start + 'Function reference for the p≡p JSON Server Adapter. Version “' + server_version + '”' + fd.section_end
+		+ 'Output parameters are denoted by a ' + fd.b_start + '⇑' + fd.b_end + ', '
+		+ 'InOut parameters are denoted by a ' + fd.b_start + '⇕' + fd.b_end + ' after the parameter type.\n\n'
+		+ output + fd.table_end;
+
 	if(format_name != "html")
 		output = "<pre>" + output + "\n</pre>";
 	
-	document.getElementById("doc_out").innerHTML = 
-		'<h4>Function reference for the p≡p JSON Server Adapter. Version “' + server_version + '”</h4>'
-		+ 'Output parameters are denoted by a <b>⇑</b>, InOut parameters are denoted by a <b>⇕</b> after the parameter type.<br>'
-		+ output;
+	document.getElementById("doc_out").innerHTML = output;
 }
