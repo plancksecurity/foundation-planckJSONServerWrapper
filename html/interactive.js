@@ -495,8 +495,89 @@ function init_pep_functions()
 	for(var i=0, len=pep_functions.length; i<len; ++i)
 	{
 		var f = pep_functions[i];
-		optionList += '<option' + (f.separator? ' disabled>':'>') + f.name + "</option>\n";
+		optionList += '<option' + (f.separator? ' disabled> —— ':'>') + f.name + "</option>\n";
 	}
 	document.getElementById("fn_name").innerHTML = optionList;
 	document.getElementById("spn_version").innerHTML = "version: " + server_version;
+}
+
+
+function create_doc()
+{
+	var format_def = {
+		html : {   section_start : '<h3>' ,    section_end : '</h3>\n',
+				subsection_start : '<h4>' , subsection_end : '</h4>\n',
+				b_start : '<b>', b_end : '</b>',
+				table_start  : '<table class="dtable">', table_end: '</table>\n',
+				table_header : '<tr><th>Function name</th><th>Return Type</th><th>Parameters</th></tr>\n',
+				line_start : '<tr>', line_end : '</tr>\n',
+				cell_start : '<td>', cell_end : '</td>'
+				},
+		md :   {   section_start : '### '  ,    section_end : ' ###\n',
+				subsection_start : '#### ' , subsection_end : ' ####\n',
+				b_start : ' **', b_end : '** ',
+				table_start : '', table_end: '\n',
+				table_header: '| Function name | Return Type | Parameters |\n' +
+				              '|---------------|-------------|------------|\n',
+				line_start : ''  , line_end: '|\n',
+				cell_start : '| ', cell_end: ' '
+				},
+		trac : {   section_start : '=== '  ,    section_end : ' ===\n',
+				subsection_start : '==== ' , subsection_end : ' ====\n',
+				b_start : ' **', b_end : '** ',
+				table_start : ''  , table_end: '\n',
+				table_header: '||= Function name =||= Return Type =||= Parameters =||\n',
+				line_start : '|' , line_end : '|\n',
+				cell_start : '| ', cell_end : ' |'
+				}
+	};
+	
+	var format_name = document.getElementById('doc_format').value;
+	var fd  = format_def[format_name];
+	var output = ""; 
+	
+	for(var i=0, len=pep_functions.length; i<len; ++i)
+	{
+		var f = pep_functions[i];
+		if(f.separator)
+		{
+			if(output.length > 0)
+			{
+				output += fd.table_end + "\n";
+			}
+			output += fd.subsection_start + f.name + fd.subsection_end
+			 + fd.table_start + fd.table_header;
+		}else{
+			output += fd.line_start
+				+ fd.cell_start + f.name + fd.cell_end
+				+ fd.cell_start + f["return"] + fd.cell_end
+				+ fd.cell_start ;
+			
+			for( var p=0, plen = f.params.length; p<plen; ++p)
+			{
+				if(p>0) output += ', ';
+				output += f.params[p].type;
+				switch(f.params[p].direction)
+				{
+					case 'In'    : break;
+					case 'Out'   : output += '⇑'; break;
+					case 'InOut' :  output += '⇕'; break;
+				}
+			}
+			
+			output += fd.cell_end + fd.line_end;
+			
+		}
+	}
+	
+	output =
+		fd.section_start + 'Function reference for the p≡p JSON Server Adapter. Version “' + server_version + '”' + fd.section_end
+		+ 'Output parameters are denoted by a ' + fd.b_start + '⇑' + fd.b_end + ', '
+		+ 'InOut parameters are denoted by a ' + fd.b_start + '⇕' + fd.b_end + ' after the parameter type.\n\n'
+		+ output + fd.table_end;
+
+	if(format_name != "html")
+		output = "<pre>" + output + "\n</pre>";
+	
+	document.getElementById("doc_out").innerHTML = output;
 }
