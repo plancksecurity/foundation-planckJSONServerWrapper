@@ -500,3 +500,67 @@ function init_pep_functions()
 	document.getElementById("fn_name").innerHTML = optionList;
 	document.getElementById("spn_version").innerHTML = "version: " + server_version;
 }
+
+
+function create_doc()
+{
+	var table_def = {
+		html : {    start : '<table class="dtable">',       end: '</table>\n',
+				header : '<tr><th>Function name</th><th>Return Type</th><th>Parameters</th></tr>\n',
+				line_start  : '<tr>', line_end  : '</tr>\n',
+				cell_start : '<td>' ,  cell_end : '</td>'
+				},
+		md :   { start: '', end: '\n',
+				header : '| Function name | Return Type | Parameters |\n' +
+				         '|---------------|-------------|------------|\n',
+				line_start : '', line_end : '|\n',
+				cell_start : '| ', cell_end: ' '
+				},
+		trac : { start: '', end: '\n',
+				header : '||= Function name =||= Return Type =||= Parameters =||\n',
+				line_start : '|', line_end : '|\n',
+				cell_start : '| ', cell_end: ' |'
+				}
+	};
+	
+	var format_name = document.getElementById('doc_format').value;
+	var format_def  = table_def[format_name];
+	var output = ""; 
+	
+	for(var i=0, len=pep_functions.length; i<len; ++i)
+	{
+		var f = pep_functions[i];
+		if(f.separator)
+		{
+			output += format_def.end + "\n" + f.name + "\n" + format_def.start + format_def.header;
+		}else{
+			output += format_def.line_start
+				+ format_def.cell_start + f.name + format_def.cell_end
+				+ format_def.cell_start + f["return"] + format_def.cell_end
+				+ format_def.cell_start ;
+			
+			for( var p=0, plen = f.params.length; p<plen; ++p)
+			{
+				if(p>0) output += ', ';
+				output += f.params[p].type;
+				switch(f.params[p].direction)
+				{
+					case 'In'    : break;
+					case 'Out'   : output += '⇑'; break;
+					case 'InOut' :  output += '⇕'; break;
+				}
+			}
+			
+			output += format_def.cell_end + format_def.line_end;
+			
+		}
+	}
+	
+	if(format_name != "html")
+		output = "<pre>" + output + "\n</pre>";
+	
+	document.getElementById("doc_out").innerHTML = 
+		'<h4>Function reference for the p≡p JSON Server Adapter. Version “' + server_version + '”</h4>'
+		+ 'Output parameters are denoted by a <b>⇑</b>, InOut parameters are denoted by a <b>⇕</b> after the parameter type.<br>'
+		+ output;
+}

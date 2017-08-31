@@ -22,7 +22,9 @@
 </head>
 <body>
 
-<h1>Send example calls via jQuery – <span id="spn_version">(no JavaScript?)</span></h1>
+<h1>p≡p JSON Server Adapter – <span id="spn_version">(no JavaScript?)</span></h1>
+
+<h2>1. Send example calls via jQuery</h2>
 
 <form id="frm" name="frm">
 
@@ -47,9 +49,22 @@
 </form>
 
 <form id="frm_2" name="frm_2">
-<textarea placeholder="Just a scratchboard for text copy & paste :-)" rows="20" cols="88">
+<textarea placeholder="Just a scratchboard for text copy & paste :-)" rows="12" cols="80">
 </textarea>
 </form>
+<hr>
+<h2>2. Generate documentation</h2>
+<form id="frm_doc" name="frm_doc">
+	Select output format:
+	<select id="doc_format" size="1">
+		<option value="html" checked>HTML Table</option>
+		<option value="md"   >Markdown Table</option>
+		<option value="trac" >Trac Table</option>
+	</select>
+	<button type="button" name="btn_doc" onclick="create_doc()">Create!</button></dd>
+</form>
+
+<div id="doc_out" style="background-color:white;border:1px black solid; padding:10px;"></div>
 
 <script type="text/javascript">
 	init_pep_functions();
