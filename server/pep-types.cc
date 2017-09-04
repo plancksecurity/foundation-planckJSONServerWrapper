@@ -217,9 +217,9 @@ message* from_json<message*>(const js::Value& v)
 	msg->sent     = from_json_object<timestamp*, js::int_type>(o, "sent");
 	msg->recv     = from_json_object<timestamp*, js::int_type>(o, "recv");
 	
-	msg->from     = from_json_object<pEp_identity*, js::obj_type>(o, "from");
+	msg->from     = from_json_object<pEp_identity* , js::obj_type>  (o, "from");
 	msg->to       = from_json_object<identity_list*, js::array_type>(o, "to");
-	msg->recv_by  = from_json_object<pEp_identity*, js::obj_type>(o, "recv_by");
+	msg->recv_by  = from_json_object<pEp_identity* , js::obj_type>  (o, "recv_by");
 	msg->cc       = from_json_object<identity_list*, js::array_type>(o, "cc");
 	msg->bcc      = from_json_object<identity_list*, js::array_type>(o, "bcc");
 	msg->reply_to = from_json_object<identity_list*, js::array_type>(o, "reply_to");
