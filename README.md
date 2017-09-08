@@ -176,15 +176,6 @@ If there are functions that have a different semantics the behavior of the
 JSON wrapper has to be changed.
 
 
-#### Supported return types
-The current implementation only supports functions with a non-void return
-type.  (It would be possible to extend the `FunctionMap` implementation to
-support also void-returning functions if desired, but it would require more
-template specializations in `function_map.hh` etc.  that's why it is not
-implemented, yet.) So void-returning functions must currently be wrapped in
-a helper function that calls the void function and just returns a dummy
-value.
-
 #### Parameter (value) restrictions
 Some API functions have restrictions on their parameter values.  The JSON
 Adapter does not know these restrictions (because it does not know the
