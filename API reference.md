@@ -42,8 +42,8 @@ Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a 
 | mark_as_comprimized | PEP_STATUS | String |
 | identity_rating | PEP_STATUS | Identity, PEP_rating⇑ |
 | outgoing_message_rating | PEP_STATUS | Message, PEP_rating⇑ |
-| set_identity_flags | PEP_STATUS | Identity, Integer |
-| unset_identity_flags | PEP_STATUS | Identity, Integer |
+| set_identity_flags | PEP_STATUS | Identity⇕, Integer |
+| unset_identity_flags | PEP_STATUS | Identity⇕, Integer |
 
 
 #### Low level Key Management API ####
@@ -93,5 +93,3 @@ Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a 
 | version | String |  |
 | apiVersion | Integer |  |
 | getGpgEnvironment | GpgEnvironment |  |
-
-
