@@ -13,6 +13,8 @@
 #include <functional>
 #include <tuple>
 
+#include <mutex>
+
 #include "json-adapter.hh"
 #include "function_map.hh"
 #include "pep-types.hh"
@@ -288,6 +290,19 @@ const FunctionMap functions = {
 	};
 
 
+std::mutex js_mutex;
+
+// TODO: use && and std::forward<> to avoid copying of the arguments.
+// It is not relevant, yet, because at the moment we use this function template only
+// for init() and release() which have cheap-to-copy pointer parameters only
+template<class R, class... Args>
+R call_with_lock( R(*fn)(Args...), Args... args)
+{
+	std::lock_guard<std::mutex> L(js_mutex);
+	return fn(args...);
+}
+
+
 void sendReplyString(evhttp_request* req, const char* contentType, const std::string& outputText)
 {
 	auto* outBuf = evhttp_request_get_output_buffer(req);
@@ -508,7 +523,7 @@ struct JsonAdapter::Internal
 	~Internal()
 	{
 		stopSync();
-		release(session);
+		call_with_lock(&release, session);
 		session=nullptr;
 	}
 	
@@ -744,7 +759,7 @@ void JsonAdapter::startSync()
 		throw std::runtime_error("sync session already started!");
 	}
 	
-	PEP_STATUS status = init(&i->sync_session);
+	PEP_STATUS status = call_with_lock(&init, &i->sync_session);
 	if(status != PEP_STATUS_OK || i->sync_session==nullptr)
 	{
 		throw std::runtime_error("Cannot create sync session! status: " + status_to_string(status));
@@ -787,7 +802,7 @@ void JsonAdapter::Internal::stopSync()
 	unregister_sync_callbacks(sync_session);
 	sync_queue.clear();
 	
-	release(sync_session);
+	call_with_lock(&release, sync_session);
 	sync_session = nullptr;
 }
 
@@ -797,7 +812,7 @@ void JsonAdapter::startKeyserverLookup()
 	if(keyserver_lookup_session)
 		throw std::runtime_error("KeyserverLookup already started.");
 
-	PEP_STATUS status = init(&keyserver_lookup_session);
+	PEP_STATUS status = call_with_lock(&init, &keyserver_lookup_session);
 	if(status != PEP_STATUS_OK || keyserver_lookup_session==nullptr)
 	{
 		throw std::runtime_error("Cannot create keyserver lookup session! status: " + status_to_string(status));
@@ -826,7 +841,7 @@ void JsonAdapter::stopKeyserverLookup()
 
 	// there is no unregister_examine_callback() function. hum...
 	keyserver_lookup_queue.clear();
-	release(keyserver_lookup_session);
+	call_with_lock(&release, keyserver_lookup_session);
 	keyserver_lookup_session = nullptr;
 }
 
@@ -899,7 +914,7 @@ try
 			if(q==session_registry.end())
 			{
 				i->session = nullptr;
-				PEP_STATUS status = init(&i->session); // release(session) in ThreadDeleter
+				PEP_STATUS status = call_with_lock(&init, &i->session); // release(session) in ThreadDeleter
 				if(status != PEP_STATUS_OK || i->session==nullptr)
 				{
 					throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
