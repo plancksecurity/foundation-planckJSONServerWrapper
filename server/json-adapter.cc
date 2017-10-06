@@ -99,7 +99,8 @@ const std::string server_version =
 //	"(26) Reichshof";        // change return type from JSON array into JSON object {"output":[...], "return":..., "errorstack":[...]}
 //	"(27) Eckenhagen";       // add command line switch  "--sync false"  to disable automatic start of keysync at startup
 //	"(28) Olpe-Süd";         // add re_evaluate_message_rating(). Jira: JSON-29
-	"(29) Wenden";           // {start|stop}{KeySync|KeyserverLookup}  JSON-28
+//	"(29) Wenden";           // {start|stop}{KeySync|KeyserverLookup}  JSON-28
+	"(30) Krombach";         // JSON-49, add call_with_lock() around init() and release().
 
 
 typedef std::map<std::thread::id, JsonAdapter*> SessionRegistry;
@@ -256,6 +257,7 @@ const FunctionMap functions = {
 		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &get_trust) ),
 		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
 		FP( "own_identities_retrieve", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<identity_list*>>( &own_identities_retrieve ) ),
+		FP( "undo_last_mitrust", new Func<PEP_STATUS, In<PEP_SESSION,false>>( &undo_last_mistrust ) ),
 		
 		FP( "myself"        , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &myself) ),
 		FP( "update_dentity", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &update_identity) ),
