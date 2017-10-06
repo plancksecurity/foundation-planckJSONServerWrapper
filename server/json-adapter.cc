@@ -13,8 +13,6 @@
 #include <functional>
 #include <tuple>
 
-#include <mutex>
-
 #include "json-adapter.hh"
 #include "function_map.hh"
 #include "pep-types.hh"
@@ -127,8 +125,6 @@ locked_queue< pEp_identity*, &free_identity> keyserver_lookup_queue;
 PEP_SESSION keyserver_lookup_session = nullptr; // FIXME: what if another adapter started it already?
 ThreadPtr   keyserver_lookup_thread{nullptr, ThreadDeleter};
 
-// lock on pEpEngine init
-std::mutex init_mutex;
 
 PEP_STATUS get_gpg_path(const char** path)
 {
@@ -748,18 +744,12 @@ void JsonAdapter::startSync()
 		throw std::runtime_error("sync session already started!");
 	}
 	
-    PEP_STATUS status;
-
-    // lock init()
-    {
-        std::lock_guard<std::mutex> lock(init_mutex);    
-    	status = init(&i->sync_session);
-    	if(status != PEP_STATUS_OK || i->sync_session==nullptr)
-    	{
-    		throw std::runtime_error("Cannot create sync session! status: " + status_to_string(status));
-    	}
-	} // lock now out of scope
-    
+	PEP_STATUS status = init(&i->sync_session);
+	if(status != PEP_STATUS_OK || i->sync_session==nullptr)
+	{
+		throw std::runtime_error("Cannot create sync session! status: " + status_to_string(status));
+	}
+	
 	i->sync_queue.clear();
 	
 	status = register_sync_callbacks(i->sync_session,
@@ -807,18 +797,12 @@ void JsonAdapter::startKeyserverLookup()
 	if(keyserver_lookup_session)
 		throw std::runtime_error("KeyserverLookup already started.");
 
-    PEP_STATUS status;
-
-    // lock init()
-    {
-        std::lock_guard<std::mutex> lock(init_mutex);
-    	status = init(&keyserver_lookup_session);
-    	if(status != PEP_STATUS_OK || keyserver_lookup_session==nullptr)
-    	{
-    		throw std::runtime_error("Cannot create keyserver lookup session! status: " + status_to_string(status));
-    	}
-	} // lock now out of scope
-    
+	PEP_STATUS status = init(&keyserver_lookup_session);
+	if(status != PEP_STATUS_OK || keyserver_lookup_session==nullptr)
+	{
+		throw std::runtime_error("Cannot create keyserver lookup session! status: " + status_to_string(status));
+	}
+	
 	keyserver_lookup_queue.clear();
 	status = register_examine_function(keyserver_lookup_session,
 			JsonAdapter::examineIdentity,
@@ -915,17 +899,12 @@ try
 			if(q==session_registry.end())
 			{
 				i->session = nullptr;
-                
-                // lock init()
-                {
-                    std::lock_guard<std::mutex> lock(init_mutex);
-    				PEP_STATUS status = init(&i->session); // release(session) in ThreadDeleter
-    				if(status != PEP_STATUS_OK || i->session==nullptr)
-    				{
-    					throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
-    				}
-				} // lock now out of scope
-                
+				PEP_STATUS status = init(&i->session); // release(session) in ThreadDeleter
+				if(status != PEP_STATUS_OK || i->session==nullptr)
+				{
+					throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
+				}
+				
 				session_registry.emplace(id, ja);
 				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".\n";
 				if(i->shall_sync)
