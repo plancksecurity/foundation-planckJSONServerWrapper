@@ -18,19 +18,26 @@ distributions should work, but are not yet officially supported.
 
 #### System requirements
 
-* Debian 9 (or higher) or Ubuntu 16.04 (or higher)
+Debian 9 or Ubuntu 16.04. Newer versions should also work (file a bug report
+if not) but are not in our main focus, yet.
 
 #### Dependencies
-* g++ 4.8 or 4.9
+* C++ compiler: tested with g++ 4.8 and 4.9, and clang++ 2.8. Newer versions should work, too.
 * GNU make
-* libboost-filesystem-dev
+* libboost-thread-dev (tested with 1.58)
+* libboost-program-options-dev  (tested with 1.58)
+* libboost-filesystem-dev (tested with 1.58)
+* libevent-dev 2.0.21 or 2.0.22 (or build from source, see below)
 * [p≡p Engine](https://letsencrypt.pep.foundation/trac/wiki/Basic%20Concepts%20of%20p%E2%89%A1p%20engine) (which needs gpgme-thread,
   a patched libetpan, libboost-system-dev)
 
 #### Build steps
 
 1. Build [p≡p Engine](https://letsencrypt.pep.foundation/trac/wiki/Basic%20Concepts%20of%20p%E2%89%A1p%20engine)
-2. Build [libevent](http://libevent.org/) (a user-install in $HOME/local/ is fine)
+2. Build [libevent](http://libevent.org/)
+   * tested with version 2.0.21 and 2.0.22, newer versions should work, too. 2.1.x is not yet tested.
+   * Can be configured without dependency to OpenSSL, because the JSON Server Adapter does not use SSL/TLS.
+   * A user-install in $HOME/local/ is fine. 
 3. Edit the library and include paths server/Makefile so p≡p & libevent will be found
 4. Run "make" in the server/ path
 
