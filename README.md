@@ -48,11 +48,11 @@ make
 
 ### Building on macOS
 
-The p≡p JSON Server Adapter can be built on OS X or macOS with MacPorts.
+The p≡p JSON Server Adapter can be built on OS X 10.11 or macOS 10.12 with MacPorts.
 
 #### System requirements
 
-* OS X or macOS
+* OS X 10.11 or macOS 10.12.
 
 #### Preconditions
 
