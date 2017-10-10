@@ -14,7 +14,7 @@ Currently, Linux and OSX/macOS are supported, Windows is about to follow.
 ### Building on Linux
 
 The p≡p JSON Server Adapter can be build on Debian and Ubuntu.  Other
-distributions should work, but are not officially supported.
+distributions should work, but are not yet officially supported.
 
 #### System requirements
 
@@ -41,7 +41,7 @@ make
 
 ### Building on macOS
 
-The p≡p JSON Server Adapter can be build on OS X or macOS with MacPorts.
+The p≡p JSON Server Adapter can be built on OS X or macOS with MacPorts.
 
 #### System requirements
 
@@ -116,7 +116,7 @@ make
    ```
 
 2. Visit that address (normally http://127.0.0.1:4223/) in your
-   javascript-enabled web browser to see the test JavaScript client.
+   JavaScript-enabled web browser to see the test JavaScript client.
 3. Call any function ("version()" or "get_gpg_path()" should work just
    fine) with the correct security token.
 
@@ -128,10 +128,10 @@ the adapter and its functions.
 ### Session handling
 
 When using the p≡p engine, a session is needed to which any adapter can
-connect.  The p≡p JSON Server Adapter automatically creates one session per
+connect. The p≡p JSON Server Adapter automatically creates one session per
 HTTP client connection (and also closes that session automatically when the
-client connections is closed).  Therefore, the client does not need to take
-care of the session management.  However, the client has to set up a [HTTP
+client connections is closed). Therefore, the client does not need to take
+care of the session management. However, the client has to set up a [HTTP
 persistent
 connection](https://en.wikipedia.org/wiki/HTTP_persistent_connection).
 
@@ -140,7 +140,7 @@ connection](https://en.wikipedia.org/wiki/HTTP_persistent_connection).
 All C data types are mapped the same way, so some day the JSON wrapper can
 be generated from the p≡p Engine header files (or the JSON wrapper and the
 p≡p engine header are both generated from a common interface description
-file)
+file).
 
 | C type | JSON mapping |
 |--|--|
@@ -157,6 +157,7 @@ The parameter type PEP_SESSION is handled automatically by the JSON Server
 Adapter and the PEP_SESSION parameter is omitted from the JSON API.
 
 #### enum types
+
 Enum types are represented as JSON objects with one member, whose name is
 derived from the enum type name, holding the numeric value of the enum.
 
@@ -164,6 +165,7 @@ Some enum types are still represented directly as JSON decimal number. It
 shall be changed in a future version of the JSON Adapter.
 
 #### String types
+
 The JSON Server Adapter does automatic memory management for string
 parameters. The current p≡p Engine's API distinguish between `const char*`
 parameters and `char*` parameters.  `const char*` normally means: the
@@ -175,8 +177,8 @@ free string.
 If there are functions that have a different semantics the behavior of the
 JSON wrapper has to be changed.
 
-
 #### Parameter (value) restrictions
+
 Some API functions have restrictions on their parameter values.  The JSON
 Adapter does not know these restrictions (because it does not know the
 semantics of the wrapped functions at all).  So it is the client's
@@ -189,7 +191,6 @@ Engine is compiled in debug mode (= with enabled assert() checking).
 Currently there are no range checks for numerical parameter types (e.g. a
 JSON decimal number can hold a bigger value than the `int` parameter type of
 a certain C function).
-
 
 ### API Reference
 
