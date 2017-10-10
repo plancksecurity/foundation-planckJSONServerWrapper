@@ -123,7 +123,7 @@ make
    ```
 
 2. Visit that address (normally http://127.0.0.1:4223/) in your
-   JavaScript-enabled web browser to see the test JavaScript client.
+   JavaScript-enabled web browser to see the "JavaScript test client".
 3. Call any function ("version()" or "get_gpg_path()" should work just
    fine) with the correct security token.
 
@@ -203,6 +203,10 @@ a certain C function).
 
 An complete overview with all functions that are callable from the client
 can be found in the [API Reference](pEp JSON Server Adapter/API Reference).
+
+That API reference is a generated file that shows the current API briefly.
+There is also a (currently manually written) file that holts a copy of the
+documentation from the Engine's header files: [API reference detail.md]
 
 Most of the callable functions are functions from the C API of the p≡p
 Engine.  They are described in detail, incl.  pre- and post-conditions in
