@@ -1,4 +1,4 @@
-### Function reference for the p≡p JSON Server Adapter. Version “(29) Wenden” ###
+### Function reference for the p≡p JSON Server Adapter. Version “(30) Krombach” ###
 Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a  **⇕**  after the parameter type.
 
 #### Message API ####
