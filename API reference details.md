@@ -220,7 +220,7 @@ get path of gpg binary.
 #### pEp Engine Core API ####
 ##### log_event(String title, String entity, String description, String comment)
 log a user defined event defined by UTF-8 encoded strings into management log
-
+```
     parameters:
         title (in)          C string with event name
         entity (in)         C string with name of entity which is logging
@@ -233,7 +233,7 @@ log a user defined event defined by UTF-8 encoded strings into management log
 
 ##### get_trustwords(Identity id1, Identity id2, Language lang, String⇑ words, Integer⇑ wsize, Bool full)
 get full trustwords string for a *pair* of identities
-`` 
+```
     parameters:
         id1 (in)            identity of first party in communication - fpr can't be NULL  
         id2 (in)            identity of second party in communication - fpr can't be NULL
@@ -264,7 +264,7 @@ get the list of languages
 
 ##### get_phrase(Language lang, Integer phrase_id, String⇑ phrase)
 get phrase in a dedicated language through i18n
-`` 
+```
   parameters:
       lang (in)               C string with ISO 639-1 language code
       phrase_id (in)          id of phrase in i18n
