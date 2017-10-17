@@ -26,13 +26,13 @@ endif
 all: pep-json-server servertest
 
 pep-json-server: main.o libjson-adapter.a
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) -o $@ $^
+	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
 
 pep-json-server-static: main.o libjson-adapter.a
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) -static -o $@ $^
+	$(CXX) $(LDFLAGS) $(LDLIBS) -static -o $@ $^
 
 servertest: servertest.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) -o $@ $^
+	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
 
 # FIXME How about `%.o json_spirit/*.o`? How about using built-in rules?
 libjson-adapter.a: \
