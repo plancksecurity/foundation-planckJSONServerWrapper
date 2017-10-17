@@ -55,9 +55,11 @@ prefix-config.cc:
 
 .PHONY: install
 install:
-	mkdir -v -p  $(HTML_DIRECTORY)
+	mkdir -v -p $(PREFIX)/bin $(PREFIX)/lib
+	mkdir -v -p $(HTML_DIRECTORY)
 	cp -v ../html/* $(HTML_DIRECTORY)
-# FIXME Install binaries as well here
+	cp -v libjson-adapter.a $(PREFIX)/lib
+	cp -v pep-json-server servertest $(PREFIX)/bin
 
 .PHONY: clean
 clean:
