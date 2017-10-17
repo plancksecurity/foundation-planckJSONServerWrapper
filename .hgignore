@@ -7,7 +7,6 @@ syntax: glob
 *.pc
 
 libevent-*-stable/Makefile
-libevent-*-stable/configure
 libevent-*-stable/config.h
 libevent-*-stable/config.log
 libevent-*-stable/config.status
