@@ -7,6 +7,7 @@ syntax: glob
 *.pc
 
 libevent-*-stable/Makefile
+libevent-*-stable/configure
 libevent-*-stable/config.h
 libevent-*-stable/config.log
 libevent-*-stable/config.status
@@ -19,6 +20,7 @@ libevent-*-stable/**/.libs/
 libevent-*-stable/*.lo
 libevent-*-stable/*.la
 
+libevent-*-stable/autom4te.cache/
 libevent-*-stable/include/event2/event-config.h
 libevent-*-stable/sample/dns-example
 libevent-*-stable/sample/event-test
@@ -39,6 +41,8 @@ libevent-*-stable/test/test-init
 libevent-*-stable/test/test-ratelim
 libevent-*-stable/test/test-time
 libevent-*-stable/test/test-weof
+
+libevent-*-stable/build/
 
 server/pep-json-server
 server/servertest
