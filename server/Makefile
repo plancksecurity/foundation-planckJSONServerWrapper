@@ -24,9 +24,8 @@ endif
 
 NO_SOURCE=main.cc servertest.cc
 
-ALL_SOURCE=$(wildcard json_spirit/*.cpp)
-ALL_SOURCE+= $(wildcard *.cc)
-ALL_SOURCE=$(filter-out $(NO_SOURCE),$(ALL_SOURCE))
+ALL_SOURCE=$(filter-out $(NO_SOURCE),$(wildcard json_spirit/*.cpp))
+ALL_SOURCE+= $(filter-out $(NO_SOURCE),$(wildcard *.cc))
 DEPENDS=$(subst .cpp,.d,$(ALL_SOURCE))
 DEPENDS=$(subst .cc,.d,$(ALL_SOURCE))
 ALL_OBJECTS=$(subst .cpp,.o,$(ALL_SOURCE))
