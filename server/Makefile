@@ -33,9 +33,15 @@ ALL_OBJECTS0=$(subst .cpp,.o,$(ALL_SOURCE))
 ALL_OBJECTS=$(subst .cc,.o,$(ALL_OBJECTS0))
 
 ifeq ($(BUILD_FOR),Linux)
-    LIBPATH=DYLD_LIBRARY_PATH
-else
     LIBPATH=LD_LIBRARY_PATH
+else
+    LIBPATH=DYLD_LIBRARY_PATH
+endif
+
+ifeq ($(BUILD_FOR),Linux)
+    LD_EAGER_VAR=LD_BIND_NOW=placeholder
+else
+    LD_EAGER_VAR=DYLD_BIND_AT_LAUNCH=placeholder
 endif
 
 # Create a list of the extra library paths for the loader.
@@ -63,6 +69,10 @@ endif
 EXTRA_LIB_PATHS:=$(EXTRA_LIB_PATHS::=)
 
 CMD_PFX=$(LIBPATH)=$(EXTRA_LIB_PATHS)
+
+ifdef DEBUG
+    CMD_PFX+= $(LD_EAGER_VAR)
+endif
 
 .PHONY: all
 all: pep-json-server servertest
