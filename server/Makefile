@@ -46,7 +46,7 @@ endif
 
 # Create a list of the extra library paths for the loader.
 # Note that += can not be used here, as it changes the amount of whitespace
-EXTRA_LIB_PATHS=
+EXTRA_LIB_PATHS=$(PREFIX)/lib:
 ifdef BOOST_LIB
     EXTRA_LIB_PATHS:=$(EXTRA_LIB_PATHS)$(patsubst -L%,%,$(BOOST_LIB)):
 endif
