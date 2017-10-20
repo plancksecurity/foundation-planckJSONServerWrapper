@@ -25,11 +25,12 @@ endif
 NO_SOURCE=main.cc servertest.cc
 
 ALL_SOURCE=$(filter-out $(NO_SOURCE),$(wildcard json_spirit/*.cpp))
+ALL_SOURCE+= prefix-config.cc
 ALL_SOURCE+= $(filter-out $(NO_SOURCE),$(wildcard *.cc))
-DEPENDS=$(subst .cpp,.d,$(ALL_SOURCE))
-DEPENDS=$(subst .cc,.d,$(ALL_SOURCE))
-ALL_OBJECTS=$(subst .cpp,.o,$(ALL_SOURCE))
-ALL_OBJECTS=$(subst .cc,.o,$(ALL_SOURCE))
+DEPENDS0=$(subst .cpp,.d,$(ALL_SOURCE))
+DEPENDS=$(subst .cc,.d,$(DEPENDS0))
+ALL_OBJECTS0=$(subst .cpp,.o,$(ALL_SOURCE))
+ALL_OBJECTS=$(subst .cc,.o,$(ALL_OBJECTS0))
 
 ifeq ($(BUILD_FOR),Linux)
     LIBPATH=DYLD_LIBRARY_PATH
