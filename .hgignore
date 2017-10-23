@@ -48,3 +48,7 @@ server/servertest
 server/*.a
 server/prefix-config.cc
 server/local.conf
+server/*.d
+server/json_spirit/*.d
+
+build/
