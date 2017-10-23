@@ -95,7 +95,13 @@ prefix-config.cc:
 %.o: %.cc %.hh
 	$(CXX) $(CXXFLAGS) -c $<
 
-%.d: %.c
+%.d: %.cpp
+	@set -e; rm -f $@; \
+	$(CXX) -MM $(CPPFLAGS) $(CXXFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+%.d: %.cc
 	@set -e; rm -f $@; \
 	$(CXX) -MM $(CPPFLAGS) $(CXXFLAGS) $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
@@ -121,10 +127,12 @@ clean:
 	rm -vf *.a json_spirit/*.a
 	rm -vf prefix-config.cc
 
-.PHONY: run
+.PHONY: run | install
 run:
+	@echo "The adapter must be installed for $< to work"
 	$(CMD_PFX) "$(PREFIX)/bin/$(TARGET)"
 
-.PHONY: test
+.PHONY: test | install
 test:
+	@echo "The adapter must be installed for $< to work"
 	$(CMD_PFX) "$(PREFIX)/bin/$(TARGET_TEST)"
