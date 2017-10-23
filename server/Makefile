@@ -125,6 +125,7 @@ clean:
 	rm -vf pep-json-server servertest
 	rm -vf *.o json_spirit/*.o
 	rm -vf *.a json_spirit/*.a
+	rm -vf *.d json_spirit/*.d
 	rm -vf prefix-config.cc
 
 .PHONY: run | install
