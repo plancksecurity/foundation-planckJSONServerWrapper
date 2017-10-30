@@ -147,6 +147,17 @@ You can use `make run` to start the server.
 In the following section, you'll find background information on how to use
 the adapter and its functions.
 
+### Server startup and shutdown
+
+The JSON Server Adapter can be started on demand.
+It checks automatically whether an instance for the same user on the machine
+is already running and if yes it ends itself gracefully.
+
+If there is no running server found the newly started server creates the
+server token file and forks itself into background (if not prevented via
+"-d" commandline switch).
+
+
 ### Session handling
 
 When using the p≡p engine, a session is needed to which any adapter can
@@ -226,6 +237,34 @@ documentation from the Engine's header files: [API reference detail.md]
 Most of the callable functions are functions from the C API of the p≡p
 Engine.  They are described in detail, incl.  pre- and post-conditions in
 the appropriate C header files of the Engine.
+
+
+### Authentication
+
+The JSON Server Adapter and the client have to authenticate to each ohter.
+"Authentication" in this case means "run with the same user rights". This is
+done by proving that each communication partner is able to read a certain
+file that has user-only read permissions.
+
+0.  There is a common (between client & server) algorithm to create the path
+   and filename of the "server token file", for a given user name. 
+
+1.  The server creates a "server token file" containing a "server token" and
+   the IP address and port where the server listens on.  This file can only
+   be read by client programs that run with the same user rights.
+
+2.  The client creates a "client token file" containing a "client token". 
+   This file can only be read by the server when it runs with the same user
+   rights.
+
+3.  When the client connects to the server it sends the absolute path of the
+   client token file.  The server checks the path (to avoid URL or path
+   attacks), reads the file and answers with the containing "client token"
+   to prove it runs with the same user rights to the client.
+
+4.  The client checks the path, reads the "server token" from the file and
+   authenticate itself to the server in each JSON RPC call with that "sever
+   token".
 
 
 ## Extending / customizing
