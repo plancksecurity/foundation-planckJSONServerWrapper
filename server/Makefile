@@ -78,13 +78,13 @@ endif
 all: pep-json-server servertest
 
 $(TARGET): main.o libjson-adapter.a
-	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
+	$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 $(TARGET)-static: main.o libjson-adapter.a
-	$(CXX) $(LDFLAGS) $(LDLIBS) -static -o $@ $^
+	$(CXX) $^ $(LDFLAGS) $(LDLIBS) -static -o $@
 
 $(TARGET_TEST): servertest.o
-	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
+	$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 libjson-adapter.a: $(ALL_OBJECTS)
 	ar rcs $@ $^
