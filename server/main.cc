@@ -68,7 +68,7 @@ try
 			std::cout << "Press <Q> <Enter> to quit." << std::endl;
 			input = std::cin.get();
 			std::cout << "Oh, I got a '" << input << "'. \n";
-		}while(input != 'q' && input != 'Q');
+		}while(std::cin && input != 'q' && input != 'Q');
 	}else{
 		do{
 			std::this_thread::sleep_for(std::chrono::seconds(3));
