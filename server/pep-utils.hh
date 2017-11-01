@@ -3,12 +3,12 @@
 #include <list>
 #include <mutex>
 #include <condition_variable>
+#include <string>
 
 namespace pEp
 {
 	namespace utility
 	{
-	
 		// a thread-safe queue of T elements. Deleter is a functor that is called in clear() for each elements
 		// interface differs from std::queue because "top() and pop() if not empty()" does not work atomically!
 		// elements must be copied without exceptions!
@@ -138,6 +138,11 @@ namespace pEp
 				return _q.empty();
 			}
 		};
+		
+		// reads a whole file and returns it as std::string
+		// throws std::runtime_error() if the file cannot be read. Empty file is not an error.
+		std::string slurp(const std::string& filename);
+
 	
 	} // end of namespace pEp::util
 } // end of namespace pEp

@@ -334,19 +334,11 @@ void sendFile( evhttp_request* req, const std::string& mimeType, const fs::path&
 	if (!outBuf)
 		return;
 	
-	const int fd = open(fileName.c_str(), O_RDONLY);
-	if(fd>0)
-	{
-		const uint64_t fileSize = boost::filesystem::file_size(fileName);
-		evbuffer_add_file(outBuf, fd, 0, fileSize);
-		evhttp_add_header(evhttp_request_get_output_headers(req), "Content-Type", mimeType.c_str());
-		evhttp_send_reply(req, HTTP_OK, "", outBuf);
-		//close(fd);  // not necessary because it is done inside of libevhttp :-)
-	}else{
-		char error_msg[128];
-		snprintf(error_msg, 127, "Cannot open file \"%s\". errno=%d.\n", fileName.c_str(), errno);
-		evhttp_send_error(req, HTTP_NOTFOUND, error_msg);
-	}
+	// not the best for big files, but this server does not send big files. :-)
+	const std::string fileContent = pEp::utility::slurp(fileName.string());
+	evbuffer_add(outBuf, fileContent.data(), fileContent.size());
+	evhttp_add_header(evhttp_request_get_output_headers(req), "Content-Type", mimeType.c_str());
+	evhttp_send_reply(req, HTTP_OK, "", outBuf);
 }
 
 
