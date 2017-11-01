@@ -335,7 +335,7 @@ void sendFile( evhttp_request* req, const std::string& mimeType, const fs::path&
 		return;
 	
 	// not the best for big files, but this server does not send big files. :-)
-	const std::string fileContent = pEp::utility::slurp(fileName);
+	const std::string fileContent = pEp::utility::slurp(fileName.string());
 	evbuffer_add(outBuf, fileContent.data(), fileContent.size());
 	evhttp_add_header(evhttp_request_get_output_headers(req), "Content-Type", mimeType.c_str());
 	evhttp_send_reply(req, HTTP_OK, "", outBuf);

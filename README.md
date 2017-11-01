@@ -1,27 +1,15 @@
 # p≡p JSON Server Adapter
 
 ## Introduction
-
 The p≡p JSON Server Adapter provides a REST-like jQuery-compatible API to
 connect with the p≡p engine.  It is language-independent and can be used by
 any client.
 
-## Getting started - build and run
-
+## Requirements
 In order to use the p≡p JSON Server Adapter, you need to build and run it.
-Currently, Linux and OSX/macOS are supported, Windows is about to follow.
+Currently, Linux (Debian 9, Ubuntu 16.04) and MacOS (10.11, 10.12) are supported, Windows is about to follow. Newer versions should also work (file a bug report if not) but are not in our main focus, yet.
 
-### Building on Linux
-
-The p≡p JSON Server Adapter can be build on Debian and Ubuntu.  Other
-distributions should work, but are not yet officially supported.
-
-#### System requirements
-
-Debian 9 or Ubuntu 16.04. Newer versions should also work (file a bug report
-if not) but are not in our main focus, yet.
-
-#### Dependencies
+## Dependencies
 * C++ compiler: tested with g++ 4.8 and 4.9, and clang++ 2.8. Newer versions should work, too.
 * GNU make
 * libboost-thread-dev (tested with 1.58)
@@ -30,46 +18,97 @@ if not) but are not in our main focus, yet.
 * libevent-dev 2.0.21 or 2.0.22 (or build from source, see below)
 * [p≡p Engine](https://letsencrypt.pep.foundation/trac/wiki/Basic%20Concepts%20of%20p%E2%89%A1p%20engine) (which needs gpgme-thread,
   a patched libetpan, libboost-system-dev)
+* OSSP libuuid
 
-#### Build steps
+## Building/Installing
+### Install the dependencies
+Debian 9:
 
-1. Build [p≡p Engine](https://letsencrypt.pep.foundation/trac/wiki/Basic%20Concepts%20of%20p%E2%89%A1p%20engine)
-2. Build [libevent](http://libevent.org/)
-   * tested with version 2.0.21 and 2.0.22, newer versions should work, too. 2.1.x is not yet tested.
-   * Can be configured without dependency to OpenSSL, because the JSON Server Adapter does not use SSL/TLS.
-   * A user-install in $HOME/local/ is fine. 
-3. Edit the library and include paths server/Makefile so p≡p & libevent will be found
-4. Run "make" in the server/ path
+~~~~~
+apt install -y build-essential libboost1.62-dev libboost-system1.62-dev libboost-filesystem1.62-dev libboost-program-options1.62-dev libboost-thread1.62-dev libgpgme-dev uuid-dev
+~~~~~
 
-```
-cd server
+macOS 10.12:
+
+Use homebrew or macports to install the required libraries.
+
+For more explicit instructions on how to do this with macports, see the section below.
+
+Build and install the pEp Engine. Instructions can be found here: [https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md](https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md).
+
+### Build and install libevent
+~~~~~
+mkdir ~/code/json-ad
+hg clone https://cacert.pep.foundation/dev/repos/pEpJSONServerAdapter/ ~/code/json-ad
+cd ~/code/json-ad
+./configure --prefix="$HOME/code/json-ad/libevent-2.0.22-stable/build/" --disable-openssl
 make
-```
+make install
+~~~~~
 
-### Building on macOS
+### Build and install the JSON server
+~~~~~
+cd cd ~/code/json-ad/server
+~~~~~
 
-The p≡p JSON Server Adapter can be built on OS X 10.11 or macOS 10.12 with MacPorts.
+Edit the build configuration to your needs in `./Makefile.conf`, or create a `./local.conf` that sets any of the make variables documented in `./Makefile.conf`.
 
-#### System requirements
+If a dependency is not found in your system's default include or library paths, you will have to specify the according paths in a make variable. Typically, this has to be done at least for the pEp Engine, libetpan and libevent.
 
-* OS X 10.11 or macOS 10.12.
+Below are two sample `./local.conf` files, for orientation.
 
-#### Preconditions
+macOS 10.12:
 
-For compiling the p≡p JSON Server Adapter and its dependencies, make sure
-you have the LANG variable set.
+~~~~~
+PREFIX=$(HOME)/code/json-ad/build
+HTML_DIRECTORY=$(PREFIX)/share/pEp/json-adapter/html
 
-```
-export LANG=en_US.UTF-8
-```
+BOOST_INC=-I$(HOME)/Cellar/boost/1.65.1/include
+BOOST_LIB=-L$(HOME)/Cellar/boost/1.65.1/lib
 
-#### Dependencies
+ENGINE_INC=-I$(HOME)/code/engine/build/include
+ENGINE_LIB=-L$(HOME)/code/engine/build/lib
 
-The following dependencies need to be installed in order to be able to build
-the p≡p JSON Server Adapter.
+ETPAN_INC=-I$(HOME)/code/libetpan/build/include
+ETPAN_LIB=-L$(HOME)/code/libetpan/build/lib
 
-##### MacPorts
-[Install MacPorts](https://www.macports.org/install.php) for your version of OS X/macOS.
+EVENT_INC=-I$(HOME)/code/json-ad/libevent-2.0.22-stable/build/include
+EVENT_LIB=-L$(HOME)/code/json-ad/libevent-2.0.22-stable/build/lib
+
+GPGME_INC=-I$(HOME)/Cellar/gpgme/1.9.0_1/include
+GPGME_LIB=-L$(HOME)/Cellar/gpgme/1.9.0_1/lib
+
+UUID_INC=-I$(HOME)/Cellar/ossp-uuid/1.6.2_2/include
+UUID_LIB=-L$(HOME)/Cellar/ossp-uuid/1.6.2_2/lib
+~~~~~
+
+Debian 9:
+
+~~~~~
+PREFIX=$(HOME)/code/json-ad/build
+HTML_DIRECTORY=$(PREFIX)/share/pEp/json-adapter/html
+
+ENGINE_INC=-I$(HOME)/code/engine/build/include
+ENGINE_LIB=-L$(HOME)/code/engine/build/lib
+
+ETPAN_INC=-I$(HOME)/code/libetpan/build/include
+ETPAN_LIB=-L$(HOME)/code/libetpan/build/lib
+
+EVENT_INC=-I$(HOME)/code/json-ad/libevent-2.0.22-stable/build/include
+EVENT_LIB=-L$(HOME)/code/json-ad/libevent-2.0.22-stable/build/lib
+~~~~~
+
+Now, build and install the server:
+
+~~~~~
+make all
+make install
+~~~~~
+
+With `make test` you can execute the server's tests.
+
+### Macports
+[Install MacPorts](https://www.macports.org/install.php) for your version of macOS.
 
 If MacPorts is already installed on your machine, but was installed by a
 different user, make sure your `PATH` variable is set as follows in
@@ -82,35 +121,11 @@ export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
 Install dependencies packaged with MacPorts as follows.
 
 ```
-sudo port install openssl boost ossp-uuid
+sudo port install gpgme boost ossp-uuid
 ```
 
-##### libevent
-
-Install [libevent](http://libevent.org/).
-
-```
-cd libevent-2.0.22-stable
-export LDFLAGS=-L/opt/local
-export CFLAGS=-I/opt/local/include
-
-./configure --prefix "$HOME"
-
-make
-make install
-```
-
-#### Build steps
-
-1. Install dependencies
-2. Run "make" in the server/ path
-
-```
-cd server
-make
-```
-
-### Running the pEp JSON Adapter
+## Running the pEp JSON Adapter
+You can use `make run` to start the server.
 
 1. Run ./pep-json-server.  This creates a file that is readable only by the
    current user (/tmp/pEp-json-token-${USER}) and contains the address and
