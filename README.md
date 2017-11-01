@@ -241,30 +241,30 @@ the appropriate C header files of the Engine.
 
 ### Authentication
 
-The JSON Server Adapter and the client have to authenticate to each ohter.
+The JSON Server Adapter and the client have to authenticate to each other.
 "Authentication" in this case means "run with the same user rights". This is
 done by proving that each communication partner is able to read a certain
 file that has user-only read permissions.
 
 0.  There is a common (between client & server) algorithm to create the path
-   and filename of the "server token file", for a given user name. 
+    and filename of the "server token file", for a given user name. 
 
 1.  The server creates a "server token file" containing a "server token" and
-   the IP address and port where the server listens on.  This file can only
-   be read by client programs that run with the same user rights.
+    the IP address and port where the server listens on.  This file can only
+    be read by client programs that run with the same user rights.
 
 2.  The client creates a "client token file" containing a "client token". 
-   This file can only be read by the server when it runs with the same user
-   rights.
+    This file can only be read by the server when it runs with the same user
+    rights.
 
 3.  When the client connects to the server it sends the absolute path of the
-   client token file.  The server checks the path (to avoid URL or path
-   attacks), reads the file and answers with the containing "client token"
-   to prove it runs with the same user rights to the client.
+    client token file.  The server checks the path (to avoid URL or path
+    attacks), reads the file and answers with the containing "client token"
+    to prove it runs with the same user rights to the client.
 
 4.  The client checks the path, reads the "server token" from the file and
-   authenticate itself to the server in each JSON RPC call with that "sever
-   token".
+    authenticates itself to the server in each JSON RPC call with that "server
+    token".
 
 
 ## Extending / customizing
