@@ -71,13 +71,18 @@ namespace
 		while(c<end)
 		{
 			const uint8_t u = uint8_t(*c);
-			switch(u)
+			
+			if (u<=0x7f)
 			{
-				case 0x00 ... 0x7f : return u;
-				case 0x80 ... 0xBF : throw cont_without_start(u);
-				case 0xC0 ... 0xC1 : throw overlong_sequence(u);
-				case 0xC2 ... 0xDF : // 2 octet sequence
-					{
+				return u;
+			} else if (u<=0xBF)
+			{
+				throw cont_without_start(u);
+			} else if (u<=0xC1)
+			{
+				throw overlong_sequence(u);
+			} else if (u<=0xDF)  // 2 octet sequence
+			{
 						++c;
 						if(c==end) throw unexpected_end(u);
 						const uint8_t uu = uint8_t(*c);
@@ -86,9 +91,8 @@ namespace
 							throw unexpected_end(uu);
 						}
 						return  ((u & 0x1F) << 6) + (uu & 0x3F);
-					}
-				case 0xE0 ... 0xEF :  // 3 octet sequence
-					{
+			} else if (u<=0xEF)  // 3 octet sequence
+			{
 						++c;
 						if(c==end) throw unexpected_end(u);
 						const uint8_t uu = uint8_t(*c);
@@ -107,9 +111,8 @@ namespace
 						const uint32_t ret = ((u & 0xF) << 12) + ((uu & 0x3F)<<6) + (uuu & 0x3F);
 						if(ret<0x800) throw overlong_sequence(u);
 						return ret;
-					}
-				case 0xF0 ... 0xF4 :  // 4 octet sequence
-					{
+			} else if (u<=0xF4)  // 4 octet sequence
+			{
 						++c;
 						if(c==end) throw unexpected_end(u);
 						const uint8_t uu = uint8_t(*c);
@@ -136,8 +139,8 @@ namespace
 						if(ret<0x10000) throw overlong_sequence(u);
 						if(ret>0x10FFFF) throw no_unicode(u);
 						return ret;
-					}
-				default:
+			} else
+			{
 					throw no_unicode(u);
 			}
 			
