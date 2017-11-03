@@ -75,7 +75,7 @@ ifdef DEBUG
 endif
 
 .PHONY: all
-all: pep-json-server servertest
+all: $(TARGET) $(TARGET_TEST)
 
 $(TARGET): main.o libjson-adapter.a
 	$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
