@@ -282,9 +282,7 @@ const FunctionMap functions = {
 		FP( "Event Listener & Results", new Separator ),
 		FP( "registerEventListener"  , new Func<PEP_STATUS, In<Context*, false>, In<std::string>, In<unsigned>, In<std::string>> ( &registerEventListener) ),
 		FP( "unregisterEventListener", new Func<PEP_STATUS, In<Context*, false>, In<std::string>, In<unsigned>, In<std::string>> ( &unregisterEventListener) ),
-
-// NO SYNC AT THE MOMENT!
-//		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
+		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
@@ -502,12 +500,11 @@ struct JsonAdapter::Internal
 	ThreadPool  threads;
 	PEP_SESSION session = nullptr;
 	
-	/***** NO KEYSYNC AT THE MOMENT!
 	// Sync
 	locked_queue< sync_msg_t*, &free_sync_msg>  sync_queue;
 	PEP_SESSION sync_session = nullptr;
 	ThreadPtr   sync_thread{nullptr, ThreadDeleter};
-	*****/
+	
 	
 	explicit Internal(std::ostream& logger, bool _shall_sync)
 	: Log(logger)
@@ -524,8 +521,7 @@ struct JsonAdapter::Internal
 		session=nullptr;
 	}
 	
-	void stopSync() { /* NO KEYSYNC AT THE MOMENT! */ }
-
+	void stopSync();
 	
 	static
 	void requestDone(evhttp_request* req, void* userdata)
@@ -581,6 +577,11 @@ struct JsonAdapter::Internal
 		return makeAndDeliverRequest(msg_name, param_array);
 	}
 	
+	int injectSyncMsg(void* msg)
+	{
+		sync_queue.push_back( static_cast<sync_msg_t*>(msg) );
+		return 0;
+	}
 	
 	int injectIdentity(pEp_identity* idy)
 	{
@@ -588,13 +589,6 @@ struct JsonAdapter::Internal
 		return 0;
 	}
 	
-/*** NO SYNC AT THE MOMENT
-	int injectSyncMsg(void* msg)
-	{
-		sync_queue.push_back( static_cast<sync_msg_t*>(msg) );
-		return 0;
-	}
-
 	void* retrieveNextSyncMsg(time_t* timeout)
 	{
         sync_msg_t* msg = nullptr;
@@ -625,22 +619,18 @@ struct JsonAdapter::Internal
         }
         return msg;
 	}
-****/
-
+	
 	pEp_identity* retrieveNextIdentity()
 	{
 		return keyserver_lookup_queue.pop_front();
 	}
 	
-/*** NO SYNC AT THE MOMENT
 	void* syncThreadRoutine(void* arg)
 	{
 		PEP_STATUS status = do_sync_protocol(sync_session, arg); // does the whole work
 		sync_queue.clear(); // remove remaining messages
 		return (void*) status;
 	}
-***/
-
 };
 
 
@@ -717,7 +707,8 @@ unsigned JsonAdapter::apiVersion()
 }
 
 
-/**** NO SYNC AT THE MOMENT!
+
+
 
 PEP_STATUS JsonAdapter::messageToSend(void* obj, message* msg)
 {
@@ -757,7 +748,6 @@ void* JsonAdapter::syncThreadRoutine(void* arg)
 
 void JsonAdapter::startSync()
 {
-
 	if(i->sync_session)
 	{
 		throw std::runtime_error("sync session already started!");
@@ -785,7 +775,6 @@ void JsonAdapter::startSync()
 		throw std::runtime_error("Cannot attach to sync session! status: " + status_to_string(status));
 	
 	i->sync_thread.reset( new std::thread( JsonAdapter::syncThreadRoutine, (void*)this ) );
-
 }
 
 
@@ -810,10 +799,6 @@ void JsonAdapter::Internal::stopSync()
 	call_with_lock(&release, sync_session);
 	sync_session = nullptr;
 }
-*****/
-void JsonAdapter::startSync() { /* dummy */ }
-void JsonAdapter::stopSync()  { /* dummy */ }
-
 
 
 void JsonAdapter::startKeyserverLookup()
