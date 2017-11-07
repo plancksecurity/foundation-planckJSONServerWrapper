@@ -318,10 +318,20 @@ The following issues are planned but not yet implemented.
   code generator, if ready)
 
 
-## Attack scenarios on the authentication
+## Appendix A: Attack scenarios on the authentication
 
 Let's discuss different attack / threat scenarios. I don't know which are
 realistic or possible, yet.
+
+### Attacker with the same user rights
+
+If the attacker is able to run his malicious code with the same user
+rights as the SON Server Adapter and his legitimate client, it is (and
+always will be) impossible to prevent this attack. Such an attacker also
+can just start a legitimate client that is under his control.
+
+The same applies to an attacker who gains root / admin access rights.
+
 
 ### Man-in-the-middle with different user rights
 
@@ -337,7 +347,8 @@ realistic or possible, yet.
   original client.
 * The attacker has to convince the client that it is a legitimate server. It
   has to create a fake "server token file" to divert the client to the
-  attacker's port.
+  attacker's port. But that fake file cannot contain the right server token
+  because the attacker does not know it.
   * if the server started before the attacker the "server token file"'s
     access rights should prevent this (no write access for the attacker, no
     "delete" right in common TEMP dir (sticky bit on the directory)
@@ -346,3 +357,27 @@ realistic or possible, yet.
     client. The client could detect it when it can check the file access
     rights.
     There might be race conditons...
+
+* Is it possible for the attacker to let the client send the right server
+  token to him, at least temporarily (e.g. within a race condition)?
+  * As long as the server runs, the attacker cannot bind to the same address
+    & port. Finding and binding of the port is done by the server before the
+    server token file is created and filled.
+  * When the server that created the "server token file" dies, its port
+    becomes available for the attacker, but the server token is no longer
+    valid and no longer useful for the attacker.
+* there _might_ be a very _small_ chance for a race condition:
+  1. The attacker opens a connection to the running server but does not
+    use it. To find the server it cannot read the server configuration
+    file, but it can ask the OS for ports that are open in "listen" mode.
+    Normally the JSON Adapter listens on 4223 or some port numbers above
+    that. That means: guessing the server's address is quite easy.
+  2. when the server shuts down, the attacker immediately binds itself to
+    that port. If a client connects just in this moment it sends the server
+    token to the attacker, not to the server. But the attacker can use that
+    token now to the server via the already opened TCP connection.
+  3. To prevent this the server should call shutdown(2) on its listening
+    socket to block any new client connection, but still block the port.
+    (is that the case on all platforms?) Than close(2) all TCP connections
+    to the clients (if any) and than also delete the server token file.
+    Finally call close(2) on the listening socket.
