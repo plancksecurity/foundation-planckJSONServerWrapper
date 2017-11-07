@@ -7,7 +7,9 @@ any client.
 
 ## Requirements
 In order to use the p≡p JSON Server Adapter, you need to build and run it.
-Currently, Linux (Debian 9, Ubuntu 16.04) and MacOS (10.11, 10.12) are supported, Windows is about to follow. Newer versions should also work (file a bug report if not) but are not in our main focus, yet.
+Currently, Linux (Debian 9, Ubuntu 16.04) and MacOS (10.11, 10.12) are
+supported, Windows is about to follow.  Newer versions should also work
+(file a bug report if not) but are not in our main focus, yet.
 
 ## Dependencies
 * C++ compiler: tested with g++ 4.8 and 4.9, and clang++ 2.8. Newer versions should work, too.
@@ -16,8 +18,8 @@ Currently, Linux (Debian 9, Ubuntu 16.04) and MacOS (10.11, 10.12) are supported
 * libboost-program-options-dev  (tested with 1.58)
 * libboost-filesystem-dev (tested with 1.58)
 * libevent-dev 2.0.21 or 2.0.22 (or build from source, see below)
-* [p≡p Engine](https://letsencrypt.pep.foundation/trac/wiki/Basic%20Concepts%20of%20p%E2%89%A1p%20engine) (which needs gpgme-thread,
-  a patched libetpan, libboost-system-dev)
+* [p≡p Engine](https://letsencrypt.pep.foundation/trac/wiki/Basic%20Concepts%20of%20p%E2%89%A1p%20engine)
+  (which needs gpgme-thread, a patched libetpan, libboost-system-dev)
 * OSSP libuuid
 
 ## Building/Installing
@@ -25,7 +27,8 @@ Currently, Linux (Debian 9, Ubuntu 16.04) and MacOS (10.11, 10.12) are supported
 Debian 9:
 
 ~~~~~
-apt install -y build-essential libboost1.62-dev libboost-system1.62-dev libboost-filesystem1.62-dev libboost-program-options1.62-dev libboost-thread1.62-dev libgpgme-dev uuid-dev
+apt install -y build-essential libboost1.62-dev libboost-system1.62-dev libboost-filesystem1.62-dev \
+    libboost-program-options1.62-dev libboost-thread1.62-dev libgpgme-dev uuid-dev
 ~~~~~
 
 macOS 10.12:
@@ -34,7 +37,8 @@ Use homebrew or macports to install the required libraries.
 
 For more explicit instructions on how to do this with macports, see the section below.
 
-Build and install the pEp Engine. Instructions can be found here: [https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md](https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md).
+Build and install the pEp Engine.  Instructions can be found here:
+[https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md](https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md).
 
 ### Build and install libevent
 ~~~~~
@@ -51,9 +55,14 @@ make install
 cd cd ~/code/json-ad/server
 ~~~~~
 
-Edit the build configuration to your needs in `./Makefile.conf`, or create a `./local.conf` that sets any of the make variables documented in `./Makefile.conf`.
+Edit the build configuration to your needs in `./Makefile.conf`, or create a
+`./local.conf` that sets any of the make variables documented in
+`./Makefile.conf`.
 
-If a dependency is not found in your system's default include or library paths, you will have to specify the according paths in a make variable. Typically, this has to be done at least for the pEp Engine, libetpan and libevent.
+If a dependency is not found in your system's default include or library
+paths, you will have to specify the according paths in a make variable. 
+Typically, this has to be done at least for the pEp Engine, libetpan and
+libevent.
 
 Below are two sample `./local.conf` files, for orientation.
 
@@ -246,25 +255,25 @@ The JSON Server Adapter and the client have to authenticate to each other.
 done by proving that each communication partner is able to read a certain
 file that has user-only read permissions.
 
-0.  There is a common (between client & server) algorithm to create the path
-    and filename of the "server token file", for a given user name. 
+0. There is a common (between client & server) algorithm to create the path
+   and filename of the "server token file", for a given user name. 
 
-1.  The server creates a "server token file" containing a "server token" and
-    the IP address and port where the server listens on.  This file can only
-    be read by client programs that run with the same user rights.
+1. The server creates a "server token file" containing a "server token" and
+   the IP address and port where the server listens on.  This file can only
+   be read by client programs that run with the same user rights.
 
-2.  The client creates a "client token file" containing a "client token". 
-    This file can only be read by the server when it runs with the same user
-    rights.
+2. The client creates a "client token file" containing a "client token". 
+   This file can only be read by the server when it runs with the same user
+   rights.
 
-3.  When the client connects to the server it sends the absolute path of the
-    client token file.  The server checks the path (to avoid URL or path
-    attacks), reads the file and answers with the containing "client token"
-    to prove it runs with the same user rights to the client.
+3. When the client connects to the server it sends the absolute path of the
+   client token file.  The server checks the path (to avoid URL or path
+   attacks), reads the file and answers with the containing "client token"
+   to prove it runs with the same user rights to the client.
 
-4.  The client checks the path, reads the "server token" from the file and
-    authenticates itself to the server in each JSON RPC call with that "server
-    token".
+4. The client checks the path, reads the "server token" from the file and
+   authenticates itself to the server in each JSON RPC call with that "server
+   token".
 
 
 ## Extending / customizing
@@ -307,3 +316,33 @@ The following issues are planned but not yet implemented.
 
 * Adapt the "p≡p Transport API", when it is final. (either manually or by
   code generator, if ready)
+
+
+## Attack scenarios on the authentication
+
+Let's discuss different attack / threat scenarios. I don't know which are
+realistic or possible, yet.
+
+### Man-in-the-middle with different user rights
+
+```
+ ,---------------------.      ,----------.      ,--------.
+ | JSON Server Adapter | <==> | Attacker | <==> | Client |
+ `---------------------'      `----------'      `--------'
+```
+
+* The attacker cannot read "client token file" nor "server token file".
+* The server cannot check "who" connects to it, until the client
+  authenticates itself, which might be relayed by the attacker from the
+  original client.
+* The attacker has to convince the client that it is a legitimate server. It
+  has to create a fake "server token file" to divert the client to the
+  attacker's port.
+  * if the server started before the attacker the "server token file"'s
+    access rights should prevent this (no write access for the attacker, no
+    "delete" right in common TEMP dir (sticky bit on the directory)
+  * if the attacker starts before the server it can write a fake toke file.
+    The server could detect it but is unable to notice the legitimate
+    client. The client could detect it when it can check the file access
+    rights.
+    There might be race conditons...
