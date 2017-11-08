@@ -56,7 +56,7 @@ namespace fs = boost::filesystem;
 namespace {
     using namespace pEp::utility;
 
-static const unsigned API_VERSION = 0x0002;
+static const unsigned API_VERSION = 0x0003;
 
 std::string BaseUrl    = "/ja/0.1/";
 int SrvThreadCount     = 1;
@@ -100,7 +100,8 @@ const std::string server_version =
 //	"(27) Eckenhagen";       // add command line switch  "--sync false"  to disable automatic start of keysync at startup
 //	"(28) Olpe-Süd";         // add re_evaluate_message_rating(). Jira: JSON-29
 //	"(29) Wenden";           // {start|stop}{KeySync|KeyserverLookup}  JSON-28
-	"(30) Krombach";         // JSON-49, add call_with_lock() around init() and release().
+//	"(30) Krombach";         // JSON-49, add call_with_lock() around init() and release().
+	"(31) Altenkleusheim";   // JSON-57: change location of server token file. breaking API change, so API_VERSION=0x0003.
 
 
 typedef std::map<std::thread::id, JsonAdapter*> SessionRegistry;
