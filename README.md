@@ -323,6 +323,26 @@ The following issues are planned but not yet implemented.
 Let's discuss different attack / threat scenarios. I don't know which are
 realistic or possible, yet.
 
+### General ideas / improvements
+
+Currently the JSON Server Adapter writes its server token file in /tmp/,
+a world-readable, world-writable but "sticky" (than means: user A cannot
+delete files of user B) directory.
+
+It would be a big security win and prevent many possible attacks when we
+move that file into a directory that is only readable & writable by the
+user (0700 access rights on Unix, on MS Windows there are similiar
+concepts). The suggestion would be ~/.pEp/ which is already used by other
+pEp software components.
+
+So the server token file will move from /tmp/pEp-json-token-$USER into
+$HOME/.pEp/json-token on UNIX/Linux/MacOS and
+%LOCALAPPDATA%/pEp/json-token on MS Windows.
+
+The JSON Server Adapter also checks whether .pEp has 0700 access rights
+on unixoid systems.
+
+
 ### Attacker with the same user rights
 
 If the attacker is able to run his malicious code with the same user
