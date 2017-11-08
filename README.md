@@ -332,6 +332,28 @@ can just start a legitimate client that is under his control.
 
 The same applies to an attacker who gains root / admin access rights.
 
+### Fake Server with different user rights
+
+```
+ ,----------.      ,--------.
+ | Attacker | <==> | Client |
+ `----------'      `--------'
+```
+
+If no real JSON Adapter runs an attacker can create a fake server that
+pretends to be a legitimate JSON Adapter. It creates its own server token
+file, with different and conspicuous access rights, but a limited
+JavaScript client might be unable to detect the file permissions.
+
+This fake server cannot access the private key of the user but it might
+get sensitive plaintext data the client wants to encrypt. The fake server
+cannot sign the encrypted data so the fake would be conspicuous, too. But
+that would be too late, because the sensitive plaintext data could
+already be leaked by the fake server.
+
+This attack is prevented when the client forces authentication from the
+server via its "client token" that the fake server cannot show.
+
 
 ### Man-in-the-middle with different user rights
 
