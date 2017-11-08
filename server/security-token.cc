@@ -37,6 +37,7 @@ namespace
 
 fs::path get_token_filename()
 {
+	// Windows guarantees that this directory is rw by the user only?
 	const char* const dir = getenv("LOCALAPPDATA");
 	return dir / fs::path("pEp") / fs::path("json-token");
 }
@@ -60,10 +61,27 @@ void write_security_file(const std::string& content)
 
 fs::path get_token_filename()
 {
-	const char* const temp_dir = getenv("TEMP");
-	const char* const user_name = getenv("USER");
+	const char* const home_dir = getenv("HOME");
+	if(home_dir == nullptr)
+	{
+		throw std::runtime_error("Cannot get home directory. $HOME environment variable is not set.");
+	}
 	
-	return fs::path(temp_dir ? temp_dir : "/tmp") / fs::path( std::string("/pEp-json-token-") + ( user_name ? user_name : "XXX" )); 
+	const fs::path pep_dir = fs::path(home_dir) / ".pEp";
+	boost::system::error_code ec;
+	fs::create_directory( pep_dir, ec );
+	if(ec)
+	{
+		throw boost::system::system_error(ec, "Cannot create pEp home directory" );
+	}
+	
+	fs::permissions( pep_dir, fs::perms(0700), ec);
+	if(ec)
+	{
+		throw boost::system::system_error(ec, "Cannot change permissions of pEp home directory to 0700 ");
+	}
+	
+	return  pep_dir / "json-token";
 }
 
 
