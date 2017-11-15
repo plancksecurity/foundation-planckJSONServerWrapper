@@ -530,17 +530,15 @@ struct JsonAdapter::Internal
 		// Hum, what is to do here?
 	}
 
-	PEP_STATUS deliverRequest(std::pair<const EventListenerKey,EventListenerValue>& e, const js::Object& request)
+	PEP_STATUS deliverRequest(const std::string& uri, evhttp_connection* connection, const js::Object& request)
 	{
-		const std::string uri = "http://" + e.first.first + ":" + std::to_string(e.first.second) + "/";
 		const std::string request_s = js::write(request, js::raw_utf8);
-		evhttp_request* ereq = evhttp_request_new( &requestDone, &e ); // ownership goes to the connection in evhttp_make_request() below.
-		evhttp_add_header(ereq->output_headers, "Host", e.first.first.c_str());
+		evhttp_request* ereq = evhttp_request_new( &requestDone, nullptr ); // ownership goes to the connection in evhttp_make_request() below.
 		evhttp_add_header(ereq->output_headers, "Content-Length", std::to_string(request_s.length()).c_str());
 		auto output_buffer = evhttp_request_get_output_buffer(ereq);
 		evbuffer_add(output_buffer, request_s.data(), request_s.size());
 		
-		const int ret = evhttp_make_request(e.second.connection.get(), ereq, EVHTTP_REQ_POST, uri.c_str() );
+		const int ret = evhttp_make_request(connection, ereq, EVHTTP_REQ_POST, uri.c_str() );
 		
 		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
 	}
@@ -550,8 +548,9 @@ struct JsonAdapter::Internal
 		PEP_STATUS status = PEP_STATUS_OK;
 		for(auto& e : eventListener)
 		{
-			js::Object request = make_request( function_name, params, e.second.securityContext );
-			const PEP_STATUS s2 = deliverRequest( e, request );
+			const js::Object request = make_request( function_name, params, e.second.securityContext );
+			const std::string uri = "http://" + e.first.first + ":" + std::to_string(e.first.second) + "/";
+			const PEP_STATUS s2 = deliverRequest( uri, e.second.connection.get(), request );
 			if(s2!=PEP_STATUS_OK)
 			{
 				status = s2;
