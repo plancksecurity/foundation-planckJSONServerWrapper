@@ -22,6 +22,10 @@ public:
 	JsonAdapter(const JsonAdapter&) = delete;
 	void operator=(const JsonAdapter&) = delete;
 	
+	// just static trampolines to call the member functions below
+	static PEP_STATUS   registerEventListener2(Context* ctx, std::string address, unsigned port, std::string securityContext);
+	static PEP_STATUS unregisterEventListener2(Context* ctx, std::string address, unsigned port, std::string securityContext);
+	
 	void   registerEventListener(const std::string& address, unsigned port, const std::string& securityContext);
 	void unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext);
 	
