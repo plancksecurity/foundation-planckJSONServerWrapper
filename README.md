@@ -283,9 +283,12 @@ rules and definitions to take into account.
 
 ### Definitions
 
-* The `FunctionMap function` in `json-adapter.cc` defines which functions
+* The `FunctionMap function` in `ev_server.cc` defines which functions
   are callable via the JSON-RPC interface.  The existing entries show the
   syntax of that map.
+  Non-static member functions can be called, too. Thanks to std::function<>
+  a member function `Foo::func(Params...)` is handled like a free-standing
+  function `func(Foo* f, Params...)`.
 
 * For each type there must exist specializations of the template classes
   "In" (for input parameters) and "Out" (for output parameters).
