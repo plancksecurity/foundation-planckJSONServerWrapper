@@ -680,32 +680,6 @@ void JsonAdapter::augment(json_spirit::Object& returnObject)
 }
 
 
-PEP_STATUS JsonAdapter::registerEventListener2(Context* ctx, std::string address, unsigned port, std::string securityContext)
-{
-	JsonAdapter* ja = dynamic_cast<JsonAdapter*>(ctx);
-	if(!ja)
-	{
-		return PEP_STATUS(-42);
-	}
-	
-	ja->registerEventListener(address, port, securityContext);
-	return PEP_STATUS_OK;
-}
-
-
-PEP_STATUS JsonAdapter::unregisterEventListener2(Context* ctx, std::string address, unsigned port, std::string securityContext)
-{
-	JsonAdapter* ja = dynamic_cast<JsonAdapter*>(ctx);
-	if(!ja)
-	{
-		return PEP_STATUS(-42);
-	}
-	
-	ja->unregisterEventListener(address, port, securityContext);
-	return PEP_STATUS_OK;
-}
-
-
 void JsonAdapter::registerEventListener(const std::string& address, unsigned port, const std::string& securityContext)
 {
 	const auto key = std::make_pair(address, port);
