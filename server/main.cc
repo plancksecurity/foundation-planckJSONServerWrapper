@@ -1,3 +1,5 @@
+#include "main.hh"
+#include "prefix-config.hh"
 #include "json-adapter.hh"
 #include "daemonize.hh"
 
@@ -12,6 +14,8 @@ bool do_sync    = false;
 std::string address = "127.0.0.1";
 unsigned start_port = 4223;
 unsigned end_port   = 9999;
+
+boost::filesystem::path path_to_html = boost::filesystem::path(html_directory);
 
 void print_version()
 {
@@ -35,6 +39,7 @@ try
 		("start-port,s", po::value<unsigned>(&start_port)->default_value(start_port),  "First port to bind on")
 		("end-port,e",   po::value<unsigned>(&end_port)->default_value(end_port),      "Last port to bind on")
 		("address,a",    po::value<std::string>(&address)->default_value(address),     "Address to bind on")
+		("html-directory,H", po::value<boost::filesystem::path>(&path_to_html)->default_value(path_to_html), "Path to the HTML and JavaScript files")
 	;
 	
 	po::variables_map vm;
