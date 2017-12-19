@@ -1,13 +1,13 @@
 #include <evhttp.h>
 
 #include "ev_server.hh"
+#include "main.hh"
 #include "json-adapter.hh"
 #include "function_map.hh"
 #include "pep-types.hh"
 #include "json_rpc.hh"
 #include "pep-utils.hh"
 #include "gpg_environment.hh"
-#include "prefix-config.hh"
 #include "server_version.hh"
 
 #include <pEp/message_api.h>
@@ -211,8 +211,6 @@ void sendFile( evhttp_request* req, const std::string& mimeType, const fs::path&
 	evhttp_send_reply(req, HTTP_OK, "", outBuf);
 }
 
-
-static const boost::filesystem::path  path_to_html = fs::path(html_directory);
 
 struct FileRequest
 {

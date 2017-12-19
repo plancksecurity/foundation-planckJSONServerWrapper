@@ -15,6 +15,7 @@
 
 #include <mutex>
 
+#include "main.hh"
 #include "json-adapter.hh"
 // #include "function_map.hh"
 #include "pep-types.hh"
@@ -22,7 +23,6 @@
 #include "nulllogger.hh"
 #include "security-token.hh"
 #include "pep-utils.hh"
-#include "prefix-config.hh"
 #include "ev_server.hh"
 #include "server_version.hh"
 
