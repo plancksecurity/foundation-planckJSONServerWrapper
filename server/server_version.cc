@@ -1,5 +1,4 @@
 #include "server_version.hh"
-#include "main.hh"
 
 // version names comes from here:
 // https://de.wikipedia.org/wiki/Bundesautobahn_4

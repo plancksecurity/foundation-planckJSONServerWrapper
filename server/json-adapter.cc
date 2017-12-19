@@ -15,9 +15,7 @@
 
 #include <mutex>
 
-#include "main.hh"
 #include "json-adapter.hh"
-// #include "function_map.hh"
 #include "pep-types.hh"
 #include "json_rpc.hh"
 #include "nulllogger.hh"
