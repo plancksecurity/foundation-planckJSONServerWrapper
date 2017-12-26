@@ -1,25 +1,6 @@
 #include "inout.hh"
 #include <stdexcept>
-
-#include <cstring> // for memcpy()
-
-
-namespace
-{
-	char* make_c_string(const std::string& src)
-	{
-		char* dest = (char*)malloc(src.size() + 1);
-		memcpy(dest, src.c_str(), src.size() + 1 );
-		return dest;
-	}
-}
-
-
-template<>
-In<char const*>::~In()
-{
-	if(value) free(const_cast<char*>(value));
-}
+#include <pEp/pEpEngine.h>
 
 
 #define SIMPLE_TYPE(TYPE)     \
@@ -53,7 +34,7 @@ Out<char const*>::~Out()
 {
 	if(value)
 	{
-		free(const_cast<char*>(*value));
+		pEp_free(const_cast<char*>(*value));
 	}
 	delete value;
 }
@@ -64,7 +45,7 @@ Out<char*>::~Out()
 {
 	if(value)
 	{
-		free(*value);
+		pEp_free(*value);
 		*value = nullptr;
 	}
 	delete value;
@@ -137,18 +118,6 @@ std::string from_json<std::string>(const js::Value& v)
 	return v.get_str();
 }
 
-
-template<>
-char* from_json<char*>(const js::Value& v)
-{
-	return make_c_string( v.get_str() );
-}
-
-template<>
-const char* from_json<const char*>(const js::Value& v)
-{
-	return make_c_string( v.get_str() );
-}
 
 
 template<class T>

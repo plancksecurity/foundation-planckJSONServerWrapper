@@ -1,8 +1,12 @@
 #include "function_map.hh"
+#include "c_string.hh"
 
 
 template<>
 js::Value Type2String<std::string>::get()  { return "String"; }
+
+template<>
+js::Value Type2String<c_string>::get()  { return "String"; }
 
 template<>
 js::Value Type2String<const char*>::get()  { return "String"; }
