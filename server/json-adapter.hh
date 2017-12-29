@@ -32,6 +32,8 @@ public:
 	// if "tv" is NULL it means: exits immediately after _all_ currently processed events have been finished.
 	void shutdown(struct timeval* tv);
 	
+	void shutdown_now() { shutdown(nullptr); }
+	
 	// exit immediately or after the currently processed event has been finished.
 	//void abort();
 	

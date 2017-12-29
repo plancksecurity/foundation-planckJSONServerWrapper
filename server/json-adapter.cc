@@ -290,6 +290,8 @@ const FunctionMap functions = {
 		FP( "version",     new Func<std::string>( &JsonAdapter::version ) ),
 		FP( "apiVersion",  new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
 		FP( "getGpgEnvironment", new Func<GpgEnvironment>( &getGpgEnvironment ) ),
+
+		FP( "shutdown",  new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::shutdown_now ) ),
 	};
 
 
@@ -475,7 +477,6 @@ struct EventListenerValue
 	std::string securityContext;
 	std::unique_ptr<evhttp_connection, decltype(&evhttp_connection_free)> connection = { nullptr, &evhttp_connection_free};
 };
-
 
 
 
@@ -705,8 +706,6 @@ unsigned JsonAdapter::apiVersion()
 {
 	return API_VERSION;
 }
-
-
 
 
 
