@@ -103,7 +103,6 @@ struct EventListenerValue
 
 
 
-
 struct JsonAdapter::Internal
 {
 	std::unique_ptr<event_base, decltype(&event_base_free)> eventBase = {nullptr, &event_base_free};
@@ -141,7 +140,8 @@ struct JsonAdapter::Internal
 	~Internal()
 	{
 		stopSync();
-		call_with_lock(&release, session);
+		if(session)
+			call_with_lock(&release, session);
 		session=nullptr;
 	}
 	
@@ -332,8 +332,6 @@ unsigned JsonAdapter::apiVersion()
 
 
 
-
-
 PEP_STATUS JsonAdapter::messageToSend(void* obj, message* msg)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
@@ -509,9 +507,9 @@ JsonAdapter::~JsonAdapter()
 	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered.\n";
 	stopSync();
 	this->shutdown(nullptr);
+	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered.\n";
 	delete i;
 	i=nullptr;
-	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered.\n";
 }
 
 
@@ -606,10 +604,10 @@ try_next_port:
 		}
 		catch (...)
 		{
-			Log() << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ ";
+			Log() << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ \n";
 			initExcept = std::current_exception();
 		}
-		Log() << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". +++\n";
+		Log() << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++\n";
 	};
 	
 	i->running = true;
@@ -618,8 +616,9 @@ try_next_port:
 		Log() << "Start Thread #" << t << "...\n";
 		ThreadPtr thread(new std::thread(ThreadFunc), ThreadDeleter);
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		if (initExcept != std::exception_ptr())
+		if (initExcept)
 		{
+			thread->join();
 			i->running = false;
 			std::rethrow_exception(initExcept);
 		}
@@ -633,7 +632,7 @@ try_next_port:
 }
 catch (std::exception const &e)
 {
-	Log() << "Exception catched in main(): \"" << e.what() << "\"" << std::endl;
+	Log() << "Exception caught in JsonAdapter::run(): \"" << e.what() << "\"" << std::endl;
 	throw;
 }
 

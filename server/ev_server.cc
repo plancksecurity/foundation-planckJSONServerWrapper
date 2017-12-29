@@ -172,6 +172,8 @@ const FunctionMap functions = {
 		FP( "version",     new Func<std::string>( &JsonAdapter::version ) ),
 		FP( "apiVersion",  new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
 		FP( "getGpgEnvironment", new Func<GpgEnvironment>( &getGpgEnvironment ) ),
+
+		FP( "shutdown",  new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::shutdown_now ) ),
 	};
 
 

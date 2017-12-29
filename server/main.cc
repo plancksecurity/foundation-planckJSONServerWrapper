@@ -56,12 +56,7 @@ try
 		print_version();
 		return 0;
 	}
-
-	if( !debug_mode )
-	{
-		daemonize();
-	}
-
+	
 	JsonAdapter ja( address, start_port, end_port, !debug_mode, do_sync );
 	ja.run();
 
@@ -75,6 +70,7 @@ try
 			std::cout << "Oh, I got a '" << input << "'. \n";
 		}while(std::cin && input != 'q' && input != 'Q');
 	}else{
+		daemonize();
 		do{
 			std::this_thread::sleep_for(std::chrono::seconds(3));
 		}while(ja.running());
@@ -84,7 +80,12 @@ try
 }
 catch (std::exception const &e)
 {
-	std::cerr << "Exception catched in main(): \"" << e.what() << "\"" << std::endl;
+	std::cerr << "Exception caught in main(): \"" << e.what() << "\"" << std::endl;
 	return 1;
+}
+catch (...)
+{
+	std::cerr << "Unknown Exception caught in main()." << std::endl;
+	return 20;
 }
 
