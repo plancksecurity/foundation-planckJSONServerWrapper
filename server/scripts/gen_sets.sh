@@ -43,7 +43,7 @@ while [ -n "$U" ] ; do
 done
 
 
-echo "const unsigned NFC_No_Size = ${#CHAR_NO[*]};"
+# echo "const unsigned NFC_No_Size = ${#CHAR_NO[*]};"
 echo -en 'const std::set<unsigned> NFC_No = {'
 
 index=10
@@ -58,7 +58,7 @@ done
 echo -en '\n\t};\n\n'
 
 
-echo "const unsigned NFC_Maybe_Size = ${#CHAR_MAYBE[*]};"
+# echo "const unsigned NFC_Maybe_Size = ${#CHAR_MAYBE[*]};"
 echo -en 'const std::set<unsigned> NFC_Maybe = {'
 
 index=10
