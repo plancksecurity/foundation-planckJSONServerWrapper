@@ -27,15 +27,17 @@ supported, Windows is about to follow.  Newer versions should also work
 Debian 9:
 
 ~~~~~
-apt install -y build-essential libboost1.62-dev libboost-system1.62-dev libboost-filesystem1.62-dev \
-    libboost-program-options1.62-dev libboost-thread1.62-dev libgpgme-dev uuid-dev
+apt install -y build-essential libboost1.62-dev libboost-system1.62-dev \
+    libboost-filesystem1.62-dev libboost-program-options1.62-dev \
+    libboost-thread1.62-dev libgpgme-dev uuid-dev
 ~~~~~
 
 macOS 10.12:
 
 Use homebrew or macports to install the required libraries.
 
-For more explicit instructions on how to do this with macports, see the section below.
+For more explicit instructions on how to do this with macports, see the
+section below.
 
 Build and install the pEp Engine.  Instructions can be found here:
 [https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md](https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md).
@@ -256,22 +258,17 @@ done by proving that each communication partner is able to read a certain
 file that has user-only read permissions.
 
 0. There is a common (between client & server) algorithm to create the path
-   and filename of the "server token file", for a given user name. 
+   and filename of the "server token file", for a given user name.
+   The token file and its directory MUST be owned by the user and MUST be
+   readable and writable only by the user, nobody else.  Client and server
+   check for the right ownership and access rights of the token file and its
+   directory. (TODO: What shall be done if that check fails?)
 
 1. The server creates a "server token file" containing a "server token" and
    the IP address and port where the server listens on.  This file can only
    be read by client programs that run with the same user rights.
 
-2. The client creates a "client token file" containing a "client token". 
-   This file can only be read by the server when it runs with the same user
-   rights.
-
-3. When the client connects to the server it sends the absolute path of the
-   client token file.  The server checks the path (to avoid URL or path
-   attacks), reads the file and answers with the containing "client token"
-   to prove it runs with the same user rights to the client.
-
-4. The client checks the path, reads the "server token" from the file and
+2. The client checks the path, reads the "server token" from the file and
    authenticates itself to the server in each JSON RPC call with that "server
    token".
 
@@ -328,19 +325,11 @@ realistic or possible, yet.
 
 ### General ideas / improvements
 
-Currently the JSON Server Adapter writes its server token file in /tmp/,
-a world-readable, world-writable but "sticky" (than means: user A cannot
-delete files of user B) directory.
+Currently the JSON Server Adapter writes its server token file in a
+directory that is only readable & writable by the user itself.
 
-It would be a big security win and prevent many possible attacks when we
-move that file into a directory that is only readable & writable by the
-user (0700 access rights on Unix, on MS Windows there are similiar
-concepts). The suggestion would be ~/.pEp/ which is already used by other
-pEp software components.
-
-So the server token file will move from /tmp/pEp-json-token-$USER into
-$HOME/.pEp/json-token on UNIX/Linux/MacOS and
-%LOCALAPPDATA%/pEp/json-token on MS Windows.
+The server token file is written in $HOME/.pEp/json-token on
+UNIX/Linux/MacOS and %LOCALAPPDATA%/pEp/json-token on MS Windows.
 
 The JSON Server Adapter also checks whether .pEp has 0700 access rights
 on unixoid systems.
@@ -349,8 +338,8 @@ on unixoid systems.
 ### Attacker with the same user rights
 
 If the attacker is able to run his malicious code with the same user
-rights as the SON Server Adapter and his legitimate client, it is (and
-always will be) impossible to prevent this attack. Such an attacker also
+rights as the JSON Server Adapter and his legitimate client, it is (and
+always will be) *impossible* to prevent this attack. Such an attacker also
 can just start a legitimate client that is under his control.
 
 The same applies to an attacker who gains root / admin access rights.
@@ -374,8 +363,11 @@ cannot sign the encrypted data so the fake would be conspicuous, too. But
 that would be too late, because the sensitive plaintext data could
 already be leaked by the fake server.
 
-This attack is prevented when the client forces authentication from the
-server via its "client token" that the fake server cannot show.
+This attack needs a user's home directory that is writable by someone else
+(to create a ~/.pEp/ directory) or a foreign-writable ~/.pEp/ directory.
+
+The pEpEngine creates a ~/.pEp/ directory (if not yet exists) and sets the
+permissions to 0700 explicitly.
 
 
 ### Man-in-the-middle with different user rights
