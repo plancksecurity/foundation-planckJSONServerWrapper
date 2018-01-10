@@ -74,9 +74,6 @@ ThreadPtr   keyserver_lookup_thread{nullptr, ThreadDeleter};
 
 
 
-
-
-
 std::mutex js_mutex;
 
 // TODO: use && and std::forward<> to avoid copying of the arguments.
