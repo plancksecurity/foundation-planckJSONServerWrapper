@@ -9,6 +9,13 @@ namespace pEp
 {
 	namespace utility
 	{
+		template<class T>
+		std::unique_ptr<T, void(*)(T*)> make_c_ptr(T* data, void(*Deleter)(T*))
+		{
+			return { data, Deleter };
+		}
+	
+	
 		// a thread-safe queue of T elements. Deleter is a functor that is called in clear() for each elements
 		// interface differs from std::queue because "top() and pop() if not empty()" does not work atomically!
 		// elements must be copied without exceptions!

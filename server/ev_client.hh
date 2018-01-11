@@ -7,6 +7,8 @@
 
 
 struct evhttp_request;
+struct event_base;
+
 
 class ev_client
 {
@@ -15,6 +17,7 @@ public:
 	: server_name(_server_name)
 	, server_port(_server_port)
 	, server_path(_server_path)
+	, server_uri( "http://" + server_name + ":" + std::to_string(server_port) + server_path )
 	{}
 	
 	virtual ~ev_client() = default;
@@ -25,12 +28,13 @@ public:
 		// do nothing by default.
 	}
 	
-	PEP_STATUS deliverRequest(const json_spirit::Object& request);
+	PEP_STATUS deliverRequest(event_base* base, const json_spirit::Object& request);
 
 protected:
 	const std::string server_name;
 	const unsigned server_port;
 	const std::string server_path;
+	const std::string server_uri;
 	
 	static
 	void requestDoneTrampoline(evhttp_request* req, void* userdata);
