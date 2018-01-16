@@ -1,6 +1,7 @@
 #include <evhttp.h>
 
 #include "ev_server.hh"
+#include "c_string.hh"
 #include "main.hh"
 #include "json-adapter.hh"
 #include "function_map.hh"
