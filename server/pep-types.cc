@@ -203,7 +203,7 @@ template<>
 char* from_json<char*>(const js::Value& v)
 {
 	const std::string& ss = v.get_str();
-	char* s = new_string(nullptr, ss.size() );
+	char* s = new_string(ss.c_str(), ss.size() );
 	return s;
 }
 
@@ -213,9 +213,7 @@ message* from_json<message*>(const js::Value& v)
 {
 	const js::Object& o = v.get_obj();
 
-	_message* msg = new_message(PEP_dir_incoming);
-
-	std::cout << "|$ from_json<message*>: msg=" << (void*)msg << " \n";
+	auto msg = pEp::utility::make_c_ptr(new_message(PEP_dir_incoming), &free_message );
 
 	// fetch values from v and put them into msg
 	msg->dir      = from_json_object<PEP_msg_direction, js::int_type>(o, "dir");
@@ -246,7 +244,7 @@ message* from_json<message*>(const js::Value& v)
 	msg->opt_fields = from_json_object<stringpair_list_t*, js::array_type>(o, "opt_fields");
 	msg->enc_format = from_json_object<PEP_enc_format, js::int_type>(o, "enc_format");
 	
-	return msg;
+	return msg.release();
 }
 
 
@@ -255,34 +253,28 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 {
 	const js::Object& o = v.get_obj();
 	
-	char* address     = from_json_object<char*, js::str_type>(o, "address");
-	char* fingerprint = from_json_object<char*, js::str_type>(o, "fpr");
-	char* user_id     = from_json_object<char*, js::str_type>(o, "user_id");
-	char* username    = from_json_object<char*, js::str_type>(o, "username");
-	char* lang        = from_json_object<char*, js::str_type>(o, "lang");
+	auto address     = pEp::utility::make_c_ptr(from_json_object<char*, js::str_type>(o, "address")  , &free_string );
+	auto fingerprint = pEp::utility::make_c_ptr(from_json_object<char*, js::str_type>(o, "fpr")      , &free_string );
+	auto user_id     = pEp::utility::make_c_ptr(from_json_object<char*, js::str_type>(o, "user_id")  , &free_string );
+	auto username    = pEp::utility::make_c_ptr(from_json_object<char*, js::str_type>(o, "username") , &free_string );
+	auto lang        = pEp::utility::make_c_ptr(from_json_object<char*, js::str_type>(o, "lang")     , &free_string );
 	
-	pEp_identity* ident = new_identity
+	auto ident = pEp::utility::make_c_ptr( new_identity
 		(
-			address,
-			fingerprint,
-			user_id,
-			username
-		);
-	
-	free(username);
-	free(user_id);
-	free(fingerprint);
-	free(address);
+			address.get(),
+			fingerprint.get(),
+			user_id.get(),
+			username.get()
+		), &free_identity );
 	
 	ident->comm_type = from_json_object<PEP_comm_type, js::int_type>(o, "comm_type");
-	if(lang && lang[0] && lang[1])
+	if(lang && lang.get()[0] && lang.get()[1])
 	{
-		strncpy(ident->lang, lang, 3);
-		free(lang);
+		strncpy(ident->lang, lang.get(), 3);
 	}
 	ident->flags = from_json_object<unsigned, js::int_type>(o, "flags");
 	
-	return ident;
+	return ident.release();
 }
 
 template<>
@@ -343,15 +335,15 @@ stringlist_t* from_json<stringlist_t*>(const js::Value& v)
 {
 	const js::Array& a = v.get_array();
 
-	stringlist_t* sl = new_stringlist( nullptr );
+	auto sl = pEp::utility::make_c_ptr(new_stringlist( nullptr ), &free_stringlist );
 
 	for(const js::Value& v : a )
 	{
-		const std::string s = v.get_str();
-		stringlist_add(sl, s.c_str() );
+		const std::string& s = v.get_str();
+		stringlist_add(sl.get(), s.c_str() );
 	}
 
-	return sl;
+	return sl.release();
 }
 
 template<>
@@ -366,15 +358,15 @@ identity_list* from_json<identity_list*>(const js::Value& v)
 {
 	const js::Array& a = v.get_array();
 
-	identity_list* il = new_identity_list( nullptr );
+	auto il = pEp::utility::make_c_ptr(new_identity_list( nullptr ), &free_identity_list);
 
 	for(const js::Value& v : a )
 	{
 		pEp_identity* id = from_json<pEp_identity*>(v);
-		identity_list_add(il, id );
+		identity_list_add(il.get(), id );
 	}
 
-	return il;
+	return il.release();
 }
 
 
