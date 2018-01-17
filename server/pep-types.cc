@@ -1,6 +1,8 @@
 #include "pep-types.hh"
+#include "pep-utils.hh"
 #include "json_spirit/json_spirit_utils.h"
 
+#include <pEp/pEp_string.h>
 #include <iostream> // Just to print debug stuff to std::cerr
 #include "base64.hh"
 
@@ -196,6 +198,16 @@ Out<PEP_comm_type>::~Out()
 }
 
 
+// used for strings that shall be _owned_ by the pEpEngine only!
+template<>
+char* from_json<char*>(const js::Value& v)
+{
+	const std::string& ss = v.get_str();
+	char* s = new_string(nullptr, ss.size() );
+	return s;
+}
+
+
 template<>
 message* from_json<message*>(const js::Value& v)
 {
@@ -379,22 +391,24 @@ _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 	for(; element!=a.end(); ++element)
 	{
 		const auto oelem = element->get_obj();
+		
+		// FIXME: change base64 decoder that it decodes into output array directly to avoid copying.
 		std::string v = base64_from_json_object(oelem, "value");
 		size_t vs = v.size();
-		char* vc = (char*)malloc(vs + 1);
+		char* vc = new_string(nullptr, vs + 1);
 		if(vc == NULL) 
 			throw std::runtime_error("Out of memory while allocating blob");
 		
 		memcpy(vc, v.c_str(), vs + 1 );
 		
-		bl = bloblist_add(bl, 
-			vc, vs,
-			from_json_object<const char*, js::str_type>(oelem, "mime_type"),
-			from_json_object<const char*, js::str_type>(oelem, "filename")
-		);
+		// must use unique_ptr<char> instead of std::string to handle NULL values differently from empty strings:
+		auto mime_type = pEp::utility::make_c_ptr( from_json_object<char*, js::str_type>(oelem, "mime_type"), &free_string );
+		auto filename  = pEp::utility::make_c_ptr( from_json_object<char*, js::str_type>(oelem, "filename") , &free_string );
+		
+		bl = bloblist_add(bl, vc, vs, mime_type.get(), filename.get());
 		
 		if(bl == NULL)
-		throw std::runtime_error("Couldn't add blob to bloblist");
+			throw std::runtime_error("Couldn't add blob to bloblist");
 	}
 	
 	return bl;
