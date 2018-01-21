@@ -649,6 +649,7 @@ catch (std::exception const &e)
 
 void JsonAdapter::shutdown(timeval* t)
 {
+	exit(0);  // HACK for JSON-41
 	check_guard();
 	Log() << "JS::shutdown() was called.\n";
 	i->running = false;
