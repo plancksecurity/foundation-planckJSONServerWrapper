@@ -77,10 +77,15 @@ public:
 	
 	// returns the associated log stream (either std::cerr or nulllogger)
 	std::ostream& Log() const;
+	
+	// will throw logic_error if guard variables contains illegal values, which means: *this is not a valid JsonAdapter object!
+	void check_guard() const;
 
 //private:
 	struct Internal;
+	unsigned long long guard_0;
 	Internal* i; // pimpl for stable interface.
+	unsigned long long guard_1;
 };
 
 // just for debug:
