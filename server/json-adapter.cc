@@ -45,7 +45,8 @@ const std::string CreateSessionUrl = BaseUrl + "createSession";
 const std::string GetAllSessionsUrl = BaseUrl + "getAllSessions";
 const std::string ApiRequestUrl = BaseUrl + "callFunction";
 
-
+const uint64_t Guard_0 = 123456789;
+const uint64_t Guard_1 = 987654321;
 
 typedef std::map<std::thread::id, JsonAdapter*> SessionRegistry;
 
@@ -371,6 +372,7 @@ void* JsonAdapter::syncThreadRoutine(void* arg)
 
 void JsonAdapter::startSync()
 {
+	check_guard();
 	if(i->sync_session)
 	{
 		throw std::runtime_error("sync session already started!");
@@ -403,6 +405,7 @@ void JsonAdapter::startSync()
 
 void JsonAdapter::stopSync()
 {
+	check_guard();
 	i->stopSync();
 }
 
@@ -486,7 +489,9 @@ void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
 
 
 JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync)
-: i(new Internal( silent ? nulllogger : std::cerr, do_sync ))
+: guard_0(Guard_0)
+, i(new Internal( silent ? nulllogger : std::cerr, do_sync ))
+, guard_1(Guard_1)
 {
 	i->eventBase.reset(event_base_new());
 	if (!i->eventBase)
@@ -505,6 +510,7 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 
 JsonAdapter::~JsonAdapter()
 {
+	check_guard();
 	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered.\n";
 	stopSync();
 	this->shutdown(nullptr);
@@ -517,6 +523,7 @@ JsonAdapter::~JsonAdapter()
 void JsonAdapter::run()
 try
 {
+	check_guard();
 	Log() << "JS::run(): This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".\n";
 	Log() << to_string( session_registry);
 	
@@ -642,6 +649,7 @@ catch (std::exception const &e)
 
 void JsonAdapter::shutdown(timeval* t)
 {
+	check_guard();
 	Log() << "JS::shutdown() was called.\n";
 	i->running = false;
 	const int ret = event_base_loopexit(i->eventBase.get(), t);
@@ -663,6 +671,7 @@ void JsonAdapter::shutdown(timeval* t)
 // returns 'true' if 's' is the security token created by the function above.
 bool JsonAdapter::verify_security_token(const std::string& s) const
 {
+	check_guard();
 	if(s!=i->token)
 	{
 		Log() << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!\n";
@@ -671,8 +680,9 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 }
 
 
-void JsonAdapter::augment(json_spirit::Object& /*returnObject*/)
+void JsonAdapter::augment(json_spirit::Object& returnObject)
 {
+	check_guard();
 	PEP_SESSION session = this->i->session;
 	auto errorstack = get_errorstack(session);
 	returnObject.emplace_back( "errorstack", to_json(errorstack) );
@@ -682,6 +692,7 @@ void JsonAdapter::augment(json_spirit::Object& /*returnObject*/)
 
 void JsonAdapter::registerEventListener(const std::string& address, unsigned port, const std::string& securityContext)
 {
+	check_guard();
 	const auto key = std::make_pair(address, port);
 	const auto q = i->eventListener.find(key);
 	if( q != i->eventListener.end() && q->second.securityContext != securityContext)
@@ -698,6 +709,7 @@ void JsonAdapter::registerEventListener(const std::string& address, unsigned por
 
 void JsonAdapter::unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext)
 {
+	check_guard();
 	const auto key = std::make_pair(address, port);
 	const auto q = i->eventListener.find(key);
 	if( q == i->eventListener.end() || q->second.securityContext != securityContext)
@@ -711,6 +723,7 @@ void JsonAdapter::unregisterEventListener(const std::string& address, unsigned p
 
 std::ostream& JsonAdapter::Log() const
 {
+	check_guard();
 	return i->Log;
 }
 
@@ -718,6 +731,20 @@ std::ostream& JsonAdapter::Log() const
 bool JsonAdapter::running() const
 {
 	return i->running;
+}
+
+
+void JsonAdapter::check_guard() const
+{
+	if(guard_0 != Guard_0 || guard_1 != Guard_1)
+	{
+		char buf[128];
+		snprintf(buf,127, "JS::check_guard failed: guard0=%llu, guard1=%llu this=%p.\n",
+			guard_0, guard_1, (void*)this
+			);
+		std::cerr << buf;
+		throw std::logic_error( buf );
+	}
 }
 
 

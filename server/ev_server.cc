@@ -38,18 +38,6 @@ namespace fs = boost::filesystem;
 
 namespace ev_server {
 
-PEP_STATUS get_gpg_path(const char** path)
-{
-	const char* gpg_path = nullptr;
-	const auto status =get_binary_path( PEP_crypt_OpenPGP, &gpg_path);
-	
-	if(status == PEP_STATUS_OK && gpg_path!=nullptr)
-	{
-		*path = strdup(gpg_path);
-	}
-	return status;
-}
-
 
 // HACK: because "auto sessions" are per TCP connections, add a parameter to set passive_mode each time again
 PEP_STATUS MIME_encrypt_message_ex(
@@ -111,7 +99,6 @@ const FunctionMap functions = {
 		FP( "outgoing_message_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, Out<PEP_rating>>( &outgoing_message_rating ) ),
 		FP( "re_evaluate_message_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, In<stringlist_t*>, In<PEP_rating>, Out<PEP_rating>>( &re_evaluate_message_rating ) ),
 		FP( "identity_rating" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
-		FP( "get_gpg_path",    new Func<PEP_STATUS, Out<const char*>>(&get_gpg_path) ),
 		
 		FP( "pEp Engine Core API", new Separator),
 		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
