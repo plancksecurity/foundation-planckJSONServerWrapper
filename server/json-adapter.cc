@@ -671,7 +671,7 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 }
 
 
-void JsonAdapter::augment(json_spirit::Object& /*returnObject*/)
+void JsonAdapter::augment(json_spirit::Object& returnObject)
 {
 	PEP_SESSION session = this->i->session;
 	auto errorstack = get_errorstack(session);
