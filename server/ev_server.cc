@@ -1,6 +1,7 @@
 #include <evhttp.h>
 
 #include "ev_server.hh"
+#include "c_string.hh"
 #include "main.hh"
 #include "json-adapter.hh"
 #include "function_map.hh"
@@ -75,17 +76,17 @@ PEP_STATUS MIME_decrypt_message_ex(
 const FunctionMap functions = {
 		// from message_api.h
 		FP( "Message API", new Separator ),
-		FP( "MIME_encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>, In<stringlist_t*>,
+		FP( "MIME_encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<c_string>, In<size_t>, In<stringlist_t*>,
 			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message ) ),
-		FP( "MIME_encrypt_message_for_self", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<pEp_identity*>, In<const char*>, In<size_t>,
+		FP( "MIME_encrypt_message_for_self", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<pEp_identity*>, In<c_string>, In<size_t>,
 			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message_for_self ) ),
-		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>,
+		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<c_string>, In<size_t>,
 			Out<char*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>( &MIME_decrypt_message ) ),
 		
 		// HACK: because "auto sessions" are per TCP connections, add a parameter to set passive_mode each time again
-		FP( "MIME_encrypt_message_ex", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>, In<stringlist_t*>, In<bool>,
+		FP( "MIME_encrypt_message_ex", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<c_string>, In<size_t>, In<stringlist_t*>, In<bool>,
 			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message_ex ) ),
-		FP( "MIME_decrypt_message_ex", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<const char*>, In<size_t>, In<bool>,
+		FP( "MIME_decrypt_message_ex", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<c_string>, In<size_t>, In<bool>,
 			Out<char*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>( &MIME_decrypt_message_ex ) ),
 		
 		FP( "startKeySync", new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::startSync) ),
@@ -101,7 +102,7 @@ const FunctionMap functions = {
 		FP( "identity_rating" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		
 		FP( "pEp Engine Core API", new Separator),
-		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, In<const char*>, In<const char*>>( &log_event) ),
+		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, In<c_string>, In<c_string>, In<c_string>>( &log_event) ),
 		FP( "get_trustwords", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const pEp_identity*>, In<const pEp_identity*>, In<Language>, Out<char*>, Out<size_t>, In<bool>>( &get_trustwords) ),
 		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<char*>>( &get_languagelist) ),
 		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<Language>, In<int>, Out<char*>> ( &get_phrase) ),
@@ -110,9 +111,9 @@ const FunctionMap functions = {
 		FP( "config_unencrypted_subject", new Func<void, In<PEP_SESSION,false>, In<bool>>( &config_unencrypted_subject) ),
 		
 		FP( "Identity Management API", new Separator),
-		FP( "get_identity"       , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>, Out<pEp_identity*>>( &get_identity) ),
+		FP( "get_identity"       , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, In<c_string>, Out<pEp_identity*>>( &get_identity) ),
 		FP( "set_identity"       , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>> ( &set_identity) ),
-		FP( "mark_as_comprimized", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &mark_as_compromized) ),
+		FP( "mark_as_comprimized", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>> ( &mark_as_compromized) ),
 		FP( "identity_rating"    , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "outgoing_message_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, Out<PEP_rating>>( &outgoing_message_rating) ),
 		FP( "set_identity_flags"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>, In<identity_flags_t>>( &set_identity_flags) ),
@@ -120,12 +121,12 @@ const FunctionMap functions = {
 		
 		FP( "Low level Key Management API", new Separator),
 		FP( "generate_keypair", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &generate_keypair) ),
-		FP( "delete_keypair", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &delete_keypair) ),
-		FP( "import_key"    , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<std::size_t>, Out<identity_list*>> ( &import_key) ),
-		FP( "export_key"    , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<char*>, Out<std::size_t>> ( &export_key) ),
-		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<stringlist_t*>> ( &find_keys) ),
+		FP( "delete_keypair", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>> ( &delete_keypair) ),
+		FP( "import_key"    , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, In<std::size_t>, Out<identity_list*>> ( &import_key) ),
+		FP( "export_key"    , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, Out<char*>, Out<std::size_t>> ( &export_key) ),
+		FP( "find_keys"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &get_trust) ),
-		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<bool>> ( &own_key_is_listed) ),
+		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, Out<bool>> ( &own_key_is_listed) ),
 		FP( "own_identities_retrieve", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<identity_list*>>( &own_identities_retrieve ) ),
 		FP( "undo_last_mitrust", new Func<PEP_STATUS, In<PEP_SESSION,false>>( &undo_last_mistrust ) ),
 		
@@ -136,18 +137,18 @@ const FunctionMap functions = {
 		FP( "key_mistrusted",     new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>>( &key_mistrusted) ),
 		FP( "key_reset_trust",    new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>>( &key_reset_trust) ),
 		
-		FP( "least_trust"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<PEP_comm_type>> ( &least_trust) ),
-		FP( "get_key_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<PEP_comm_type>> ( &get_key_rating) ),
-		FP( "renew_key"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const timestamp*>> ( &renew_key) ),
-		FP( "revoke"        , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<const char*>> ( &revoke_key) ),
-		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, In<time_t>, Out<bool>> ( &key_expired) ),
+		FP( "least_trust"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, Out<PEP_comm_type>> ( &least_trust) ),
+		FP( "get_key_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, Out<PEP_comm_type>> ( &get_key_rating) ),
+		FP( "renew_key"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, In<const timestamp*>> ( &renew_key) ),
+		FP( "revoke"        , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, In<c_string>> ( &revoke_key) ),
+		FP( "key_expired"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, In<time_t>, Out<bool>> ( &key_expired) ),
 		
 		FP( "from blacklist.h & OpenPGP_compat.h", new Separator),
-		FP( "blacklist_add"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &blacklist_add) ),
-		FP( "blacklist_delete", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>> ( &blacklist_delete) ),
-		FP( "blacklist_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<bool>> ( &blacklist_is_listed) ),
+		FP( "blacklist_add"   , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>> ( &blacklist_add) ),
+		FP( "blacklist_delete", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>> ( &blacklist_delete) ),
+		FP( "blacklist_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, Out<bool>> ( &blacklist_is_listed) ),
 		FP( "blacklist_retrieve" , new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<stringlist_t*>> ( &blacklist_retrieve) ),
-		FP( "OpenPGP_list_keyinfo", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const char*>, Out<stringpair_list_t*>> ( &OpenPGP_list_keyinfo) ),
+		FP( "OpenPGP_list_keyinfo", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, Out<stringpair_list_t*>> ( &OpenPGP_list_keyinfo) ),
 		
 		FP( "Event Listener & Results", new Separator ),
 		FP( "registerEventListener"  , new Func<void, In<JsonAdapter*, false>, In<std::string>, In<unsigned>, In<std::string>> ( &JsonAdapter::registerEventListener) ),
