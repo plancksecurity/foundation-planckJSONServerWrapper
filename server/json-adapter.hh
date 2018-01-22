@@ -86,6 +86,13 @@ public:
 	unsigned long long guard_0;
 	Internal* i; // pimpl for stable interface.
 	unsigned long long guard_1;
+
+private:
+	static
+	void staticThreadFunc(JsonAdapter* that) { that->threadFunc(); }
+	
+	void threadFunc();
+	std::exception_ptr initExcept;
 };
 
 // just for debug:

@@ -520,18 +520,8 @@ JsonAdapter::~JsonAdapter()
 }
 
 
-void JsonAdapter::run()
-try
+void JsonAdapter::threadFunc()
 {
-	check_guard();
-	Log() << "JS::run(): This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".\n";
-	Log() << to_string( session_registry);
-	
-	JsonAdapter* ja = this;
-	
-	std::exception_ptr initExcept;
-	auto ThreadFunc = [&] ()
-	{
 		try
 		{
 			const auto id = std::this_thread::get_id();
@@ -546,7 +536,7 @@ try
 					throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
 				}
 				
-				session_registry.emplace(id, ja);
+				session_registry.emplace(id, this);
 				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".\n";
 				if(i->shall_sync)
 				{
@@ -618,13 +608,21 @@ try_next_port:
 			initExcept = std::current_exception();
 		}
 		Log() << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++\n";
-	};
+}
+
+
+void JsonAdapter::run()
+try
+{
+	check_guard();
+	Log() << "JS::run(): This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".\n";
+	Log() << to_string( session_registry);
 	
 	i->running = true;
 	for(int t=0; t<SrvThreadCount; ++t)
 	{
 		Log() << "Start Thread #" << t << "...\n";
-		ThreadPtr thread(new std::thread(ThreadFunc), ThreadDeleter);
+		ThreadPtr thread(new std::thread(staticThreadFunc, this), ThreadDeleter);
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		if (initExcept)
 		{
