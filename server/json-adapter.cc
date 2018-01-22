@@ -45,11 +45,14 @@ const std::string CreateSessionUrl = BaseUrl + "createSession";
 const std::string GetAllSessionsUrl = BaseUrl + "getAllSessions";
 const std::string ApiRequestUrl = BaseUrl + "callFunction";
 
-
+const uint64_t Guard_0 = 123456789;
+const uint64_t Guard_1 = 987654321;
 
 typedef std::map<std::thread::id, JsonAdapter*> SessionRegistry;
 
 SessionRegistry session_registry;
+std::string to_string(const SessionRegistry& reg);
+
 
 auto ThreadDeleter = [](std::thread* t)
 {
@@ -289,6 +292,8 @@ PEP_SESSION from_json(const js::Value& /* not used */)
 		std::stringstream ss;
 		ss << "There is no SESSION for this thread (" << id << ")!"; 
 		throw std::logic_error( ss.str() );
+	}else{
+		std::cerr << "from_json<PEP_SESSION> for thread " << id << " got " << (void*)q->second->i->session << ".\n";
 	}
 	return q->second->i->session;
 }
@@ -367,6 +372,7 @@ void* JsonAdapter::syncThreadRoutine(void* arg)
 
 void JsonAdapter::startSync()
 {
+	check_guard();
 	if(i->sync_session)
 	{
 		throw std::runtime_error("sync session already started!");
@@ -399,6 +405,7 @@ void JsonAdapter::startSync()
 
 void JsonAdapter::stopSync()
 {
+	check_guard();
 	i->stopSync();
 }
 
@@ -482,7 +489,9 @@ void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
 
 
 JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync)
-: i(new Internal( silent ? nulllogger : std::cerr, do_sync ))
+: guard_0(Guard_0)
+, i(new Internal( silent ? nulllogger : std::cerr, do_sync ))
+, guard_1(Guard_1)
 {
 	i->eventBase.reset(event_base_new());
 	if (!i->eventBase)
@@ -501,6 +510,7 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 
 JsonAdapter::~JsonAdapter()
 {
+	check_guard();
 	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered.\n";
 	stopSync();
 	this->shutdown(nullptr);
@@ -510,15 +520,8 @@ JsonAdapter::~JsonAdapter()
 }
 
 
-void JsonAdapter::run()
-try
+void JsonAdapter::threadFunc()
 {
-	Log() << "I have " << session_registry.size() << " registered session(s).\n";
-	JsonAdapter* ja = this;
-	
-	std::exception_ptr initExcept;
-	auto ThreadFunc = [&] ()
-	{
 		try
 		{
 			const auto id = std::this_thread::get_id();
@@ -533,7 +536,7 @@ try
 					throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
 				}
 				
-				session_registry.emplace(id, ja);
+				session_registry.emplace(id, this);
 				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".\n";
 				if(i->shall_sync)
 				{
@@ -551,7 +554,7 @@ try
 			if (i->sock == -1) // no port bound, yet
 			{
 				// initialize the pEp engine
-				Log() << "I have " << session_registry.size() << " registered session(s).\n";
+				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
 				
 				unsigned port_ofs = 0;
 try_next_port:
@@ -605,13 +608,21 @@ try_next_port:
 			initExcept = std::current_exception();
 		}
 		Log() << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++\n";
-	};
+}
+
+
+void JsonAdapter::run()
+try
+{
+	check_guard();
+	Log() << "JS::run(): This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".\n";
+	Log() << to_string( session_registry);
 	
 	i->running = true;
 	for(int t=0; t<SrvThreadCount; ++t)
 	{
 		Log() << "Start Thread #" << t << "...\n";
-		ThreadPtr thread(new std::thread(ThreadFunc), ThreadDeleter);
+		ThreadPtr thread(new std::thread(staticThreadFunc, this), ThreadDeleter);
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		if (initExcept)
 		{
@@ -636,6 +647,8 @@ catch (std::exception const &e)
 
 void JsonAdapter::shutdown(timeval* t)
 {
+	exit(0);  // HACK for JSON-41
+	check_guard();
 	Log() << "JS::shutdown() was called.\n";
 	i->running = false;
 	const int ret = event_base_loopexit(i->eventBase.get(), t);
@@ -657,6 +670,7 @@ void JsonAdapter::shutdown(timeval* t)
 // returns 'true' if 's' is the security token created by the function above.
 bool JsonAdapter::verify_security_token(const std::string& s) const
 {
+	check_guard();
 	if(s!=i->token)
 	{
 		Log() << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!\n";
@@ -667,7 +681,8 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 
 void JsonAdapter::augment(json_spirit::Object& returnObject)
 {
-	PEP_SESSION session = from_json<PEP_SESSION>(returnObject); // the parameter is not used :-D
+	check_guard();
+	PEP_SESSION session = this->i->session;
 	auto errorstack = get_errorstack(session);
 	returnObject.emplace_back( "errorstack", to_json(errorstack) );
 	clear_errorstack(session);
@@ -676,6 +691,7 @@ void JsonAdapter::augment(json_spirit::Object& returnObject)
 
 void JsonAdapter::registerEventListener(const std::string& address, unsigned port, const std::string& securityContext)
 {
+	check_guard();
 	const auto key = std::make_pair(address, port);
 	const auto q = i->eventListener.find(key);
 	if( q != i->eventListener.end() && q->second.securityContext != securityContext)
@@ -692,6 +708,7 @@ void JsonAdapter::registerEventListener(const std::string& address, unsigned por
 
 void JsonAdapter::unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext)
 {
+	check_guard();
 	const auto key = std::make_pair(address, port);
 	const auto q = i->eventListener.find(key);
 	if( q == i->eventListener.end() || q->second.securityContext != securityContext)
@@ -705,6 +722,7 @@ void JsonAdapter::unregisterEventListener(const std::string& address, unsigned p
 
 std::ostream& JsonAdapter::Log() const
 {
+	check_guard();
 	return i->Log;
 }
 
@@ -712,4 +730,43 @@ std::ostream& JsonAdapter::Log() const
 bool JsonAdapter::running() const
 {
 	return i->running;
+}
+
+
+void JsonAdapter::check_guard() const
+{
+	if(guard_0 != Guard_0 || guard_1 != Guard_1)
+	{
+		char buf[128];
+		snprintf(buf,127, "JS::check_guard failed: guard0=%llu, guard1=%llu this=%p.\n",
+			guard_0, guard_1, (void*)this
+			);
+		std::cerr << buf;
+		throw std::logic_error( buf );
+	}
+}
+
+
+namespace {
+
+std::string to_string(const SessionRegistry& reg)
+{
+	std::stringstream ss;
+	ss << "There are " << reg.size() << " sessions registered" << (reg.empty() ? '.' : ':' ) << std::endl;
+	for(const auto s : reg)
+	{
+		ss << "\t thread id " << s.first << " : JA=" << (void*)s.second << ". ";
+		if(s.second)
+		{
+			ss << " js.i=" << (void*)(s.second->i) << ". ";
+			if(s.second->i)
+			{
+				ss << "  session=" << (void*)(s.second->i->session) << ".";
+			}
+		}
+		ss << std::endl;
+	}
+	return ss.str();
+}
+
 }
