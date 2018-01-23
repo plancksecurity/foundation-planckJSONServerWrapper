@@ -295,7 +295,7 @@ void OnApiRequest(evhttp_request* req, void* obj)
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	
 	std::vector<char> data(length);
-	ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
+	const ev_ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
 	const std::string data_string(data.data(), data.data() + nr );
 	if(nr>0)
 	{
