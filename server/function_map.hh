@@ -124,6 +124,14 @@ struct Type2String<In<T, true>>
 };
 
 template<class T>
+struct Type2String<In<T, false>>
+{
+	static js::Value get() { throw "MSVC is b0rken"; }
+};
+
+
+
+template<class T>
 struct Type2String<InRaw<T, true>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
