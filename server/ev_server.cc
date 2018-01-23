@@ -2,7 +2,7 @@
 
 #include "ev_server.hh"
 #include "c_string.hh"
-#include "main.hh"
+#include "prefix-config.hh"
 #include "json-adapter.hh"
 #include "function_map.hh"
 #include "pep-types.hh"
@@ -36,8 +36,11 @@ In<Context*, false>::In(const js::Value&, Context* ctx)
 
 namespace fs = boost::filesystem;
 
+// compile-time default. might be overwritten in main() or before any ev_server function is called.
+fs::path ev_server::path_to_html = fs::path(html_directory);
 
-namespace ev_server {
+
+namespace {
 
 
 // HACK: because "auto sessions" are per TCP connections, add a parameter to set passive_mode each time again
@@ -164,8 +167,10 @@ const FunctionMap functions = {
 		FP( "shutdown",  new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::shutdown_now ) ),
 	};
 
+} // end of anonymous namespace
 
-void sendReplyString(evhttp_request* req, const char* contentType, const std::string& outputText)
+
+void ev_server::sendReplyString(evhttp_request* req, const char* contentType, const std::string& outputText)
 {
 	auto* outBuf = evhttp_request_get_output_buffer(req);
 	if (!outBuf)
@@ -188,7 +193,7 @@ void sendReplyString(evhttp_request* req, const char* contentType, const std::st
 }
 
 
-void sendFile( evhttp_request* req, const std::string& mimeType, const fs::path& fileName)
+void ev_server::sendFile( evhttp_request* req, const std::string& mimeType, const fs::path& fileName)
 {
 	auto* outBuf = evhttp_request_get_output_buffer(req);
 	if (!outBuf)
@@ -209,7 +214,7 @@ struct FileRequest
 };
 
 // catch-all callback
-void OnOtherRequest(evhttp_request* req, void*)
+void ev_server::OnOtherRequest(evhttp_request* req, void*)
 {
 	static const std::map<std::string, FileRequest > files =
 		{
@@ -243,7 +248,7 @@ void OnOtherRequest(evhttp_request* req, void*)
 
 
 // generate a JavaScript file containing the definition of all registered callable functions, see above.
-void OnGetFunctions(evhttp_request* req, void*)
+void ev_server::OnGetFunctions(evhttp_request* req, void*)
 {
 	static const std::string preamble =
 		"var Direction = { In:1, Out:2, InOut:3 };\n"
@@ -280,7 +285,7 @@ void OnGetFunctions(evhttp_request* req, void*)
 }
 
 
-void OnApiRequest(evhttp_request* req, void* obj)
+void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 {
 	evbuffer* inbuf = evhttp_request_get_input_buffer(req);
 	const size_t length = evbuffer_get_length(inbuf);
@@ -322,7 +327,4 @@ void OnApiRequest(evhttp_request* req, void* obj)
 
 	sendReplyString(req, "text/plain", js::write(answer, js::raw_utf8));
 };
-
-
-} // end of namespace ev_server
 
