@@ -120,6 +120,7 @@ struct JsonAdapter::Internal
 	bool        shall_sync    = false; // just hold the value from config/command line.
 	bool        running = false;
 	bool        silent  = false;
+	bool        ignore_session_error = false;
 	ThreadPool  threads;
 	PEP_SESSION session = nullptr;
 	
@@ -488,7 +489,7 @@ void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
 }
 
 
-JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync)
+JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync, bool ignore_session_error)
 : guard_0(Guard_0)
 , i(new Internal( silent ? nulllogger : std::cerr, do_sync ))
 , guard_1(Guard_1)
@@ -505,6 +506,7 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 	i->start_port = start_port;
 	i->end_port   = end_port;
 	i->silent     = silent;
+	i->ignore_session_error = ignore_session_error;
 }
 
 
@@ -533,12 +535,17 @@ void JsonAdapter::threadFunc()
 				PEP_STATUS status = call_with_lock(&init, &i->session); // release(session) in ThreadDeleter
 				if(status != PEP_STATUS_OK || i->session==nullptr)
 				{
-					throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
+					if( i->ignore_session_error)
+					{
+						Log() << "Cannot create session! status: " << status_to_string(status);
+					}else{
+						throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
+					}
 				}
 				
 				session_registry.emplace(id, this);
 				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".\n";
-				if(i->shall_sync)
+				if(i->shall_sync && i->session) // startSync() does not make sense without session.
 				{
 					Log() << "\tstartSync()...\n";
 					startSync();
