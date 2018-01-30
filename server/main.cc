@@ -61,10 +61,11 @@ try
 	}
 	
 	JsonAdapter ja( address, start_port, end_port, !debug_mode, do_sync, ignore_missing_session );
-	ja.run();
+	ja.prepare_run();
 
 	if( debug_mode )
 	{
+		ja.run();
 		// run until "Q" from stdin
 		int input = 0;
 		do{
@@ -74,6 +75,7 @@ try
 		}while(std::cin && input != 'q' && input != 'Q');
 	}else{
 		daemonize();
+		ja.run();
 		do{
 			std::this_thread::sleep_for(std::chrono::seconds(3));
 		}while(ja.running());

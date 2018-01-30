@@ -25,6 +25,9 @@ public:
 	void   registerEventListener(const std::string& address, unsigned port, const std::string& securityContext);
 	void unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext);
 	
+	// look for a free port to listen on
+	void prepare_run();
+	
 	// run the server in another thread and returns immediately.
 	void run();
 	

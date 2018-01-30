@@ -522,6 +522,35 @@ JsonAdapter::~JsonAdapter()
 }
 
 
+void JsonAdapter::prepare_run()
+{
+				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
+				
+				unsigned port_ofs = 0;
+try_next_port:
+				auto* boundSock = evhttp_bind_socket_with_handle(i->evHttp.get(), i->address.c_str(), i->start_port + port_ofs);
+				if (!boundSock)
+				{
+					++port_ofs;
+					if(i->start_port + port_ofs > i->end_port)
+					{
+						throw std::runtime_error("Failed to bind server socket: "
+							"No free port between " + std::to_string(i->start_port) + " and " + std::to_string(i->end_port)
+							);
+					}
+					goto try_next_port;
+				}
+				
+				if ((i->sock = evhttp_bound_socket_get_fd(boundSock)) == -1)
+					throw std::runtime_error("Failed to get server socket for next instance.");
+				
+				i->port = i->start_port + port_ofs;
+				i->token = create_security_token(i->address, i->port, BaseUrl);
+				
+				Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"\n";
+}
+
+
 void JsonAdapter::threadFunc()
 {
 		try
@@ -562,31 +591,7 @@ void JsonAdapter::threadFunc()
 			
 			if (i->sock == -1) // no port bound, yet
 			{
-				// initialize the pEp engine
-				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
-				
-				unsigned port_ofs = 0;
-try_next_port:
-				auto* boundSock = evhttp_bind_socket_with_handle(i->evHttp.get(), i->address.c_str(), i->start_port + port_ofs);
-				if (!boundSock)
-				{
-					++port_ofs;
-					if(i->start_port + port_ofs > i->end_port)
-					{
-						throw std::runtime_error("Failed to bind server socket: "
-							"No free port between " + std::to_string(i->start_port) + " and " + std::to_string(i->end_port)
-							);
-					}
-					goto try_next_port;
-				}
-				
-				if ((i->sock = evhttp_bound_socket_get_fd(boundSock)) == -1)
-					throw std::runtime_error("Failed to get server socket for next instance.");
-				
-				i->port = i->start_port + port_ofs;
-				i->token = create_security_token(i->address, i->port, BaseUrl);
-				
-				Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"\n";
+				prepare_run();
 			}
 			else
 			{
