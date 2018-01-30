@@ -535,11 +535,13 @@ void JsonAdapter::threadFunc()
 				PEP_STATUS status = call_with_lock(&init, &i->session); // release(session) in ThreadDeleter
 				if(status != PEP_STATUS_OK || i->session==nullptr)
 				{
+					const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".\n";
 					if( i->ignore_session_error)
 					{
-						Log() << "Cannot create session! status: " << status_to_string(status);
+						Log() << error_msg;
 					}else{
-						throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
+						std::cerr << error_msg;
+						throw std::runtime_error(error_msg);
 					}
 				}
 				
