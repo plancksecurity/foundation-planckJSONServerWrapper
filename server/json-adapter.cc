@@ -120,6 +120,7 @@ struct JsonAdapter::Internal
 	bool        shall_sync    = false; // just hold the value from config/command line.
 	bool        running = false;
 	bool        silent  = false;
+	bool        ignore_session_error = false;
 	ThreadPool  threads;
 	PEP_SESSION session = nullptr;
 	
@@ -488,7 +489,7 @@ void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
 }
 
 
-JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync)
+JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync, bool ignore_session_error)
 : guard_0(Guard_0)
 , i(new Internal( silent ? nulllogger : std::cerr, do_sync ))
 , guard_1(Guard_1)
@@ -505,6 +506,7 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 	i->start_port = start_port;
 	i->end_port   = end_port;
 	i->silent     = silent;
+	i->ignore_session_error = ignore_session_error;
 }
 
 
@@ -520,40 +522,8 @@ JsonAdapter::~JsonAdapter()
 }
 
 
-void JsonAdapter::threadFunc()
+void JsonAdapter::prepare_run()
 {
-		try
-		{
-			const auto id = std::this_thread::get_id();
-			Log() << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++\n";
-			const auto q=session_registry.find(id);
-			if(q==session_registry.end())
-			{
-				i->session = nullptr;
-				PEP_STATUS status = call_with_lock(&init, &i->session); // release(session) in ThreadDeleter
-				if(status != PEP_STATUS_OK || i->session==nullptr)
-				{
-					throw std::runtime_error("Cannot create session! status: " + status_to_string(status));
-				}
-				
-				session_registry.emplace(id, this);
-				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".\n";
-				if(i->shall_sync)
-				{
-					Log() << "\tstartSync()...\n";
-					startSync();
-				}
-			}else{
-				Log() << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
-			}
-			
-			evhttp_set_cb(i->evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
-			evhttp_set_cb(i->evHttp.get(), "/pep_functions.js"      , ev_server::OnGetFunctions  , this);
-			evhttp_set_gencb(i->evHttp.get(), ev_server::OnOtherRequest, nullptr);
-			
-			if (i->sock == -1) // no port bound, yet
-			{
-				// initialize the pEp engine
 				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
 				
 				unsigned port_ofs = 0;
@@ -578,6 +548,50 @@ try_next_port:
 				i->token = create_security_token(i->address, i->port, BaseUrl);
 				
 				Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"\n";
+}
+
+
+void JsonAdapter::threadFunc()
+{
+		try
+		{
+			const auto id = std::this_thread::get_id();
+			Log() << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++\n";
+			const auto q=session_registry.find(id);
+			if(q==session_registry.end())
+			{
+				i->session = nullptr;
+				PEP_STATUS status = call_with_lock(&init, &i->session); // release(session) in ThreadDeleter
+				if(status != PEP_STATUS_OK || i->session==nullptr)
+				{
+					const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".\n";
+					if( i->ignore_session_error)
+					{
+						Log() << error_msg;
+					}else{
+						std::cerr << error_msg;
+						throw std::runtime_error(error_msg);
+					}
+				}
+				
+				session_registry.emplace(id, this);
+				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".\n";
+				if(i->shall_sync && i->session) // startSync() does not make sense without session.
+				{
+					Log() << "\tstartSync()...\n";
+					startSync();
+				}
+			}else{
+				Log() << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
+			}
+			
+			evhttp_set_cb(i->evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
+			evhttp_set_cb(i->evHttp.get(), "/pep_functions.js"      , ev_server::OnGetFunctions  , this);
+			evhttp_set_gencb(i->evHttp.get(), ev_server::OnOtherRequest, nullptr);
+			
+			if (i->sock == -1) // no port bound, yet
+			{
+				prepare_run();
 			}
 			else
 			{

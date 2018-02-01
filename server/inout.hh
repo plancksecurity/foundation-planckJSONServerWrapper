@@ -46,7 +46,7 @@ struct In
 	
 	js::Value to_json() const
 	{
-		return ::to_json<T>(value);
+		throw "Something went wrong here!";
 	}
 	
 	c_type get_value() const { return value; }

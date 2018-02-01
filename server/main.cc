@@ -1,4 +1,5 @@
 #include "main.hh"
+#include "ev_server.hh"
 #include "prefix-config.hh"
 #include "json-adapter.hh"
 #include "daemonize.hh"
@@ -11,11 +12,12 @@ namespace po = boost::program_options;
 
 bool debug_mode = false;
 bool do_sync    = false;
+bool ignore_missing_session = false;
+
 std::string address = "127.0.0.1";
 unsigned start_port = 4223;
 unsigned end_port   = 9999;
 
-boost::filesystem::path path_to_html = boost::filesystem::path(html_directory);
 
 void print_version()
 {
@@ -39,7 +41,8 @@ try
 		("start-port,s", po::value<unsigned>(&start_port)->default_value(start_port),  "First port to bind on")
 		("end-port,e",   po::value<unsigned>(&end_port)->default_value(end_port),      "Last port to bind on")
 		("address,a",    po::value<std::string>(&address)->default_value(address),     "Address to bind on")
-		("html-directory,H", po::value<boost::filesystem::path>(&path_to_html)->default_value(path_to_html), "Path to the HTML and JavaScript files")
+		("html-directory,H", po::value<boost::filesystem::path>(&ev_server::path_to_html)->default_value(ev_server::path_to_html), "Path to the HTML and JavaScript files")
+		("ignore-missing-session", po::bool_switch(&ignore_missing_session), "Ignore when no PEP_SESSION can be created.")
 	;
 	
 	po::variables_map vm;
@@ -57,11 +60,12 @@ try
 		return 0;
 	}
 	
-	JsonAdapter ja( address, start_port, end_port, !debug_mode, do_sync );
-	ja.run();
+	JsonAdapter ja( address, start_port, end_port, !debug_mode, do_sync, ignore_missing_session );
+	ja.prepare_run();
 
 	if( debug_mode )
 	{
+		ja.run();
 		// run until "Q" from stdin
 		int input = 0;
 		do{
@@ -71,6 +75,7 @@ try
 		}while(std::cin && input != 'q' && input != 'Q');
 	}else{
 		daemonize();
+		ja.run();
 		do{
 			std::this_thread::sleep_for(std::chrono::seconds(3));
 		}while(ja.running());

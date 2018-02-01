@@ -2,7 +2,7 @@
 
 #include "ev_server.hh"
 #include "c_string.hh"
-#include "main.hh"
+#include "prefix-config.hh"
 #include "json-adapter.hh"
 #include "function_map.hh"
 #include "pep-types.hh"
@@ -36,40 +36,11 @@ In<Context*, false>::In(const js::Value&, Context* ctx)
 
 namespace fs = boost::filesystem;
 
+// compile-time default. might be overwritten in main() or before any ev_server function is called.
+fs::path ev_server::path_to_html = fs::path(html_directory);
 
-namespace ev_server {
 
-
-// HACK: because "auto sessions" are per TCP connections, add a parameter to set passive_mode each time again
-PEP_STATUS MIME_encrypt_message_ex(
-    PEP_SESSION session,
-    const char *mimetext,
-    size_t size,
-    stringlist_t* extra,
-    bool passive_mode,   // <-- guess what
-    char** mime_ciphertext,
-    PEP_enc_format enc_format,
-    PEP_encrypt_flags_t flags
-)
-{
-	config_passive_mode(session, passive_mode);
-	return MIME_encrypt_message(session, mimetext, size, extra, mime_ciphertext, enc_format, flags);
-}
-
-PEP_STATUS MIME_decrypt_message_ex(
-    PEP_SESSION session,
-    const char *mimetext,
-    size_t size,
-    bool passive_mode, // <-- guess what
-    char** mime_plaintext,
-    stringlist_t **keylist,
-    PEP_rating *rating,
-    PEP_decrypt_flags_t *flags
-)
-{
-	config_passive_mode(session, passive_mode);
-	return MIME_decrypt_message(session, mimetext, size, mime_plaintext, keylist, rating, flags);
-}
+namespace {
 
 
 // these are the pEp functions that are callable by the client
@@ -78,16 +49,8 @@ const FunctionMap functions = {
 		FP( "Message API", new Separator ),
 		FP( "MIME_encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<c_string>, In<size_t>, In<stringlist_t*>,
 			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message ) ),
-		FP( "MIME_encrypt_message_for_self", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<pEp_identity*>, In<c_string>, In<size_t>,
-			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message_for_self ) ),
 		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<c_string>, In<size_t>,
 			Out<char*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>( &MIME_decrypt_message ) ),
-		
-		// HACK: because "auto sessions" are per TCP connections, add a parameter to set passive_mode each time again
-		FP( "MIME_encrypt_message_ex", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<c_string>, In<size_t>, In<stringlist_t*>, In<bool>,
-			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message_ex ) ),
-		FP( "MIME_decrypt_message_ex", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<c_string>, In<size_t>, In<bool>,
-			Out<char*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>( &MIME_decrypt_message_ex ) ),
 		
 		FP( "startKeySync", new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::startSync) ),
 		FP( "stopKeySync",  new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::stopSync ) ),
@@ -95,18 +58,16 @@ const FunctionMap functions = {
 		FP( "stopKeyserverLookup",  new Func<void>( &JsonAdapter::stopKeyserverLookup ) ),
 		
 		FP( "encrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
-		FP( "encrypt_message_for_self", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<pEp_identity*>, In<message*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_for_self ) ),
 		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
 		FP( "outgoing_message_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, Out<PEP_rating>>( &outgoing_message_rating ) ),
-		FP( "re_evaluate_message_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, In<stringlist_t*>, In<PEP_rating>, Out<PEP_rating>>( &re_evaluate_message_rating ) ),
 		FP( "identity_rating" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		
 		FP( "pEp Engine Core API", new Separator),
-		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, In<c_string>, In<c_string>, In<c_string>>( &log_event) ),
+//		FP( "log_event",  new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, In<c_string>, In<c_string>, In<c_string>>( &log_event) ),
 		FP( "get_trustwords", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<const pEp_identity*>, In<const pEp_identity*>, In<Language>, Out<char*>, Out<size_t>, In<bool>>( &get_trustwords) ),
 		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<char*>>( &get_languagelist) ),
-		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<Language>, In<int>, Out<char*>> ( &get_phrase) ),
-		FP( "get_engine_version", new Func<const char*> ( &get_engine_version) ),
+//		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<Language>, In<int>, Out<char*>> ( &get_phrase) ),
+//		FP( "get_engine_version", new Func<const char*> ( &get_engine_version) ),
 		FP( "config_passive_mode", new Func<void, In<PEP_SESSION,false>, In<bool>>( &config_passive_mode) ),
 		FP( "config_unencrypted_subject", new Func<void, In<PEP_SESSION,false>, In<bool>>( &config_unencrypted_subject) ),
 		
@@ -131,7 +92,7 @@ const FunctionMap functions = {
 		FP( "undo_last_mitrust", new Func<PEP_STATUS, In<PEP_SESSION,false>>( &undo_last_mistrust ) ),
 		
 		FP( "myself"        , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &myself) ),
-		FP( "update_dentity", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &update_identity) ),
+//		FP( "update_dentity", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &update_identity) ),
 		
 		FP( "trust_personal_key", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>>( &trust_personal_key) ),
 		FP( "key_mistrusted",     new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>>( &key_mistrusted) ),
@@ -164,8 +125,10 @@ const FunctionMap functions = {
 		FP( "shutdown",  new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::shutdown_now ) ),
 	};
 
+} // end of anonymous namespace
 
-void sendReplyString(evhttp_request* req, const char* contentType, const std::string& outputText)
+
+void ev_server::sendReplyString(evhttp_request* req, const char* contentType, const std::string& outputText)
 {
 	auto* outBuf = evhttp_request_get_output_buffer(req);
 	if (!outBuf)
@@ -188,7 +151,7 @@ void sendReplyString(evhttp_request* req, const char* contentType, const std::st
 }
 
 
-void sendFile( evhttp_request* req, const std::string& mimeType, const fs::path& fileName)
+void ev_server::sendFile( evhttp_request* req, const std::string& mimeType, const fs::path& fileName)
 {
 	auto* outBuf = evhttp_request_get_output_buffer(req);
 	if (!outBuf)
@@ -209,7 +172,7 @@ struct FileRequest
 };
 
 // catch-all callback
-void OnOtherRequest(evhttp_request* req, void*)
+void ev_server::OnOtherRequest(evhttp_request* req, void*)
 {
 	static const std::map<std::string, FileRequest > files =
 		{
@@ -243,7 +206,7 @@ void OnOtherRequest(evhttp_request* req, void*)
 
 
 // generate a JavaScript file containing the definition of all registered callable functions, see above.
-void OnGetFunctions(evhttp_request* req, void*)
+void ev_server::OnGetFunctions(evhttp_request* req, void*)
 {
 	static const std::string preamble =
 		"var Direction = { In:1, Out:2, InOut:3 };\n"
@@ -280,7 +243,7 @@ void OnGetFunctions(evhttp_request* req, void*)
 }
 
 
-void OnApiRequest(evhttp_request* req, void* obj)
+void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 {
 	evbuffer* inbuf = evhttp_request_get_input_buffer(req);
 	const size_t length = evbuffer_get_length(inbuf);
@@ -295,7 +258,7 @@ void OnApiRequest(evhttp_request* req, void* obj)
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	
 	std::vector<char> data(length);
-	ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
+	const ev_ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
 	const std::string data_string(data.data(), data.data() + nr );
 	if(nr>0)
 	{
@@ -322,7 +285,4 @@ void OnApiRequest(evhttp_request* req, void* obj)
 
 	sendReplyString(req, "text/plain", js::write(answer, js::raw_utf8));
 };
-
-
-} // end of namespace ev_server
 
