@@ -5,9 +5,12 @@
 #include "daemonize.hh"
 
 #include <thread>
+#include <fstream>
 #include <chrono>
 #include <iostream>
 #include <boost/program_options.hpp>
+#include <event2/thread.h>
+
 namespace po = boost::program_options;
 
 bool debug_mode = false;
@@ -28,6 +31,7 @@ void print_version()
 		"\n";
 }
 
+std::ofstream* my_logfile = 0;
 
 int main(int argc, char** argv)
 try
@@ -59,6 +63,13 @@ try
 		print_version();
 		return 0;
 	}
+	
+	if(!debug_mode)
+	{
+		my_logfile = new std::ofstream("pep-json.log", std::ios_base::app );
+	}
+	
+	evthread_use_pthreads();
 	
 	JsonAdapter ja( address, start_port, end_port, !debug_mode, do_sync, ignore_missing_session );
 	ja.prepare_run();

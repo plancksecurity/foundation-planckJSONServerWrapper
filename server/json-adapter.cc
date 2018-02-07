@@ -488,10 +488,11 @@ void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
 	return (void*) status;
 }
 
+extern std::ofstream* my_logfile;
 
 JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync, bool ignore_session_error)
 : guard_0(Guard_0)
-, i(new Internal( silent ? nulllogger : std::cerr, do_sync ))
+, i(new Internal( (silent ? *my_logfile : std::cerr), do_sync ))
 , guard_1(Guard_1)
 {
 	i->eventBase.reset(event_base_new());
@@ -513,10 +514,10 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 JsonAdapter::~JsonAdapter()
 {
 	check_guard();
-	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered.\n";
+	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered." << std::endl;
 	stopSync();
 	this->shutdown(nullptr);
-	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered.\n";
+	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered." << std::endl;
 	delete i;
 	i=nullptr;
 }
@@ -524,7 +525,7 @@ JsonAdapter::~JsonAdapter()
 
 void JsonAdapter::prepare_run()
 {
-				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
+				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry ) << std::flush;
 				
 				unsigned port_ofs = 0;
 try_next_port:
@@ -547,7 +548,7 @@ try_next_port:
 				i->port = i->start_port + port_ofs;
 				i->token = create_security_token(i->address, i->port, BaseUrl);
 				
-				Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"\n";
+				Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"" << std::endl;
 }
 
 
@@ -556,7 +557,7 @@ void JsonAdapter::threadFunc()
 		try
 		{
 			const auto id = std::this_thread::get_id();
-			Log() << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++\n";
+			Log() << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++" << std::endl;
 			const auto q=session_registry.find(id);
 			if(q==session_registry.end())
 			{
@@ -567,7 +568,7 @@ void JsonAdapter::threadFunc()
 					const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".\n";
 					if( i->ignore_session_error)
 					{
-						Log() << error_msg;
+						Log() << error_msg << std::flush;
 					}else{
 						std::cerr << error_msg;
 						throw std::runtime_error(error_msg);
@@ -575,14 +576,14 @@ void JsonAdapter::threadFunc()
 				}
 				
 				session_registry.emplace(id, this);
-				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".\n";
+				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << "." << std::endl;
 				if(i->shall_sync && i->session) // startSync() does not make sense without session.
 				{
-					Log() << "\tstartSync()...\n";
+					Log() << "\tstartSync()..." << std::endl;
 					startSync();
 				}
 			}else{
-				Log() << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
+				Log() << "\tsession for this thread: "  << static_cast<void*>(q->second) << "." << std::endl;
 			}
 			
 			evhttp_set_cb(i->evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
@@ -591,10 +592,11 @@ void JsonAdapter::threadFunc()
 			
 			if (i->sock == -1) // no port bound, yet
 			{
-				prepare_run();
+				throw std::runtime_error("You have to call prepare_run() before run()!");
 			}
 			else
 			{
+				Log() << "\tnow I call evhttp_accept_socket()..." << std::endl;
 				if (evhttp_accept_socket(i->evHttp.get(), i->sock) == -1)
 					throw std::runtime_error("Failed to accept() on server socket for new instance.");
 			}
@@ -608,20 +610,20 @@ void JsonAdapter::threadFunc()
 				// for libevent 2.0:
 				event_base_loop(i->eventBase.get(), EVLOOP_NONBLOCK);
 				std::this_thread::sleep_for(std::chrono::milliseconds(333));
-				Log() << "\r" << ++numnum << ".   ";
+				Log() << "\r" << ++numnum << ".   " << std::endl;
 			}
 		}
 		catch (const std::exception& e)
 		{
-			Log() << " +++ std::exception in ThreadFunc: " << e.what() << "\n";
+			Log() << " +++ std::exception in ThreadFunc: " << e.what() << std::endl;
 			initExcept = std::current_exception();
 		}
 		catch (...)
 		{
-			Log() << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ \n";
+			Log() << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ " << std::endl;
 			initExcept = std::current_exception();
 		}
-		Log() << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++\n";
+		Log() << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++" << std::endl;
 }
 
 
@@ -629,13 +631,13 @@ void JsonAdapter::run()
 try
 {
 	check_guard();
-	Log() << "JS::run(): This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".\n";
-	Log() << to_string( session_registry);
+	Log() << "JS::run(): This is " << (void*)this << ", thread id " << std::this_thread::get_id() << "." << std::endl;
+	Log() << to_string( session_registry) << std::flush;
 	
 	i->running = true;
 	for(int t=0; t<SrvThreadCount; ++t)
 	{
-		Log() << "Start Thread #" << t << "...\n";
+		Log() << "Start Thread #" << t << "..." << std::endl;
 		ThreadPtr thread(new std::thread(staticThreadFunc, this), ThreadDeleter);
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		if (initExcept)
@@ -646,10 +648,10 @@ try
 		}
 		i->threads.push_back(std::move(thread));
 	}
-	Log() << "All " << SrvThreadCount << " thread(s) started:\n";
+	Log() << "All " << SrvThreadCount << " thread(s) started:" << std::endl;
 	for(const auto& t:i->threads)
 	{
-		Log() << "\tthread_id()=" << t->get_id() << ".\n";
+		Log() << "\tthread_id()=" << t->get_id() << "." << std::endl;
 	}
 }
 catch (std::exception const &e)
@@ -663,7 +665,7 @@ void JsonAdapter::shutdown(timeval* t)
 {
 	exit(0);  // HACK for JSON-41
 	check_guard();
-	Log() << "JS::shutdown() was called.\n";
+	Log() << "JS::shutdown() was called." << std::endl;
 	i->running = false;
 	const int ret = event_base_loopexit(i->eventBase.get(), t);
 	if(ret!=0)
@@ -671,10 +673,10 @@ void JsonAdapter::shutdown(timeval* t)
 		throw std::runtime_error("JsonAdapter::shutdown() failed.");
 	}
 	Log() << "JS::shutdown(): event_base loop is finished.\n";
-	Log() << "\t there are " << i->threads.size() << " threads remaining in the threadpool.\n";
+	Log() << "\t there are " << i->threads.size() << " threads remaining in the threadpool." << std::endl;
 	for(const auto& t : i->threads)
 	{
-		Log() << "\t\tjoin() on id=" << t->get_id() << "....\n";
+		Log() << "\t\tjoin() on id=" << t->get_id() << "...." << std::endl;
 		t->join();
 	}
 	i->threads.clear();
@@ -687,7 +689,7 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 	check_guard();
 	if(s!=i->token)
 	{
-		Log() << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!\n";
+		Log() << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!" << std::endl;
 	}
 	return s == i->token;
 }
