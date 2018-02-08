@@ -18,7 +18,6 @@
 #include "json-adapter.hh"
 #include "pep-types.hh"
 #include "json_rpc.hh"
-#include "nulllogger.hh"
 #include "security-token.hh"
 #include "pep-utils.hh"
 #include "ev_server.hh"
@@ -130,9 +129,8 @@ struct JsonAdapter::Internal
 	ThreadPtr   sync_thread{nullptr, ThreadDeleter};
 	
 	
-	explicit Internal(std::ostream& logger, bool _shall_sync)
+	explicit Internal(std::ostream& logger)
 	: Log(logger)
-	, shall_sync(_shall_sync)
 	{}
 	
 	Internal(const Internal&) = delete;
@@ -490,9 +488,9 @@ void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
 
 extern std::ofstream* my_logfile;
 
-JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync, bool ignore_session_error)
+JsonAdapter::JsonAdapter(std::ostream* logfile)
 : guard_0(Guard_0)
-, i(new Internal( (silent ? *my_logfile : std::cerr), do_sync ))
+, i(new Internal( *logfile ))
 , guard_1(Guard_1)
 {
 	i->eventBase.reset(event_base_new());
@@ -502,12 +500,6 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 	i->evHttp.reset( evhttp_new(i->eventBase.get()) );
 	if (!i->evHttp)
 		throw std::runtime_error("Failed to create new evhttp.");
-	
-	i->address    = address;
-	i->start_port = start_port;
-	i->end_port   = end_port;
-	i->silent     = silent;
-	i->ignore_session_error = ignore_session_error;
 }
 
 
@@ -523,8 +515,29 @@ JsonAdapter::~JsonAdapter()
 }
 
 
-void JsonAdapter::prepare_run()
+JsonAdapter& JsonAdapter::do_sync(bool _do_sync)
 {
+	check_guard();
+	i->shall_sync = _do_sync;
+	return *this;
+}
+
+JsonAdapter& JsonAdapter::ignore_session_errors(bool _ig)
+{
+	check_guard();
+	i->ignore_session_error = _ig;
+	return *this;
+}
+
+
+
+void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port)
+{
+	check_guard();
+	i->address    = address;
+	i->start_port = start_port;
+	i->end_port   = end_port;
+	
 				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry ) << std::flush;
 				
 				unsigned port_ofs = 0;

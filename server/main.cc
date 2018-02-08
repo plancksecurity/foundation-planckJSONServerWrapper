@@ -3,6 +3,7 @@
 #include "prefix-config.hh"
 #include "json-adapter.hh"
 #include "daemonize.hh"
+#include "nulllogger.hh"
 
 #include <thread>
 #include <fstream>
@@ -18,6 +19,8 @@ bool do_sync    = false;
 bool ignore_missing_session = false;
 
 std::string address = "127.0.0.1";
+std::string logfile = "";
+
 unsigned start_port = 4223;
 unsigned end_port   = 9999;
 
@@ -31,7 +34,8 @@ void print_version()
 		"\n";
 }
 
-std::ofstream* my_logfile = 0;
+std::ostream* my_logfile = nullptr;
+std::unique_ptr<std::ostream> real_logfile;
 
 int main(int argc, char** argv)
 try
@@ -46,6 +50,7 @@ try
 		("end-port,e",   po::value<unsigned>(&end_port)->default_value(end_port),      "Last port to bind on")
 		("address,a",    po::value<std::string>(&address)->default_value(address),     "Address to bind on")
 		("html-directory,H", po::value<boost::filesystem::path>(&ev_server::path_to_html)->default_value(ev_server::path_to_html), "Path to the HTML and JavaScript files")
+		("logfile,l", po::value<std::string>(&logfile)->default_value(logfile),   "Name of the logfile. Can be \"stderr\" for log to stderr or empty for no log.")
 		("ignore-missing-session", po::bool_switch(&ignore_missing_session), "Ignore when no PEP_SESSION can be created.")
 	;
 	
@@ -64,15 +69,25 @@ try
 		return 0;
 	}
 	
-	if(!debug_mode)
+	if(logfile.empty())
 	{
-		my_logfile = new std::ofstream("pep-json.log", std::ios_base::app );
+		my_logfile = &nulllogger;
+	}else if(logfile == "stderr")
+	{
+		my_logfile = &std::cerr;
+	}else{
+		real_logfile.reset( new std::ofstream( logfile, std::ios::app ) );
+		my_logfile = real_logfile.get();
 	}
 	
 	evthread_use_pthreads();
 	
-	JsonAdapter ja( address, start_port, end_port, !debug_mode, do_sync, ignore_missing_session );
-	ja.prepare_run();
+	JsonAdapter ja( my_logfile );
+	ja.do_sync( do_sync)
+	  .ignore_session_errors( ignore_missing_session)
+	  ;
+	  
+	ja.prepare_run(address, start_port, end_port);
 
 	if( debug_mode )
 	{
