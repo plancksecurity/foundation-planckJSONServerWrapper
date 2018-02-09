@@ -35,5 +35,5 @@ const std::string server_version =
 //	"(28) Olpe-Süd";         // add re_evaluate_message_rating(). Jira: JSON-29
 //	"(29) Wenden";           // {start|stop}{KeySync|KeyserverLookup}  JSON-28
 //	"(30) Krombach";         // JSON-49, add call_with_lock() around init() and release().
-	"(31) Altenkleusheim";   // JSON-57: change location of server token file. breaking API change, so API_VERSION=0x0003.
-
+//	"(31) Altenkleusheim";   // JSON-57: change location of server token file. breaking API change, so API_VERSION=0x0003.
+	"(32) Littfeld";         // JSON-72: add is_pep_user() to the API
