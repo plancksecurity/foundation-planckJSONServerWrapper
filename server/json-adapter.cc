@@ -599,9 +599,17 @@ void JsonAdapter::threadFunc()
 				Log() << "\tsession for this thread: "  << static_cast<void*>(q->second) << "." << std::endl;
 			}
 			
-			evhttp_set_cb(i->evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
-			evhttp_set_cb(i->evHttp.get(), "/pep_functions.js"      , ev_server::OnGetFunctions  , this);
-			evhttp_set_gencb(i->evHttp.get(), ev_server::OnOtherRequest, nullptr);
+			std::unique_ptr<event_base, decltype(&event_base_free)> eventBase(event_base_new(), &event_base_free);
+			if (!eventBase)
+				throw std::runtime_error("Failed to create new base_event.");
+			
+			std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp(evhttp_new(eventBase.get()), &evhttp_free);
+			if (!evHttp)
+				throw std::runtime_error("Failed to create new evhttp.");
+			
+			evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
+			evhttp_set_cb(evHttp.get(), "/pep_functions.js"      , ev_server::OnGetFunctions  , this);
+			evhttp_set_gencb(evHttp.get(), ev_server::OnOtherRequest, nullptr);
 			
 			if (i->sock == -1) // no port bound, yet
 			{
@@ -610,7 +618,7 @@ void JsonAdapter::threadFunc()
 			else
 			{
 				Log() << "\tnow I call evhttp_accept_socket()..." << std::endl;
-				if (evhttp_accept_socket(i->evHttp.get(), i->sock) == -1)
+				if (evhttp_accept_socket(evHttp.get(), i->sock) == -1)
 					throw std::runtime_error("Failed to accept() on server socket for new instance.");
 			}
 			
@@ -618,12 +626,12 @@ void JsonAdapter::threadFunc()
 			while(i->running)
 			{
 				// once we have libevent 2.1:
-				//event_base_loop(i->eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
+				//event_base_loop(eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
 				
 				// for libevent 2.0:
-				event_base_loop(i->eventBase.get(), EVLOOP_NONBLOCK);
+				event_base_loop(eventBase.get(), EVLOOP_NONBLOCK);
 				std::this_thread::sleep_for(std::chrono::milliseconds(333));
-				Log() << "\r" << ++numnum << ".   " << std::endl;
+				Log() << "\r" << ++numnum << ".   " << std::flush;
 			}
 		}
 		catch (const std::exception& e)
@@ -680,11 +688,14 @@ void JsonAdapter::shutdown(timeval* t)
 	check_guard();
 	Log() << "JS::shutdown() was called." << std::endl;
 	i->running = false;
+	
+	/**** FIXME: proper shutdown!
 	const int ret = event_base_loopexit(i->eventBase.get(), t);
 	if(ret!=0)
 	{
 		throw std::runtime_error("JsonAdapter::shutdown() failed.");
 	}
+	****/
 	Log() << "JS::shutdown(): event_base loop is finished.\n";
 	Log() << "\t there are " << i->threads.size() << " threads remaining in the threadpool." << std::endl;
 	for(const auto& t : i->threads)
@@ -730,7 +741,8 @@ void JsonAdapter::registerEventListener(const std::string& address, unsigned por
 	
 	EventListenerValue v;
 	v.securityContext = securityContext;
-	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
+// FIXME: one event_base per thread!
+//	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
 	i->eventListener[key] = std::move(v);
 }
 
