@@ -10,7 +10,6 @@
 #include <chrono>
 #include <iostream>
 #include <boost/program_options.hpp>
-#include <event2/thread.h>
 
 namespace po = boost::program_options;
 
@@ -79,8 +78,6 @@ try
 		real_logfile.reset( new std::ofstream( logfile, std::ios::app ) );
 		my_logfile = real_logfile.get();
 	}
-	
-	evthread_use_pthreads();
 	
 	JsonAdapter ja( my_logfile );
 	ja.do_sync( do_sync)
