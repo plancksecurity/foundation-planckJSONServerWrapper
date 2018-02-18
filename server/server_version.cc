@@ -36,4 +36,5 @@ const std::string server_version =
 //	"(29) Wenden";           // {start|stop}{KeySync|KeyserverLookup}  JSON-28
 //	"(30) Krombach";         // JSON-49, add call_with_lock() around init() and release().
 //	"(31) Altenkleusheim";   // JSON-57: change location of server token file. breaking API change, so API_VERSION=0x0003.
-	"(32) Littfeld";         // JSON-72: add is_pep_user() to the API
+//	"(32) Littfeld";         // JSON-72: add is_pep_user() to the API
+	"(33) Hilchenbach";      // JSON-71: Setup C++11 Multi-threading in libevent properly to avoid deadlocks in MT server code"
