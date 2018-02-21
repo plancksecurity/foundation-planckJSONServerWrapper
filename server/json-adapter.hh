@@ -5,6 +5,8 @@
 #include <pEp/sync.h>
 #include "registry.hh"
 #include "context.hh"
+#include "server_version.hh"
+
 
 class JsonAdapter : public Context
 {
@@ -57,12 +59,9 @@ public:
 	
 	virtual void augment(json_spirit::Object& returnObject) override;
 	
+	// returns the version of the JsonAdapter
 	static
-	unsigned apiVersion();
-	
-	// returns a version name
-	static
-	std::string version();
+	ServerVersion version();
 
 	static PEP_STATUS messageToSend(void* obj, message* msg);
 	static PEP_STATUS notifyHandshake(void* obj, pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal);

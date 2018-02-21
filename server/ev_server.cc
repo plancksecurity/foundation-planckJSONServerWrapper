@@ -119,8 +119,7 @@ const FunctionMap functions = {
 		
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
-		FP( "version",     new Func<std::string>( &JsonAdapter::version ) ),
-		FP( "apiVersion",  new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
+		FP( "version",     new Func<ServerVersion>( &JsonAdapter::version ) ),
 		FP( "getGpgEnvironment", new Func<GpgEnvironment>( &getGpgEnvironment ) ),
 
 		FP( "shutdown",  new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::shutdown_now ) ),
@@ -209,6 +208,7 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 // generate a JavaScript file containing the definition of all registered callable functions, see above.
 void ev_server::OnGetFunctions(evhttp_request* req, void*)
 {
+	static const auto& version = server_version();
 	static const std::string preamble =
 		"var Direction = { In:1, Out:2, InOut:3 };\n"
 		"var Type = {\n"
@@ -223,7 +223,8 @@ void ev_server::OnGetFunctions(evhttp_request* req, void*)
 		"		Session : 90 // opaque type. only a special encoded 'handle' is used in JavaScript code\n"
 		"	};\n"
 		"\n"
-		"var server_version = \"" + server_version + "\";\n"
+		"var server_version_name = \"" + version.name + "\";\n"
+		"var server_version = \"" + version.major_minor_patch() + "\";\n"
 		"var pep_functions = ";
 	
 	js::Array jsonfunctions;

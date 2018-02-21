@@ -1,8 +1,11 @@
 #include "server_version.hh"
+#include "inout.hh"
+
+namespace {
 
 // version names comes from here:
 // https://de.wikipedia.org/wiki/Bundesautobahn_4
-const std::string server_version =
+static const std::string version_name =
 //	"(4) Kreuz Aachen"; // first version with this version scheme :-)
 //	"(5a) Eschweiler-West"; // add support for log_event() and trustwords()
 //	"(5b) Eschweiler-Ost";  // add support for get_identity() and get_languagelist()
@@ -37,4 +40,47 @@ const std::string server_version =
 //	"(30) Krombach";         // JSON-49, add call_with_lock() around init() and release().
 //	"(31) Altenkleusheim";   // JSON-57: change location of server token file. breaking API change, so API_VERSION=0x0003.
 //	"(32) Littfeld";         // JSON-72: add is_pep_user() to the API
-	"(33) Hilchenbach";      // JSON-71: Setup C++11 Multi-threading in libevent properly to avoid deadlocks in MT server code"
+//	"(33) Hilchenbach";      // JSON-71: Setup C++11 Multi-threading in libevent properly to avoid deadlocks in MT server code"
+	"(34) Erndtebrück";      // remove apiVersion(), change version() to return a semver-compatible version number in a JSON object.
+
+
+const ServerVersion sv{0, 10, 0, version_name};  // first version defined.
+
+} // end of anonymous namespace
+////////////////////////////////////////////////////////////////////////////
+
+const ServerVersion& server_version()
+{
+	return sv;
+}
+
+
+std::string ServerVersion::major_minor_patch() const
+{
+	return std::to_string(major) + "."
+	     + std::to_string(minor) + "."
+	     + std::to_string(patch);
+}
+
+
+std::ostream& operator<<(std::ostream& o, const ServerVersion& sv)
+{
+	return o << sv.major_minor_patch() << " \"" << sv.name << '\"';
+}
+
+
+template<>
+js::Value to_json<ServerVersion>(const ServerVersion& sv)
+{
+	js::Object o;
+	o.emplace_back("major", uint64_t(sv.major));
+	o.emplace_back("minor", uint64_t(sv.minor));
+	o.emplace_back("patch", uint64_t(sv.patch));
+	o.emplace_back("version", sv.major_minor_patch());
+	o.emplace_back("name", sv.name);
+	
+	return o;
+}
+
+template<>
+js::Value Type2String<ServerVersion>::get()  { return "ServerVersion"; }

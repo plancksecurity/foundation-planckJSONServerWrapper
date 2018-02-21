@@ -320,16 +320,12 @@ In<JsonAdapter*, false>::~In()
 }
 
 
-std::string JsonAdapter::version()
+ServerVersion JsonAdapter::version()
 {
-	return server_version;
+	return server_version();
 }
 
 
-unsigned JsonAdapter::apiVersion()
-{
-	return API_VERSION;
-}
 
 
 

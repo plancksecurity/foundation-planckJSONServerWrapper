@@ -27,8 +27,7 @@ unsigned end_port   = 9999;
 void print_version()
 {
 	std::cout << "pEp JSON Adapter.\n"
-		"\tversion \"" << JsonAdapter::version() << "\"\n"
-		"\tAPI version " << JsonAdapter::apiVersion() << "\n" 
+		"\tversion " << JsonAdapter::version() << "\n"
 		"\tpEpEngine version " << get_engine_version() << "\n"
 		"\n";
 }
