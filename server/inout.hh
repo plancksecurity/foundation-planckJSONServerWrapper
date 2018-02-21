@@ -173,4 +173,69 @@ js::Value to_json(const InOut<T,NeedInput>& o)
 	return ::to_json(o.value);
 }
 
+
+// Type2String
+
+template<class T>
+struct Type2String
+{
+	static js::Value get();
+};
+
+
+template<class T>
+struct Type2String<In<T, true>>
+{
+	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
+};
+
+template<class T>
+struct Type2String<In<T, false>>
+{
+	static js::Value get() { throw "MSVC is b0rken"; }
+};
+
+
+
+template<class T>
+struct Type2String<InRaw<T, true>>
+{
+	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
+};
+
+template<class T>
+struct Type2String<Out<T, true>>
+{
+	static js::Value get() { js::Object ret; ret.emplace_back("direction", "Out"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
+};
+
+template<class T>
+struct Type2String<InOut<T, true>>
+{
+	static js::Value get() { js::Object ret; ret.emplace_back("direction", "InOut"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
+};
+
+template<class... Args> struct Type2Json;
+
+template<class T, class... Args>
+struct Type2Json<T, Args...>
+{
+	static js::Array& get(js::Array& a)
+	{
+		if(T::need_input)
+		{
+			a.push_back( Type2String<T>::get() );
+		}
+		Type2Json<Args...>::get(a);
+		return a;
+	}
+};
+
+
+template<> struct Type2Json<>
+{
+	static js::Array& get(js::Array& a) { return a; }
+};
+
+
 #endif // PEP_JSON_SERVER_INOUT_HH
