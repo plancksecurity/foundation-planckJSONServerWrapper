@@ -498,7 +498,7 @@ function init_pep_functions()
 		optionList += '<option' + (f.separator? ' disabled> —— ':'>') + f.name + "</option>\n";
 	}
 	document.getElementById("fn_name").innerHTML = optionList;
-	document.getElementById("spn_version").innerHTML = "version: " + server_version + " " + server_version_name;
+	document.getElementById("spn_version").innerHTML = "version: " + server_version + " “" + server_version_name + "”"
 }
 
 
