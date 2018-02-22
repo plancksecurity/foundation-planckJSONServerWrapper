@@ -127,7 +127,7 @@ const FunctionMap functions = {
 		
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
-		FP( "fullVersion",       new Func<ServerVersion>( &JsonAdapter::version ) ),
+		FP( "serverVersion",       new Func<ServerVersion>( &server_version ) ),
 		FP( "version",           new Func<std::string>( &version_as_a_string ) ),
 		FP( "getGpgEnvironment", new Func<GpgEnvironment>( &getGpgEnvironment ) ),
 
