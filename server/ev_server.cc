@@ -43,6 +43,14 @@ fs::path ev_server::path_to_html = fs::path(html_directory);
 namespace {
 
 
+std::string version_as_a_string()
+{
+	std::stringstream ss;
+	ss << server_version();
+	return ss.str();
+}
+
+
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 		// from message_api.h
@@ -119,7 +127,8 @@ const FunctionMap functions = {
 		
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
-		FP( "version",     new Func<ServerVersion>( &JsonAdapter::version ) ),
+		FP( "fullVersion",       new Func<ServerVersion>( &JsonAdapter::version ) ),
+		FP( "version",           new Func<std::string>( &version_as_a_string ) ),
 		FP( "getGpgEnvironment", new Func<GpgEnvironment>( &getGpgEnvironment ) ),
 
 		FP( "shutdown",  new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::shutdown_now ) ),
