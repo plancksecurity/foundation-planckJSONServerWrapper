@@ -534,23 +534,7 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 	i->start_port = start_port;
 	i->end_port   = end_port;
 	
-	// create a dummy session just to see whether the Engine is functional.
-	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
-	PEP_SESSION dummy_session = nullptr;
-	PEP_STATUS status = call_with_lock(&init, &dummy_session);
-	if(status != PEP_STATUS_OK || dummy_session==nullptr)
-	{
-		const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".";
-		std::cerr << error_msg << std::endl;
-		if( ! i->ignore_session_error)
-		{
-			throw std::runtime_error(error_msg);
-		}
-	}
-	
-	call_with_lock(&release, dummy_session);
-	// if we are here the Engine is able to create sessions. :-)
-	
+
 				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry ) << std::flush;
 				
 				unsigned port_ofs = 0;
