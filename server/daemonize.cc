@@ -106,6 +106,8 @@ void daemonize()
 
 void daemonize_end()
 {
+	if ( getppid() != 1 ) return;
+
 	const int fd = open("/dev/null", O_WRONLY, 0);
 
 	if (fd != -1)
