@@ -44,7 +44,8 @@ static const std::string version_name =
 	"(34) Erndtebrück";      // remove apiVersion(), change version() to return a semver-compatible version number in a JSON object.
 
 
-const ServerVersion sv{0, 10, 0, version_name};  // first version defined.
+//const ServerVersion sv{0, 10, 0, version_name};  // first version defined.
+const ServerVersion sv{0, 11, 0, version_name};  // add set_own_key()
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////

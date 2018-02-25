@@ -35,7 +35,6 @@ namespace fs = boost::filesystem;
 namespace {
     using namespace pEp::utility;
 
-static const unsigned API_VERSION = 0x0003;
 
 std::string BaseUrl    = "/ja/0.1/";
 int SrvThreadCount     = 1;
