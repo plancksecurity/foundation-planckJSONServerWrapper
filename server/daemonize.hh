@@ -4,5 +4,6 @@
 // fork(), go into background, close all ttys etc...
 // system-specific! (POSIX, Windows, ...?)
 void daemonize();
+void daemonize_end();
 
 #endif

@@ -16,6 +16,7 @@
 #include <mutex>
 
 #include "json-adapter.hh"
+#include "daemonize.hh"
 #include "pep-types.hh"
 #include "json_rpc.hh"
 #include "security-token.hh"
@@ -669,10 +670,12 @@ try
 	{
 		Log() << "\tthread_id()=" << t->get_id() << "." << std::endl;
 	}
+	daemonize_end();
 }
 catch (std::exception const &e)
 {
 	Log() << "Exception caught in JsonAdapter::run(): \"" << e.what() << "\"" << std::endl;
+	daemonize_end();
 	throw;
 }
 
