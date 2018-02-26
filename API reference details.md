@@ -226,8 +226,8 @@ returns true if the USER corresponding to this identity has been listed in the *
 parameters:
     identity (in) - identity containing the user_id to check (this is
                     the only part of the struct we require to be set)
-    is_pep (out)  - boolean pointer - will return true or false by   
-                    reference with respect to whether or not user is 
+    is_pep (out)  - boolean pointer - will return true or false by
+                    reference with respect to whether or not user is
                     a known pep user
 ```
 
@@ -439,6 +439,25 @@ mark key as own key
      fpr (in)                fingerprint of the key to mark as own key                                                            
 ```
 
+##### undo_last_mistrust()
+reset identity and trust status for the last`identity in this session marked
+as mistrusted to their cached values from the time of mistrust
+
+```
+  parameters:
+      (none)
+
+  return value:
+      PEP_STATUS_OK if identity and trust were successfully restored.
+      Otherwise, error status from attempts to set.
+
+  caveat:
+      only works for this session, and only once. cache is invalidated
+      upon use.
+
+      WILL NOT WORK ON MISTRUSTED OWN KEY
+```
+
 ##### myself(Identity⇕ identity)
 ensures that the own identity is being complete
 ```
@@ -611,11 +630,14 @@ give the result of the handshake dialog back to the Engine
 ```
 
 #### Other ####
+
+##### serverVersion()
+Returns a struct with SemVer-compatible ABI version, the codename of the
+JSON Adapter version etc.
+
 ##### version()
 Returns a codename for the current JSON Server Adapter's version.
 
-##### apiVersion()
-Returns a numerical API version, currently the API version is 2.
 
 ##### getGpgEnvironment()
 Returns a struct holding 3 members
@@ -623,3 +645,5 @@ Returns a struct holding 3 members
 * gnupg_home environment variable, if set
 * gpg_agent_info environment variable, if set.
 
+##### shutdown()
+shutdown the JSON Adapter

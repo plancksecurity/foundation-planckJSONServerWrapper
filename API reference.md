@@ -1,4 +1,4 @@
-### Function reference for the p≡p JSON Server Adapter. Version “(34) Erndtebrück”, API version 0.11.0 ###
+### Function reference for the p≡p JSON Server Adapter. Version “(34) Erndtebrück”, API version 0.12.0 ###
 Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a  **⇕**  after the parameter type.
 
 #### Message API ####
@@ -50,7 +50,7 @@ Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a 
 | own_key_is_listed | PEP_STATUS | String, Bool⇑ |
 | own_identities_retrieve | PEP_STATUS | IdentityList⇑ |
 | set_own_key | PEP_STATUS | Identity⇕, String |
-| undo_last_mitrust | PEP_STATUS |  |
+| undo_last_mistrust | PEP_STATUS |  |
 | myself | PEP_STATUS | Identity⇕ |
 | update_identity | PEP_STATUS | Identity⇕ |
 | trust_personal_key | PEP_STATUS | Identity |
