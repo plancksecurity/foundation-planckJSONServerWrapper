@@ -45,7 +45,8 @@ static const std::string version_name =
 
 
 //const ServerVersion sv{0, 10, 0, version_name};  // first version defined.
-const ServerVersion sv{0, 11, 0, version_name};  // add set_own_key()
+//const ServerVersion sv{0, 11, 0, version_name};  // add set_own_key()
+const ServerVersion sv{0, 12, 0, version_name};  // rename mis-spelled undo_last_mitrust() into undo_last_mistrust()
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
