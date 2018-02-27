@@ -43,6 +43,14 @@ fs::path ev_server::path_to_html = fs::path(html_directory);
 namespace {
 
 
+std::string version_as_a_string()
+{
+	std::stringstream ss;
+	ss << server_version();
+	return ss.str();
+}
+
+
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 		// from message_api.h
@@ -68,6 +76,7 @@ const FunctionMap functions = {
 		FP( "get_languagelist", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<char*>>( &get_languagelist) ),
 //		FP( "get_phrase"      , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<Language>, In<int>, Out<char*>> ( &get_phrase) ),
 //		FP( "get_engine_version", new Func<const char*> ( &get_engine_version) ),
+		FP( "is_pep_user"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<bool>>( &is_pep_user) ),
 		FP( "config_passive_mode", new Func<void, In<PEP_SESSION,false>, In<bool>>( &config_passive_mode) ),
 		FP( "config_unencrypted_subject", new Func<void, In<PEP_SESSION,false>, In<bool>>( &config_unencrypted_subject) ),
 		
@@ -89,10 +98,11 @@ const FunctionMap functions = {
 		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &get_trust) ),
 		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, Out<bool>> ( &own_key_is_listed) ),
 		FP( "own_identities_retrieve", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<identity_list*>>( &own_identities_retrieve ) ),
-		FP( "undo_last_mitrust", new Func<PEP_STATUS, In<PEP_SESSION,false>>( &undo_last_mistrust ) ),
+		FP( "set_own_key", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>, In<c_string>>( &set_own_key ) ),
+		FP( "undo_last_mistrust", new Func<PEP_STATUS, In<PEP_SESSION,false>>( &undo_last_mistrust ) ),
 		
 		FP( "myself"        , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &myself) ),
-//		FP( "update_dentity", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &update_identity) ),
+		FP( "update_identity", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &update_identity) ),
 		
 		FP( "trust_personal_key", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>>( &trust_personal_key) ),
 		FP( "key_mistrusted",     new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>>( &key_mistrusted) ),
@@ -118,8 +128,8 @@ const FunctionMap functions = {
 		
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
-		FP( "version",     new Func<std::string>( &JsonAdapter::version ) ),
-		FP( "apiVersion",  new Func<unsigned>   ( &JsonAdapter::apiVersion ) ),
+		FP( "serverVersion",       new Func<ServerVersion>( &server_version ) ),
+		FP( "version",           new Func<std::string>( &version_as_a_string ) ),
 		FP( "getGpgEnvironment", new Func<GpgEnvironment>( &getGpgEnvironment ) ),
 
 		FP( "shutdown",  new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::shutdown_now ) ),
@@ -208,6 +218,7 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 // generate a JavaScript file containing the definition of all registered callable functions, see above.
 void ev_server::OnGetFunctions(evhttp_request* req, void*)
 {
+	static const auto& version = server_version();
 	static const std::string preamble =
 		"var Direction = { In:1, Out:2, InOut:3 };\n"
 		"var Type = {\n"
@@ -222,7 +233,8 @@ void ev_server::OnGetFunctions(evhttp_request* req, void*)
 		"		Session : 90 // opaque type. only a special encoded 'handle' is used in JavaScript code\n"
 		"	};\n"
 		"\n"
-		"var server_version = \"" + server_version + "\";\n"
+		"var server_version_name = \"" + version.name + "\";\n"
+		"var server_version = \"" + version.major_minor_patch() + "\";\n"
 		"var pep_functions = ";
 	
 	js::Array jsonfunctions;

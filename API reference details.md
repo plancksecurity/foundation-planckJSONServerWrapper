@@ -31,31 +31,6 @@ encrypt a MIME message, with MIME output
 will remain in the ownership of the caller
 
 
-##### MIME_encrypt_message_for_self(Identity target_id, String mimetext, Integer size, String⇑ mime_ciphertext, PEP_enc_format enc_format, Integer flags)
-
-encrypt MIME message for user's identity only,  ignoring recipients and other identities from
-the message, with MIME output.
-
-```
-  parameters:
-      target_id (in)          self identity this message should be encrypted for
-      mimetext (in)           MIME encoded text to encrypt
-      size (in)               size of input mime text
-      mime_ciphertext (out)   encrypted, encoded message
-      enc_format (in)         encrypted format
-      flags (in)              flags to set special encryption features
-
-  return value:
-      PEP_STATUS_OK           if everything worked
-      PEP_BUFFER_TOO_SMALL    if encoded message size is too big to handle
-      PEP_CANNOT_CREATE_TEMP_FILE
-                              if there are issues with temp files; in
-                              this case errno will contain the underlying
-                              error
-      PEP_OUT_OF_MEMORY       if not enough memory could be allocated
-```
-
-
 ##### MIME_decrypt_message(String mimetext, Integer size, String⇑ mime_plaintext, StringList⇑ keylist, PEP_rating⇑ rating, Integer⇑ flags)
 
 decrypt a MIME message, with MIME output
@@ -80,12 +55,6 @@ decrypt a MIME message, with MIME output
       PEP_OUT_OF_MEMORY       if not enough memory could be allocated
 ```
 
-
-##### MIME_encrypt_message_ex(String, Integer, StringList, Bool, String⇑, PEP_enc_format, Integer )
-(deprecated)
-
-##### MIME_decrypt_message_ex(String, Integer, Bool, String⇑, StringList⇑, PEP_rating⇑, Integer⇑ )
-(deprecated)
 
 ##### startKeySync()
 Start Key Synchronization for the current session.
@@ -218,18 +187,6 @@ re-evaluate already decrypted message rating
 get path of gpg binary.
 
 #### pEp Engine Core API ####
-##### log_event(String title, String entity, String description, String comment)
-log a user defined event defined by UTF-8 encoded strings into management log
-```
-    parameters:
-        title (in)          C string with event name
-        entity (in)         C string with name of entity which is logging
-        description (in)    C string with long description for event or NULL if omitted
-        comment (in)        C string with user defined comment or NULL if omitted
-
-    return value:
-        PEP_STATUS_OK       log entry created
-```
 
 ##### get_trustwords(Identity id1, Identity id2, Language lang, String⇑ words, Integer⇑ wsize, Bool full)
 get full trustwords string for a *pair* of identities
@@ -262,21 +219,17 @@ get the list of languages
                               column 2 is the name of the language
 ```
 
-##### get_phrase(Language lang, Integer phrase_id, String⇑ phrase)
-get phrase in a dedicated language through i18n
+
+##### is_pep_user(Identity id, Bool⇑  ia_pwp)
+returns true if the USER corresponding to this identity has been listed in the *person* table as a pEp user
 ```
-  parameters:
-      lang (in)               C string with ISO 639-1 language code
-      phrase_id (in)          id of phrase in i18n
-      phrase (out)            phrase as UTF-8 string
+parameters:
+    identity (in) - identity containing the user_id to check (this is
+                    the only part of the struct we require to be set)
+    is_pep (out)  - boolean pointer - will return true or false by
+                    reference with respect to whether or not user is
+                    a known pep user
 ```
-
-##### get_engine_version()
-returns the current version of pEpEngine (this is different from the pEp protocol version!)
-
-* parameters: (none)
-* return_value: String containing the engine version string constant
-
 
 ##### config_passive_mode(Bool enable)
 enable passive mode
@@ -468,7 +421,7 @@ returns true id key is listed as own key
 ```
   parameters:
       fpr (in)            fingerprint of key to test
-      listed (out)          flags if key is own
+      listed (out)        flags if key is own
 ```
 
 ##### own_identities_retrieve(IdentityList⇑ own_identities)
@@ -476,6 +429,33 @@ retrieve all own identities
 ```
   parameters:
       own_identities (out)    list of own identities
+```
+
+##### set_own_key( Identity⇕ id, String fpr)
+mark key as own key
+```
+  parameters:
+     me (inout)              own identity this key is used for                                                                    
+     fpr (in)                fingerprint of the key to mark as own key                                                            
+```
+
+##### undo_last_mistrust()
+reset identity and trust status for the last`identity in this session marked
+as mistrusted to their cached values from the time of mistrust
+
+```
+  parameters:
+      (none)
+
+  return value:
+      PEP_STATUS_OK if identity and trust were successfully restored.
+      Otherwise, error status from attempts to set.
+
+  caveat:
+      only works for this session, and only once. cache is invalidated
+      upon use.
+
+      WILL NOT WORK ON MISTRUSTED OWN KEY
 ```
 
 ##### myself(Identity⇕ identity)
@@ -494,7 +474,7 @@ ensures that the own identity is being complete
       with retrieve_next_identity() where pEp_identity.me is true.
 ```
 
-##### update_dentity(Identity⇕)
+##### update_identity(Identity⇕)
 update identity information
 ```
   parameters:
@@ -650,11 +630,14 @@ give the result of the handshake dialog back to the Engine
 ```
 
 #### Other ####
+
+##### serverVersion()
+Returns a struct with SemVer-compatible ABI version, the codename of the
+JSON Adapter version etc.
+
 ##### version()
 Returns a codename for the current JSON Server Adapter's version.
 
-##### apiVersion()
-Returns a numerical API version, currently the API version is 2.
 
 ##### getGpgEnvironment()
 Returns a struct holding 3 members
@@ -662,3 +645,5 @@ Returns a struct holding 3 members
 * gnupg_home environment variable, if set
 * gpg_agent_info environment variable, if set.
 
+##### shutdown()
+shutdown the JSON Adapter

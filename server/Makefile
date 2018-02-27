@@ -113,7 +113,7 @@ ifneq ($(MAKECMDGOALS),clean)
 endif
 
 .PHONY: install
-install:
+install: all
 	mkdir -v -p $(PREFIX)/bin $(PREFIX)/lib
 	mkdir -v -p $(HTML_DIRECTORY)
 	cp -v ../html/* $(HTML_DIRECTORY)

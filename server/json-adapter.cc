@@ -18,7 +18,6 @@
 #include "json-adapter.hh"
 #include "pep-types.hh"
 #include "json_rpc.hh"
-#include "nulllogger.hh"
 #include "security-token.hh"
 #include "pep-utils.hh"
 #include "ev_server.hh"
@@ -36,7 +35,6 @@ namespace fs = boost::filesystem;
 namespace {
     using namespace pEp::utility;
 
-static const unsigned API_VERSION = 0x0003;
 
 std::string BaseUrl    = "/ja/0.1/";
 int SrvThreadCount     = 1;
@@ -130,9 +128,8 @@ struct JsonAdapter::Internal
 	ThreadPtr   sync_thread{nullptr, ThreadDeleter};
 	
 	
-	explicit Internal(std::ostream& logger, bool _shall_sync)
+	explicit Internal(std::ostream& logger)
 	: Log(logger)
-	, shall_sync(_shall_sync)
 	{}
 	
 	Internal(const Internal&) = delete;
@@ -322,16 +319,12 @@ In<JsonAdapter*, false>::~In()
 }
 
 
-std::string JsonAdapter::version()
+ServerVersion JsonAdapter::version()
 {
-	return server_version;
+	return server_version();
 }
 
 
-unsigned JsonAdapter::apiVersion()
-{
-	return API_VERSION;
-}
 
 
 
@@ -488,10 +481,11 @@ void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
 	return (void*) status;
 }
 
+extern std::ofstream* my_logfile;
 
-JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsigned end_port, bool silent, bool do_sync, bool ignore_session_error)
+JsonAdapter::JsonAdapter(std::ostream* logfile)
 : guard_0(Guard_0)
-, i(new Internal( silent ? nulllogger : std::cerr, do_sync ))
+, i(new Internal( *logfile ))
 , guard_1(Guard_1)
 {
 	i->eventBase.reset(event_base_new());
@@ -501,30 +495,62 @@ JsonAdapter::JsonAdapter(const std::string& address, unsigned start_port, unsign
 	i->evHttp.reset( evhttp_new(i->eventBase.get()) );
 	if (!i->evHttp)
 		throw std::runtime_error("Failed to create new evhttp.");
-	
-	i->address    = address;
-	i->start_port = start_port;
-	i->end_port   = end_port;
-	i->silent     = silent;
-	i->ignore_session_error = ignore_session_error;
 }
 
 
 JsonAdapter::~JsonAdapter()
 {
 	check_guard();
-	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered.\n";
+	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered." << std::endl;
 	stopSync();
 	this->shutdown(nullptr);
-	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered.\n";
+	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered." << std::endl;
 	delete i;
 	i=nullptr;
 }
 
 
-void JsonAdapter::prepare_run()
+JsonAdapter& JsonAdapter::do_sync(bool _do_sync)
 {
-				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
+	check_guard();
+	i->shall_sync = _do_sync;
+	return *this;
+}
+
+JsonAdapter& JsonAdapter::ignore_session_errors(bool _ig)
+{
+	check_guard();
+	i->ignore_session_error = _ig;
+	return *this;
+}
+
+
+
+void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port)
+{
+	check_guard();
+	i->address    = address;
+	i->start_port = start_port;
+	i->end_port   = end_port;
+	
+	// create a dummy session just to see whether the Engine is functional.
+	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
+	PEP_SESSION dummy_session = nullptr;
+	PEP_STATUS status = call_with_lock(&init, &dummy_session);
+	if(status != PEP_STATUS_OK || dummy_session==nullptr)
+	{
+		const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".";
+		std::cerr << error_msg << std::endl;
+		if( ! i->ignore_session_error)
+		{
+			throw std::runtime_error(error_msg);
+		}
+	}
+	
+	call_with_lock(&release, dummy_session);
+	// if we are here the Engine is able to create sessions. :-)
+	
+				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry ) << std::flush;
 				
 				unsigned port_ofs = 0;
 try_next_port:
@@ -547,7 +573,7 @@ try_next_port:
 				i->port = i->start_port + port_ofs;
 				i->token = create_security_token(i->address, i->port, BaseUrl);
 				
-				Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"\n";
+				Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"" << std::endl;
 }
 
 
@@ -556,7 +582,7 @@ void JsonAdapter::threadFunc()
 		try
 		{
 			const auto id = std::this_thread::get_id();
-			Log() << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++\n";
+			Log() << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++" << std::endl;
 			const auto q=session_registry.find(id);
 			if(q==session_registry.end())
 			{
@@ -564,38 +590,45 @@ void JsonAdapter::threadFunc()
 				PEP_STATUS status = call_with_lock(&init, &i->session); // release(session) in ThreadDeleter
 				if(status != PEP_STATUS_OK || i->session==nullptr)
 				{
-					const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".\n";
-					if( i->ignore_session_error)
+					const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".";
+					std::cerr << error_msg << std::endl;
+					if( ! i->ignore_session_error)
 					{
-						Log() << error_msg;
-					}else{
-						std::cerr << error_msg;
 						throw std::runtime_error(error_msg);
 					}
 				}
 				
 				session_registry.emplace(id, this);
-				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".\n";
+				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << "." << std::endl;
 				if(i->shall_sync && i->session) // startSync() does not make sense without session.
 				{
-					Log() << "\tstartSync()...\n";
+					Log() << "\tstartSync()..." << std::endl;
 					startSync();
 				}
 			}else{
-				Log() << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".\n";
+				Log() << "\tsession for this thread: "  << static_cast<void*>(q->second) << "." << std::endl;
 			}
 			
-			evhttp_set_cb(i->evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
-			evhttp_set_cb(i->evHttp.get(), "/pep_functions.js"      , ev_server::OnGetFunctions  , this);
-			evhttp_set_gencb(i->evHttp.get(), ev_server::OnOtherRequest, nullptr);
+			std::unique_ptr<event_base, decltype(&event_base_free)> eventBase(event_base_new(), &event_base_free);
+			if (!eventBase)
+				throw std::runtime_error("Failed to create new base_event.");
+			
+			std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp(evhttp_new(eventBase.get()), &evhttp_free);
+			if (!evHttp)
+				throw std::runtime_error("Failed to create new evhttp.");
+			
+			evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
+			evhttp_set_cb(evHttp.get(), "/pep_functions.js"      , ev_server::OnGetFunctions  , this);
+			evhttp_set_gencb(evHttp.get(), ev_server::OnOtherRequest, nullptr);
 			
 			if (i->sock == -1) // no port bound, yet
 			{
-				prepare_run();
+				throw std::runtime_error("You have to call prepare_run() before run()!");
 			}
 			else
 			{
-				if (evhttp_accept_socket(i->evHttp.get(), i->sock) == -1)
+				Log() << "\tnow I call evhttp_accept_socket()..." << std::endl;
+				if (evhttp_accept_socket(evHttp.get(), i->sock) == -1)
 					throw std::runtime_error("Failed to accept() on server socket for new instance.");
 			}
 			
@@ -603,25 +636,25 @@ void JsonAdapter::threadFunc()
 			while(i->running)
 			{
 				// once we have libevent 2.1:
-				//event_base_loop(i->eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
+				//event_base_loop(eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
 				
 				// for libevent 2.0:
-				event_base_loop(i->eventBase.get(), EVLOOP_NONBLOCK);
+				event_base_loop(eventBase.get(), EVLOOP_NONBLOCK);
 				std::this_thread::sleep_for(std::chrono::milliseconds(333));
-				Log() << "\r" << ++numnum << ".   ";
+				Log() << "\r" << ++numnum << ".   " << std::flush;
 			}
 		}
 		catch (const std::exception& e)
 		{
-			Log() << " +++ std::exception in ThreadFunc: " << e.what() << "\n";
+			Log() << " +++ std::exception in ThreadFunc: " << e.what() << std::endl;
 			initExcept = std::current_exception();
 		}
 		catch (...)
 		{
-			Log() << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ \n";
+			Log() << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ " << std::endl;
 			initExcept = std::current_exception();
 		}
-		Log() << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++\n";
+		Log() << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++" << std::endl;
 }
 
 
@@ -629,13 +662,13 @@ void JsonAdapter::run()
 try
 {
 	check_guard();
-	Log() << "JS::run(): This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".\n";
-	Log() << to_string( session_registry);
+	Log() << "JS::run(): This is " << (void*)this << ", thread id " << std::this_thread::get_id() << "." << std::endl;
+	Log() << to_string( session_registry) << std::flush;
 	
 	i->running = true;
 	for(int t=0; t<SrvThreadCount; ++t)
 	{
-		Log() << "Start Thread #" << t << "...\n";
+		Log() << "Start Thread #" << t << "..." << std::endl;
 		ThreadPtr thread(new std::thread(staticThreadFunc, this), ThreadDeleter);
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		if (initExcept)
@@ -646,10 +679,10 @@ try
 		}
 		i->threads.push_back(std::move(thread));
 	}
-	Log() << "All " << SrvThreadCount << " thread(s) started:\n";
+	Log() << "All " << SrvThreadCount << " thread(s) started:" << std::endl;
 	for(const auto& t:i->threads)
 	{
-		Log() << "\tthread_id()=" << t->get_id() << ".\n";
+		Log() << "\tthread_id()=" << t->get_id() << "." << std::endl;
 	}
 }
 catch (std::exception const &e)
@@ -663,18 +696,21 @@ void JsonAdapter::shutdown(timeval* t)
 {
 	exit(0);  // HACK for JSON-41
 	check_guard();
-	Log() << "JS::shutdown() was called.\n";
+	Log() << "JS::shutdown() was called." << std::endl;
 	i->running = false;
+	
+	/**** FIXME: proper shutdown!
 	const int ret = event_base_loopexit(i->eventBase.get(), t);
 	if(ret!=0)
 	{
 		throw std::runtime_error("JsonAdapter::shutdown() failed.");
 	}
+	****/
 	Log() << "JS::shutdown(): event_base loop is finished.\n";
-	Log() << "\t there are " << i->threads.size() << " threads remaining in the threadpool.\n";
+	Log() << "\t there are " << i->threads.size() << " threads remaining in the threadpool." << std::endl;
 	for(const auto& t : i->threads)
 	{
-		Log() << "\t\tjoin() on id=" << t->get_id() << "....\n";
+		Log() << "\t\tjoin() on id=" << t->get_id() << "...." << std::endl;
 		t->join();
 	}
 	i->threads.clear();
@@ -687,7 +723,7 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 	check_guard();
 	if(s!=i->token)
 	{
-		Log() << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!\n";
+		Log() << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!" << std::endl;
 	}
 	return s == i->token;
 }
@@ -715,7 +751,8 @@ void JsonAdapter::registerEventListener(const std::string& address, unsigned por
 	
 	EventListenerValue v;
 	v.securityContext = securityContext;
-	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
+// FIXME: one event_base per thread!
+//	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
 	i->eventListener[key] = std::move(v);
 }
 

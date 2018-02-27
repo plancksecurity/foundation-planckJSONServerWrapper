@@ -498,7 +498,7 @@ function init_pep_functions()
 		optionList += '<option' + (f.separator? ' disabled> —— ':'>') + f.name + "</option>\n";
 	}
 	document.getElementById("fn_name").innerHTML = optionList;
-	document.getElementById("spn_version").innerHTML = "version: " + server_version;
+	document.getElementById("spn_version").innerHTML = "version: " + server_version + " “" + server_version_name + "”"
 }
 
 
@@ -571,7 +571,7 @@ function create_doc()
 	}
 	
 	output =
-		fd.section_start + 'Function reference for the p≡p JSON Server Adapter. Version “' + server_version + '”' + fd.section_end
+		fd.section_start + 'Function reference for the p≡p JSON Server Adapter. Version “' + server_version_name + '”, API version ' + server_version + fd.section_end
 		+ 'Output parameters are denoted by a ' + fd.b_start + '⇑' + fd.b_end + ', '
 		+ 'InOut parameters are denoted by a ' + fd.b_start + '⇕' + fd.b_end + ' after the parameter type.\n\n'
 		+ output + fd.table_end;

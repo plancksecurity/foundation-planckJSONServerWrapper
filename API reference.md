@@ -1,35 +1,27 @@
-### Function reference for the p≡p JSON Server Adapter. Version “(30) Krombach” ###
+### Function reference for the p≡p JSON Server Adapter. Version “(34) Erndtebrück”, API version 0.12.0 ###
 Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a  **⇕**  after the parameter type.
 
 #### Message API ####
 | Function name | Return Type | Parameters |
 |---------------|-------------|------------|
 | MIME_encrypt_message | PEP_STATUS | String, Integer, StringList, String⇑, PEP_enc_format, Integer |
-| MIME_encrypt_message_for_self | PEP_STATUS | Identity, String, Integer, String⇑, PEP_enc_format, Integer |
 | MIME_decrypt_message | PEP_STATUS | String, Integer, String⇑, StringList⇑, PEP_rating⇑, Integer⇑ |
-| MIME_encrypt_message_ex | PEP_STATUS | String, Integer, StringList, Bool, String⇑, PEP_enc_format, Integer |
-| MIME_decrypt_message_ex | PEP_STATUS | String, Integer, Bool, String⇑, StringList⇑, PEP_rating⇑, Integer⇑ |
 | startKeySync | Void |  |
 | stopKeySync | Void |  |
 | startKeyserverLookup | Void |  |
 | stopKeyserverLookup | Void |  |
 | encrypt_message | PEP_STATUS | Message, StringList, Message⇑, PEP_enc_format, Integer |
-| encrypt_message_for_self | PEP_STATUS | Identity, Message, Message⇑, PEP_enc_format, Integer |
 | decrypt_message | PEP_STATUS | Message, Message⇑, StringList⇑, PEP_rating⇑, Integer⇑ |
 | outgoing_message_rating | PEP_STATUS | Message, PEP_rating⇑ |
-| re_evaluate_message_rating | PEP_STATUS | Message, StringList, PEP_rating, PEP_rating⇑ |
 | identity_rating | PEP_STATUS | Identity, PEP_rating⇑ |
-| get_gpg_path | PEP_STATUS | String⇑ |
 
 
 #### pEp Engine Core API ####
 | Function name | Return Type | Parameters |
 |---------------|-------------|------------|
-| log_event | PEP_STATUS | String, String, String, String |
 | get_trustwords | PEP_STATUS | Identity, Identity, Language, String⇑, Integer⇑, Bool |
 | get_languagelist | PEP_STATUS | String⇑ |
-| get_phrase | PEP_STATUS | Language, Integer, String⇑ |
-| get_engine_version | String |  |
+| is_pep_user | PEP_STATUS | Identity, Bool⇑ |
 | config_passive_mode | Void | Bool |
 | config_unencrypted_subject | Void | Bool |
 
@@ -57,8 +49,10 @@ Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a 
 | get_trust | PEP_STATUS | Identity⇕ |
 | own_key_is_listed | PEP_STATUS | String, Bool⇑ |
 | own_identities_retrieve | PEP_STATUS | IdentityList⇑ |
+| set_own_key | PEP_STATUS | Identity⇕, String |
+| undo_last_mistrust | PEP_STATUS |  |
 | myself | PEP_STATUS | Identity⇕ |
-| update_dentity | PEP_STATUS | Identity⇕ |
+| update_identity | PEP_STATUS | Identity⇕ |
 | trust_personal_key | PEP_STATUS | Identity |
 | key_mistrusted | PEP_STATUS | Identity |
 | key_reset_trust | PEP_STATUS | Identity |
@@ -82,14 +76,16 @@ Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a 
 #### Event Listener & Results ####
 | Function name | Return Type | Parameters |
 |---------------|-------------|------------|
-| registerEventListener | PEP_STATUS | String, Integer, String |
-| unregisterEventListener | PEP_STATUS | String, Integer, String |
+| registerEventListener | Void | String, Integer, String |
+| unregisterEventListener | Void | String, Integer, String |
 | deliverHandshakeResult | PEP_STATUS | Identity, PEP_sync_handshake_result |
 
 
 #### Other ####
 | Function name | Return Type | Parameters |
 |---------------|-------------|------------|
+| serverVersion | ServerVersion |  |
 | version | String |  |
-| apiVersion | Integer |  |
 | getGpgEnvironment | GpgEnvironment |  |
+| shutdown | Void |  |
+
