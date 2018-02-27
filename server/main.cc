@@ -22,7 +22,7 @@ std::string logfile = "";
 
 unsigned start_port = 4223;
 unsigned end_port   = 9999;
-
+int idle_timeout    = 360;  // in seconds
 
 void print_version()
 {
@@ -49,6 +49,7 @@ try
 		("address,a",    po::value<std::string>(&address)->default_value(address),     "Address to bind on")
 		("html-directory,H", po::value<boost::filesystem::path>(&ev_server::path_to_html)->default_value(ev_server::path_to_html), "Path to the HTML and JavaScript files")
 		("logfile,l", po::value<std::string>(&logfile)->default_value(logfile),   "Name of the logfile. Can be \"stderr\" for log to stderr or empty for no log.")
+		("idle-timeout,i",   po::value<int>(&idle_timeout)->default_value(idle_timeout), "Idle timeout (in seconds). Program ends after this amount of seconds after last request. -1 means: no timeout, 0 means: ends immediately.")
 		("ignore-missing-session", po::bool_switch(&ignore_missing_session), "Ignore when no PEP_SESSION can be created.")
 	;
 	
