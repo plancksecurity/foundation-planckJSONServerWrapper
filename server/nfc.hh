@@ -20,6 +20,8 @@ protected:
 	explicit illegal_utf8(const std::string& message);
 };
 
+// throws illegal_utf8 exception if s is not valid UTF-8
+void assert_utf8(const std::string& s);
 
 // return No or Maybe, if at least one character with NFC_Quickcheck class is "No" or "Maybe"
 // might throw illegal_utf8 exception
