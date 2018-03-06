@@ -195,23 +195,31 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 	const evhttp_uri* uri = evhttp_request_get_evhttp_uri(req);
 	const char* path = evhttp_uri_get_path(uri);
 	const char* uri_string = evhttp_request_get_uri(req);
-	std::cerr << "** Request: [" << uri_string << "] " << (path? " Path: [" + std::string(path) + "]" : "null path") << "\n";
+	//std::cerr << "** Request: [" << uri_string << "] " << (path? " Path: [" + std::string(path) + "]" : "null path") << "\n";
 	
-	if(path)
-	{
-		const auto q = files.find(path);
-		if(q != files.end()) // found in "files" map
+	try{
+		if(path)
 		{
-			std::cerr << "\t found file \"" << q->second.fileName << "\", type=" << q->second.mimeType << ".\n";
-			sendFile( req, q->second.mimeType, q->second.fileName);
-			return;
+			const auto q = files.find(path);
+			if(q != files.end()) // found in "files" map
+			{
+				//std::cerr << "\t found file \"" << q->second.fileName << "\", type=" << q->second.mimeType << ".\n";
+				sendFile( req, q->second.mimeType, q->second.fileName);
+				return;
+			}
 		}
+	
+		const std::string reply = std::string("URI \"") + uri_string + "\" not found! "
+			+ (!path ? "NULL Path" : "Path: \"" + std::string(path) + "\"");
+		evhttp_send_error(req, HTTP_NOTFOUND, reply.c_str());
 	}
-
-	const std::string reply = std::string("=== Catch-All-Reply ===\nRequest URI: [") + uri_string + "]\n===\n"
-		+ (path ? "NULL Path" : "Path: [ " + std::string(path) + "]" ) + "\n";
-	std::cerr << "\t ERROR: " << reply ;
-	sendReplyString(req, "text/plain", reply.c_str());
+	catch(const std::runtime_error& e)
+	{
+		const std::string error_msg = "Internal error caused by URI \"" + std::string(uri_string) + "\"";
+		// TODO: log e.what() to log file, but don't send it in HTTP error message
+		//       because it might contain sensitive information, e.g. local file paths etc.!
+		evhttp_send_error(req, HTTP_INTERNAL, error_msg.c_str() );
+	}
 };
 
 
