@@ -33,7 +33,7 @@ void print_version()
 }
 
 std::ostream* my_logfile = nullptr;
-std::unique_ptr<std::ostream> real_logfile;
+std::shared_ptr<std::ostream> real_logfile;
 
 int main(int argc, char** argv)
 try
@@ -74,7 +74,7 @@ try
 	{
 		my_logfile = &std::cerr;
 	}else{
-		real_logfile.reset( new std::ofstream( logfile, std::ios::app ) );
+		real_logfile = std::make_shared<std::ofstream>( logfile, std::ios::app );
 		my_logfile = real_logfile.get();
 	}
 	
