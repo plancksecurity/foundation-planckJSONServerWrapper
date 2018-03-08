@@ -54,7 +54,7 @@ namespace json_spirit
     }
 
     template< class Char_type >
-    Char_type hex_to_num( const Char_type c )
+    unsigned hex_to_num( const Char_type c )
     {
         if( ( c >= '0' ) && ( c <= '9' ) ) return c - '0';
         if( ( c >= 'a' ) && ( c <= 'f' ) ) return c - 'a' + 10;
@@ -63,7 +63,7 @@ namespace json_spirit
     }
 
     template< class Char_type, class Iter_type >
-    Char_type hex_str_to_char( Iter_type& begin )
+    unsigned hex_str_to_char( Iter_type& begin )
     {
         const Char_type c1( *( ++begin ) );
         const Char_type c2( *( ++begin ) );
@@ -72,7 +72,7 @@ namespace json_spirit
     }
 
     template< class Char_type, class Iter_type >
-    Char_type unicode_str_to_char( Iter_type& begin )
+    unsigned unicode_str_to_char( Iter_type& begin )
     {
         const Char_type c1( *( ++begin ) );
         const Char_type c2( *( ++begin ) );
@@ -112,7 +112,7 @@ namespace json_spirit
                 }
                 break;
             }
-            case 'u':  
+            case 'u':
             {
                 if( end - begin >= 5 )  //  expecting "uHHHH..."
                 {
