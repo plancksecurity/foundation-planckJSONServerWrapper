@@ -85,6 +85,18 @@ namespace json_spirit
                hex_to_num( c4 );
     }
 
+
+    template<class Char_type>
+    unsigned max_unencoded();
+
+    template<class String_type>
+    String_type encode_utf(unsigned c);
+    
+    
+    template<> inline
+    unsigned max_unencoded<char>() { return 127; }
+
+
     template< class String_type >
     void append_esc_char_and_incr_iter( String_type& s, 
                                         typename String_type::const_iterator& begin, 
@@ -116,7 +128,13 @@ namespace json_spirit
             {
                 if( end - begin >= 5 )  //  expecting "uHHHH..."
                 {
-                    s += unicode_str_to_char< Char_type >( begin );
+                    const unsigned c = unicode_str_to_char< Char_type >( begin );
+                    if( c<= max_unencoded<Char_type>() )
+                    {
+                        s += Char_type(c);
+                    }else{
+                        s += encode_utf<String_type>(c);
+                    }
                 }
                 break;
             }
