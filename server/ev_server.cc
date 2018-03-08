@@ -156,7 +156,7 @@ void ev_server::sendReplyString(evhttp_request* req, const char* contentType, co
 		evhttp_send_reply(req, 500, "evbuffer_add() failed.", outBuf);
 	}
 	
-	std::cerr << "\n=== sendReplyString(): ret=" << ret << ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL") 
+	Log() << "\n=== sendReplyString(): ret=" << ret << ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL") 
 		<< ", output=«" << outputText << "»." << std::endl;
 }
 
@@ -195,14 +195,14 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 	const evhttp_uri* uri = evhttp_request_get_evhttp_uri(req);
 	const char* path = evhttp_uri_get_path(uri);
 	const char* uri_string = evhttp_request_get_uri(req);
-	std::cerr << "** Request: [" << uri_string << "] " << (path? " Path: [" + std::string(path) + "]" : "null path") << "\n";
+	Log() << "** Request: [" << uri_string << "] " << (path? " Path: [" + std::string(path) + "]" : "null path") << "\n";
 	
 	if(path)
 	{
 		const auto q = files.find(path);
 		if(q != files.end()) // found in "files" map
 		{
-			std::cerr << "\t found file \"" << q->second.fileName << "\", type=" << q->second.mimeType << ".\n";
+			Log() << "\t found file \"" << q->second.fileName << "\", type=" << q->second.mimeType << ".\n";
 			sendFile( req, q->second.mimeType, q->second.fileName);
 			return;
 		}
@@ -210,7 +210,7 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 
 	const std::string reply = std::string("=== Catch-All-Reply ===\nRequest URI: [") + uri_string + "]\n===\n"
 		+ (path ? "NULL Path" : "Path: [ " + std::string(path) + "]" ) + "\n";
-	std::cerr << "\t ERROR: " << reply ;
+	Log() << "\t ERROR: " << reply ;
 	sendReplyString(req, "text/plain", reply.c_str());
 };
 
@@ -291,10 +291,25 @@ void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << "\tException: \"" << e.what() << "\"\n";
+		Log() << "\tException: \"" << e.what() << "\"\n";
 		answer = make_error( JSON_RPC::INTERNAL_ERROR, "Got a std::exception: \"" + std::string(e.what()) + "\"", p, request_id );
 	}
 
 	sendReplyString(req, "text/plain", js::write(answer, js::raw_utf8));
 };
 
+
+std::ostream& ev_server::Log()
+{
+	*log_file << "evserver: ";
+	return *log_file;
+}
+
+
+void ev_server::setLogfile(std::ostream* new_logfile)
+{
+	log_file = new_logfile ? new_logfile : &nulllogger;
+}
+
+
+std::ostream* ev_server::log_file = &nulllogger;

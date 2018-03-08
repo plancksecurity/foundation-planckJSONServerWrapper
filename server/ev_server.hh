@@ -3,6 +3,7 @@
 #ifndef EV_SERVER_HH
 #define EV_SERVER_HH
 
+#include "nulllogger.hh"
 #include <string>
 #include <boost/filesystem/path.hpp>
 
@@ -32,6 +33,19 @@ public:
 	// should be set before any of the methods above is called, due to static initializers use that value,
 	// so changing it later might be useless.
 	static boost::filesystem::path path_to_html;
+	
+	// if new_logfile is NULL, the logfile is reset to nulllogger.
+	static
+	void setLogfile(std::ostream* new_logfile);
+
+protected:
+	// prints "evserver:" to the log and returns it to allow << chaining
+	static
+	std::ostream& Log();
+	
+private:
+	static
+	std::ostream* log_file;
 };
 
 #endif
