@@ -27,8 +27,9 @@ const std::vector<TestTriple> testValues =
 		{ "\n\\\b", R"("\n\\\b")"             , R"("\n\\\b")"  },  // backslash escapes for ASCII and control chars
 		{ "\x1f"  , R"("\u001F")"             , R"("\u001F")"  },  // C compiler knows \x##, but JSON does not
 		{ "\x7f"  , R"("\u007F")"             , R"("\u007F")"  },  // C compiler knows \x##, but JSON does not
-		{ "äöü"   , R"("\u00E4\u00F6\u00FC")" , R"("äöü")"     },
-		{ "\xf0\x9f\x92\xa3", R"("\uD83D\uDCA3")" , "\"\xF0\x9f\x92\xA3\"" },
+		{ "äöü"  , R"("\u00E4\u00F6\u00FC")" , R"("äöü")"     },  // German umlauts from Unicode block "Latin-1 Supplement"
+		{ "Москва", R"("\u041C\u043E\u0441\u043A\u0432\u0430")" , R"("Москва")" },  // some Cyrillic
+		{ "\xf0\x9f\x92\xa3", R"("\uD83D\uDCA3")" , "\"\xF0\x9f\x92\xA3\""        }, // Unicode Bomb <U+1F4A3>, an example for char outside of BMP
 
 		{ "EOF", "\"EOF\"", "\"EOF\"" }
 	};
