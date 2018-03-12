@@ -63,7 +63,7 @@ namespace json_spirit
             case '\n': s += to_str< String_type >( "\\n"  ); return true;
             case '\r': s += to_str< String_type >( "\\r"  ); return true;
             case '\t': s += to_str< String_type >( "\\t"  ); return true;
-            case '\177': s += to_str< String_type >( "\\u007f"  ); return true;
+            case '\177': s += to_str< String_type >( "\\u007F"  ); return true;
         }
 
         // _always_ convert all remaining ASCII control characters into \uXXXX form:
