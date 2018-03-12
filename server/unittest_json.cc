@@ -21,6 +21,9 @@ std::ostream& operator<<(std::ostream& o, const TestTriple& tt)
 }
 
 
+const char nullo[4] = {0,0,0,0};
+const char null_x[4] = { '\0', 'X', '\0', '\n' };
+
 const std::vector<TestTriple> testValues =
 	{
 		{ ""      , R"("")"                   , R"("")"        },  // always start with the simple case ;-)
@@ -31,7 +34,11 @@ const std::vector<TestTriple> testValues =
 		{ "äöü"  , R"("\u00E4\u00F6\u00FC")" , R"("äöü")"     },  // German umlauts from Unicode block "Latin-1 Supplement"
 		{ "Москва", R"("\u041C\u043E\u0441\u043A\u0432\u0430")" , R"("Москва")" },  // some Cyrillic
 		{ "\xf0\x9f\x92\xa3", R"("\uD83D\uDCA3")" , "\"\xF0\x9f\x92\xA3\""        }, // Unicode Bomb <U+1F4A3>, an example for char outside of BMP
-
+		
+		{ std::string(nullo, nullo+1), R"("\u0000")"             , R"("\u0000")"  },  // Yeah, 1 NUL byte
+		{ std::string(nullo, nullo+2), R"("\u0000\u0000")"       , R"("\u0000\u0000")"  },  // Yeah, 2 NUL bytes
+		{ std::string(null_x, null_x+4), R"("\u0000X\u0000\n")" , R"("\u0000X\u0000\n")"  },  // guess what...
+		
 // a nasty and controversal example:
 // <U+2028> (LINE SEPARATOR) and <U+2029> (PARAGRAPH SEPARATOR) are legal in JSON but not in JavaScript.
 // A JSON encoder should _always_ escape them to avoid trouble in JavaScript:
