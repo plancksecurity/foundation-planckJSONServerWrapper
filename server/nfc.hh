@@ -15,7 +15,7 @@ enum class IsNFC
 class illegal_utf8 : public std::runtime_error
 {
 public:
-	illegal_utf8(const std::string& s, unsigned position, const char* reason);
+	illegal_utf8(const std::string& s, unsigned position, const std::string& reason);
 protected:
 	explicit illegal_utf8(const std::string& message);
 };

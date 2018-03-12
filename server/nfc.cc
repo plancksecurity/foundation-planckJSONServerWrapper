@@ -8,12 +8,29 @@
 
 namespace
 {
+	// unicode to hex string
+	std::string u2h(unsigned u)
+	{
+		char buf[16] = {0};
+		snprintf(buf, 15, "<U+%04X>", u );
+		return buf;
+	}
+
+	// octet to hex string
+	std::string o2h(uint8_t octet)
+	{
+		char buf[16] = {0};
+		snprintf(buf, 15, "0x%02hhX", octet);
+		return buf;
+	}
+
+
 	class utf8_exception
 	{
 	public:
 		utf8_exception(uint8_t u) : octet(u) {}
 		virtual ~utf8_exception() = default;
-		virtual const char* reason() const = 0;
+		virtual std::string reason() const = 0;
 		uint8_t octet;
 	};
 
@@ -22,15 +39,16 @@ namespace
 	{
 	public:
 		cont_without_start(uint8_t u) : utf8_exception(u) {}
-		const char* reason() const override { return "Continuation octet without start octet"; }
+		std::string reason() const override { return "Continuation octet " + o2h(octet) + " without start octet"; }
 	};
 
 
 	class overlong_sequence : public utf8_exception
 	{
 	public:
-		overlong_sequence(uint8_t u) : utf8_exception(u) {}
-		const char* reason() const override { return "Overlong sequence"; }
+		overlong_sequence(uint8_t octet, unsigned u) : utf8_exception(octet), unicode(u) {}
+		std::string reason() const override { return "Overlong sequence for " + u2h(unicode); }
+		unsigned unicode;
 	};
 
 
@@ -38,14 +56,31 @@ namespace
 	{
 	public:
 		unexpected_end(uint8_t u) : utf8_exception(u) {}
-		const char* reason() const override { return "Unexpected end of string"; }
+		std::string reason() const override { return "Unexpected end of string"; }
 	};
 	
+	class surrogate : public utf8_exception
+	{
+	public:
+		surrogate(uint8_t u, unsigned s) : utf8_exception(u), surr(s) {}
+		std::string reason() const override { return "UTF-8-encoded UTF-16 surrogate " + u2h(surr) + " detected"; }
+	private:
+		unsigned surr;
+	};
+
 	class no_unicode : public utf8_exception
 	{
 	public:
-		no_unicode(uint8_t u) : utf8_exception(u) {}
-		const char* reason() const override { return "Octet illegal in UTF-8"; }
+		explicit no_unicode(uint8_t _octet) : utf8_exception(_octet) {}
+		std::string reason() const override { return "Octet " + o2h(octet) + " is illegal in UTF-8"; }
+	};
+
+	class too_big : public utf8_exception
+	{
+	public:
+		explicit too_big(uint8_t _octet, unsigned u) : utf8_exception(_octet), unicode(u) {}
+		std::string reason() const override { return "Value " + u2h(unicode) + " is too big for Unicode"; }
+		unsigned unicode;
 	};
 
 
@@ -69,6 +104,7 @@ namespace
 
 } // end of anonymous namespace
 
+
 uint32_t parseUtf8(const char*& c, const char* end)
 {
 	while(c<end)
@@ -81,9 +117,9 @@ uint32_t parseUtf8(const char*& c, const char* end)
 		} else if (u<=0xBF)
 		{
 			throw cont_without_start(u);
-		} else if (u<=0xC1)
+		} else if (u<=0xC1) // 0xC0, 0xC1 would form "overlong sequences" and are therefore always illegal in UTF-8
 		{
-			throw overlong_sequence(u);
+			throw no_unicode(u);
 		} else if (u<=0xDF)  // 2 octet sequence
 		{
 			++c;
@@ -112,7 +148,8 @@ uint32_t parseUtf8(const char*& c, const char* end)
 			}
 			
 			const uint32_t ret = ((u & 0xF) << 12) + ((uu & 0x3F)<<6) + (uuu & 0x3F);
-			if(ret<0x800) throw overlong_sequence(u);
+			if(ret<0x800) throw overlong_sequence(u, ret);
+			if(ret>=0xD800 && ret<=0xDFFF) throw surrogate(u, ret);
 			return ret;
 		} else if (u<=0xF4)  // 4 octet sequence
 		{
@@ -139,8 +176,8 @@ uint32_t parseUtf8(const char*& c, const char* end)
 			}
 			
 			const uint32_t ret = ((u & 0xF) << 18) + ((uu & 0x3F)<<12) + ((uuu & 0x3F)<<6) + (uuuu & 0x3F);
-			if(ret<0x10000) throw overlong_sequence(u);
-			if(ret>0x10FFFF) throw no_unicode(u);
+			if(ret<0x10000) throw overlong_sequence(u, ret);
+			if(ret>0x10FFFF) throw too_big(u, ret);
 			return ret;
 		} else
 		{
@@ -153,7 +190,7 @@ uint32_t parseUtf8(const char*& c, const char* end)
 
 
 
-illegal_utf8::illegal_utf8( const std::string& s, unsigned position, const char* reason)
+illegal_utf8::illegal_utf8( const std::string& s, unsigned position, const std::string& reason)
 : std::runtime_error( "Illegal UTF-8 string \"" + escape(s) + "\" at position " + std::to_string(position) + ": " + reason  )
 {}
 
@@ -177,7 +214,7 @@ void assert_utf8(const std::string& s)
 	}
 	catch(const utf8_exception& e)
 	{
-		throw illegal_utf8(s, e.octet, e.reason());
+		throw illegal_utf8(s, begin - s.data(), e.reason());
 	}
 }
 
@@ -198,7 +235,7 @@ IsNFC isNFC_quick_check(const std::string& s)
 	}
 	catch(const utf8_exception& e)
 	{
-		throw illegal_utf8(s, e.octet, e.reason());
+		throw illegal_utf8(s, begin - s.data(), e.reason());
 	}
 	return IsNFC::Yes;
 }
