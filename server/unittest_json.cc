@@ -2,26 +2,47 @@
 
 #include "inout.hh" // for to_json() and from_json()
 #include "json_spirit/json_spirit_writer.h"
+#include <vector>
 
 namespace js = json_spirit;
 
-TEST(ToFromJsonTest, SimpleCases)
+struct TestTriple
 {
-	// simple_write() has raw_utf8 not set, so every non-ASCII is escaped:
-	EXPECT_EQ( R"("")"        , simple_write(to_json<std::string>("")) );
-	EXPECT_EQ( R"("\n")"      , simple_write(to_json<std::string>("\n")) );
-	EXPECT_EQ( R"("\u001F")"  , simple_write(to_json<std::string>("\x1f")) );
-	EXPECT_EQ( R"("\u00E4\u00F6\u00FC")" , simple_write(to_json<std::string>("äöü")) );
-	EXPECT_EQ( R"("\uD83D\uDCA3")" , simple_write(to_json<std::string>("\xf0\x9f\x92\xa3")) ); // <U+1F4A3> Unicode BOMB
+	std::string input;
+	std::string output_esc; // with \uXXXX escapes
+	std::string output_raw; // raw_utf8
+};
+
+
+std::ostream& operator<<(std::ostream& o, const TestTriple& tt)
+{
+	return o << "input=«" << tt.input << "», esc=«" << tt.output_esc << "», raw=«" << tt.output_raw << "». ";
 }
 
-// this is how the JSON Adapter writes its JSON:
-TEST(ToFromJsonTest, RawUtf8Cases)
+
+const std::vector<TestTriple> testValues =
+	{
+		{ ""      , R"("")"                   , R"("")"        },
+		{ "\n"    , R"("\n")"                 , R"("\n")"      },
+		{ "\x1f"  , R"("\u001F")"             , R"("\u001F")"  },
+		{ "äöü"   , R"("\u00E4\u00F6\u00FC")" , R"("äöü")"     },
+		{ "\xf0\x9f\x92\xa3", R"("\uD83D\uDCA3")" , "\"\xF0\x9f\x92\xA3\"" },
+
+		{ "EOF", "\"EOF\"", "\"EOF\"" }
+	};
+
+
+class ToJsonTest : public ::testing::TestWithParam<TestTriple>
 {
-	EXPECT_EQ( R"("")"        , js::write(to_json<std::string>(""), js::raw_utf8) );
-	EXPECT_EQ( R"("\n")"      , js::write(to_json<std::string>("\n"), js::raw_utf8) );
-	EXPECT_EQ( R"("\u001F")"  , js::write(to_json<std::string>("\x1f"), js::raw_utf8) );
-	EXPECT_EQ( R"("äöü")" , js::write(to_json<std::string>("äöü"), js::raw_utf8) );
-	EXPECT_EQ( "\"\xF0\x9f\x92\xA3\"" , js::write(to_json<std::string>("\xf0\x9f\x92\xa3"), js::raw_utf8) ); // <U+1F4A3> Unicode BOMB
+	// intentionally left blank for now.
+};
+
+INSTANTIATE_TEST_CASE_P(ToJsonTestInstance, ToJsonTest, testing::ValuesIn(testValues) );
+
+TEST_P( ToJsonTest, Meh )
+{
+	const auto v = GetParam();
+	EXPECT_EQ( v.output_esc, simple_write( to_json<std::string>( v.input )) );
+	EXPECT_EQ( v.output_raw, js::write( to_json<std::string>( v.input ), js::raw_utf8) );
 }
 
