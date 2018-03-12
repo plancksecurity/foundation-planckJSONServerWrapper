@@ -33,6 +33,7 @@ namespace
 		const char* reason() const override { return "Overlong sequence"; }
 	};
 
+
 	class unexpected_end : public utf8_exception
 	{
 	public:
@@ -66,90 +67,90 @@ namespace
 		return ret;
 	}
 
-	uint32_t getUni(const char*& c, const char* end)
+} // end of anonymous namespace
+
+uint32_t parseUtf8(const char*& c, const char* end)
+{
+	while(c<end)
 	{
-		while(c<end)
+		const uint8_t u = uint8_t(*c);
+		
+		if (u<=0x7f)
 		{
-			const uint8_t u = uint8_t(*c);
-			
-			if (u<=0x7f)
+			return u;
+		} else if (u<=0xBF)
+		{
+			throw cont_without_start(u);
+		} else if (u<=0xC1)
+		{
+			throw overlong_sequence(u);
+		} else if (u<=0xDF)  // 2 octet sequence
+		{
+			++c;
+			if(c==end) throw unexpected_end(u);
+			const uint8_t uu = uint8_t(*c);
+			if((uu & 0xC0) != 0x80)
 			{
-				return u;
-			} else if (u<=0xBF)
+				throw unexpected_end(uu);
+			}
+			return  ((u & 0x1F) << 6) + (uu & 0x3F);
+		} else if (u<=0xEF)  // 3 octet sequence
+		{
+			++c;
+			if(c==end) throw unexpected_end(u);
+			const uint8_t uu = uint8_t(*c);
+			if((uu & 0xC0) != 0x80)
 			{
-				throw cont_without_start(u);
-			} else if (u<=0xC1)
+				throw unexpected_end(uu);
+			}
+			++c;
+			if(c==end) throw unexpected_end(uu);
+			const uint8_t uuu = uint8_t(*c);
+			if((uuu & 0xC0) != 0x80)
 			{
-				throw overlong_sequence(u);
-			} else if (u<=0xDF)  // 2 octet sequence
-			{
-						++c;
-						if(c==end) throw unexpected_end(u);
-						const uint8_t uu = uint8_t(*c);
-						if((uu & 0xC0) != 0x80)
-						{
-							throw unexpected_end(uu);
-						}
-						return  ((u & 0x1F) << 6) + (uu & 0x3F);
-			} else if (u<=0xEF)  // 3 octet sequence
-			{
-						++c;
-						if(c==end) throw unexpected_end(u);
-						const uint8_t uu = uint8_t(*c);
-						if((uu & 0xC0) != 0x80)
-						{
-							throw unexpected_end(uu);
-						}
-						++c;
-						if(c==end) throw unexpected_end(uu);
-						const uint8_t uuu = uint8_t(*c);
-						if((uuu & 0xC0) != 0x80)
-						{
-							throw unexpected_end(uuu);
-						}
-						
-						const uint32_t ret = ((u & 0xF) << 12) + ((uu & 0x3F)<<6) + (uuu & 0x3F);
-						if(ret<0x800) throw overlong_sequence(u);
-						return ret;
-			} else if (u<=0xF4)  // 4 octet sequence
-			{
-						++c;
-						if(c==end) throw unexpected_end(u);
-						const uint8_t uu = uint8_t(*c);
-						if((uu & 0xC0) != 0x80)
-						{
-							throw unexpected_end(uu);
-						}
-						++c;
-						if(c==end) throw unexpected_end(uu);
-						const uint8_t uuu = uint8_t(*c);
-						if((uuu & 0xC0) != 0x80)
-						{
-							throw unexpected_end(uuu);
-						}
-						++c;
-						if(c==end) throw unexpected_end(uuu);
-						const uint8_t uuuu = uint8_t(*c);
-						if((uuuu & 0xC0) != 0x80)
-						{
-							throw unexpected_end(uuuu);
-						}
-						
-						const uint32_t ret = ((u & 0xF) << 18) + ((uu & 0x3F)<<12) + ((uuu & 0x3F)<<6) + (uuuu & 0x3F);
-						if(ret<0x10000) throw overlong_sequence(u);
-						if(ret>0x10FFFF) throw no_unicode(u);
-						return ret;
-			} else
-			{
-					throw no_unicode(u);
+				throw unexpected_end(uuu);
 			}
 			
+			const uint32_t ret = ((u & 0xF) << 12) + ((uu & 0x3F)<<6) + (uuu & 0x3F);
+			if(ret<0x800) throw overlong_sequence(u);
+			return ret;
+		} else if (u<=0xF4)  // 4 octet sequence
+		{
+			++c;
+			if(c==end) throw unexpected_end(u);
+			const uint8_t uu = uint8_t(*c);
+			if((uu & 0xC0) != 0x80)
+			{
+				throw unexpected_end(uu);
+			}
+			++c;
+			if(c==end) throw unexpected_end(uu);
+			const uint8_t uuu = uint8_t(*c);
+			if((uuu & 0xC0) != 0x80)
+			{
+				throw unexpected_end(uuu);
+			}
+			++c;
+			if(c==end) throw unexpected_end(uuu);
+			const uint8_t uuuu = uint8_t(*c);
+			if((uuuu & 0xC0) != 0x80)
+			{
+				throw unexpected_end(uuuu);
+			}
+			
+			const uint32_t ret = ((u & 0xF) << 18) + ((uu & 0x3F)<<12) + ((uuu & 0x3F)<<6) + (uuuu & 0x3F);
+			if(ret<0x10000) throw overlong_sequence(u);
+			if(ret>0x10FFFF) throw no_unicode(u);
+			return ret;
+		} else
+		{
+			throw no_unicode(u);
 		}
-		
-		throw unexpected_end(-1);
 	}
+	
+	throw unexpected_end(-1);
+}
 
-} // end of anonymous namespace
 
 
 illegal_utf8::illegal_utf8( const std::string& s, unsigned position, const char* reason)
@@ -170,7 +171,7 @@ void assert_utf8(const std::string& s)
 	{
 		while(begin<end)
 		{
-			getUni(begin, end);
+			parseUtf8(begin, end); // ignore the output
 			++begin;
 		}
 	}
@@ -189,7 +190,7 @@ IsNFC isNFC_quick_check(const std::string& s)
 	{
 		while(begin<end)
 		{
-			const uint32_t u = getUni(begin, end);
+			const uint32_t u = parseUtf8(begin, end);
 			if(NFC_No.count(u)) return IsNFC::No;
 			if(NFC_Maybe.count(u)) return IsNFC::Maybe;
 			++begin;

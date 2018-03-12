@@ -20,6 +20,11 @@ protected:
 	explicit illegal_utf8(const std::string& message);
 };
 
+
+// scans the char sequences and parses UTF-8 sequences. Detect UTF-8 errors and throws exceptions.
+uint32_t parseUtf8(const char*& c, const char* end)
+
+
 // throws illegal_utf8 exception if s is not valid UTF-8
 void assert_utf8(const std::string& s);
 

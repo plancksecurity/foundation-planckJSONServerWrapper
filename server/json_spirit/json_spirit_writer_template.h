@@ -66,7 +66,7 @@ namespace json_spirit
         }
 
         // _always_ convert all remaining ASCII control characters into \uXXXX form:
-        if( unsigned(c) < 32 )
+        if( uint8_t(c) < 32 )
         {
             s += non_printable_to_string<String_type>( c );
             return true;
@@ -94,7 +94,7 @@ namespace json_spirit
 
             if( raw_utf8 )
             {
-                result += c;
+                result += c; // hoping that s is properly UTF-8-encoded, so nothing is necessary here.
             }
             else
             {
