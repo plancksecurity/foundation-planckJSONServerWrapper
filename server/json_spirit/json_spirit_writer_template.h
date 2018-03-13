@@ -31,6 +31,13 @@ namespace json_spirit
     template< class String_type >
     String_type non_printable_to_string( unsigned int c )
     {
+        if(c > 0xFFFF) // do UTF-16 encoding and escape each part separatly
+        {
+            const unsigned hi = (c-0x10000) >> 10;
+            const unsigned lo = (c-0x10000) & 0x03FF;
+            return non_printable_to_string<String_type>( hi + 0xD800 )
+                 + non_printable_to_string<String_type>( lo + 0xDC00 );
+        }
         String_type result( 6, '\\' );
 
         result[1] = 'u';

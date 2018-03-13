@@ -33,7 +33,7 @@ void print_version()
 }
 
 std::ostream* my_logfile = nullptr;
-std::unique_ptr<std::ostream> real_logfile;
+std::shared_ptr<std::ostream> real_logfile;
 
 int main(int argc, char** argv)
 try
@@ -74,7 +74,7 @@ try
 	{
 		my_logfile = &std::cerr;
 	}else{
-		real_logfile.reset( new std::ofstream( logfile, std::ios::app ) );
+		real_logfile = std::make_shared<std::ofstream>( logfile, std::ios::app );
 		my_logfile = real_logfile.get();
 	}
 	
@@ -83,10 +83,11 @@ try
 	  .ignore_session_errors( ignore_missing_session)
 	  ;
 	  
-	ja.prepare_run(address, start_port, end_port);
+	auto prepare_run = [&](){ ja.prepare_run(address, start_port, end_port); };
 
 	if( debug_mode )
 	{
+		prepare_run();
 		ja.run();
 		// run until "Q" from stdin
 		int input = 0;
@@ -96,7 +97,7 @@ try
 			std::cout << "Oh, I got a '" << input << "'. \n";
 		}while(std::cin && input != 'q' && input != 'Q');
 	}else{
-		daemonize();
+		daemonize(prepare_run);
 		ja.run();
 		do{
 			std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -104,6 +105,7 @@ try
 	}
 	ja.shutdown(nullptr);
 	ja.Log() << "Good bye. :-)" << std::endl;
+	JsonAdapter::global_shutdown();
 }
 catch (std::exception const &e)
 {

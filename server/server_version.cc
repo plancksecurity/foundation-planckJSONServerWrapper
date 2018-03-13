@@ -41,13 +41,14 @@ static const std::string version_name =
 //	"(31) Altenkleusheim";   // JSON-57: change location of server token file. breaking API change, so API_VERSION=0x0003.
 //	"(32) Littfeld";         // JSON-72: add is_pep_user() to the API
 //	"(33) Hilchenbach";      // JSON-71: Setup C++11 Multi-threading in libevent properly to avoid deadlocks in MT server code"
-	"(34) Erndtebrück";      // remove apiVersion(), change version() to return a semver-compatible version number in a JSON object.
-
+//	"(34) Erndtebrück";      // remove apiVersion(), change version() to return a semver-compatible version number in a JSON object.
+	"(35) Bad Berleburg";    // fix the fork() problem on MacOS. daemonize() now got a function parameter. \o/
 
 //const ServerVersion sv{0, 10, 0, version_name};  // first version defined.
 //const ServerVersion sv{0, 11, 0, version_name};  // add set_own_key()
 //const ServerVersion sv{0, 12, 0, version_name};  // rename mis-spelled undo_last_mitrust() into undo_last_mistrust()
-const ServerVersion sv{0, 12, 1, version_name};  // add assert_utf8() for every string to/from the Engine (except blobdata)
+//const ServerVersion sv{0, 12, 1, version_name};  // add assert_utf8() for every string to/from the Engine (except blobdata)
+const ServerVersion sv{0, 12, 2, version_name};  // fix the fork() problem on MacOS. daemonize() now got a function parameter.
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
