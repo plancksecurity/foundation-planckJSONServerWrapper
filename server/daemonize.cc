@@ -2,9 +2,10 @@
 
 #ifdef _WIN32
 
-	void daemonize()
+	void daemonize(std::function<void()> child_fn = std::function<void()>() )
 	{
-		// do nothing
+		if(child_fn)
+			child_fn();
 	}
 
 #else
@@ -18,7 +19,7 @@
 
 #include <stdexcept>
 
-void daemonize()
+void daemonize(std::function<void()> child_fn )
 {
 	/* already a daemon */
 	if ( getppid() == 1 ) return;
@@ -36,6 +37,8 @@ void daemonize()
 	}
 	
 	/* At this point we are executing as the child process */
+	if(child_fn)
+		child_fn();
 	
 	/* Create a new SID for the child process */
 	pid_t sid = setsid();
