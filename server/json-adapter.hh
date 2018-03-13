@@ -86,6 +86,10 @@ public:
 	
 	// will throw logic_error if guard variables contains illegal values, which means: *this is not a valid JsonAdapter object!
 	void check_guard() const;
+	
+	// calls release(first_session).
+	static
+	void global_shutdown();
 
 //private:
 	struct Internal;
@@ -99,6 +103,9 @@ private:
 	
 	void threadFunc();
 	std::exception_ptr initExcept;
+	
+	// albait not documented, the first PEP_SESSION is special: It must be alive as long as any other PEP_SESSIONS are living.
+	static PEP_SESSION first_session;
 };
 
 // just for debug:

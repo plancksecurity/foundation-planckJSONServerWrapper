@@ -91,6 +91,9 @@ R call_with_lock( R(*fn)(Args...), Args... args)
 } // end of anonymous namespace
 
 
+PEP_SESSION JsonAdapter::first_session = nullptr;
+
+
 typedef std::pair<std::string, unsigned> EventListenerKey;
 
 struct EventListenerValue
@@ -535,22 +538,21 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 	
 	ev_server::setLogfile( &i->Log );
 	
+	if(first_session == nullptr) // okay, we are the 1st:
+	{
 	// create a dummy session just to see whether the Engine is functional.
 	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
-	PEP_SESSION dummy_session = nullptr;
-	PEP_STATUS status = call_with_lock(&init, &dummy_session);
-	if(status != PEP_STATUS_OK || dummy_session==nullptr)
+	PEP_STATUS status = call_with_lock(&init, &first_session);
+	if(status != PEP_STATUS_OK || first_session==nullptr)
 	{
-		const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".";
+		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + status_to_string(status) + ".";
 		std::cerr << error_msg << std::endl; // Log to stderr intentionally, so Enigmail can grab that error message easily.
 		if( ! i->ignore_session_error)
 		{
 			throw std::runtime_error(error_msg);
 		}
 	}
-	
-	call_with_lock(&release, dummy_session);
-	// if we are here the Engine is able to create sessions. :-)
+	}
 	
 				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry ) << std::flush;
 				
@@ -797,6 +799,13 @@ void JsonAdapter::check_guard() const
 		std::cerr << buf; // Log() might not work here, when memory is corrupted
 		throw std::logic_error( buf );
 	}
+}
+
+
+void JsonAdapter::global_shutdown()
+{
+	call_with_lock(&release, JsonAdapter::first_session);
+	JsonAdapter::first_session = nullptr;
 }
 
 
