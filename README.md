@@ -46,7 +46,7 @@ Build and install the pEp Engine.  Instructions can be found here:
 ~~~~~
 mkdir ~/code/json-ad
 hg clone https://cacert.pep.foundation/dev/repos/pEpJSONServerAdapter/ ~/code/json-ad
-cd ~/code/json-ad
+cd ~/code/json-ad/libevent-2.0.22-stable
 ./configure --prefix="$HOME/code/json-ad/libevent-2.0.22-stable/build/" --disable-openssl
 make
 make install
