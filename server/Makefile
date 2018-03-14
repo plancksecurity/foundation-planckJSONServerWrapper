@@ -123,27 +123,27 @@ endif
 
 .PHONY: install
 install: all
-	mkdir -v -p $(PREFIX)/bin $(PREFIX)/lib
-	mkdir -v -p $(HTML_DIRECTORY)
-	cp -v ../html/* $(HTML_DIRECTORY)
-	cp -v libjson-adapter.a $(PREFIX)/lib
-	cp -v pep-json-server servertest unittests $(PREFIX)/bin
+	mkdir -v -p "$(PREFIX)/bin" "$(PREFIX)/lib"
+	mkdir -v -p "$(HTML_DIRECTORY)"
+	cp -v ../html/* "$(HTML_DIRECTORY)"
+	cp -v libjson-adapter.a "$(PREFIX)/lib"
+	cp -v "$(TARGET)" "$(TARGET_TEST)" "$(TARGET_GTEST)" "$(PREFIX)/bin"
 
 .PHONY: clean
 clean:
-	rm -vf pep-json-server servertest unittests
+	rm -vf "$(TARGET)" "$(TARGET_TEST)" "$(TARGET_GTEST)"
 	rm -vf *.o json_spirit/*.o
 	rm -vf *.a json_spirit/*.a
 	rm -vf *.d json_spirit/*.d
 	rm -vf prefix-config.cc
 
 .PHONY: run
-run: | install
+run:
 	@echo "The adapter must be installed for $< to work"
 	$(CMD_PFX) "$(PREFIX)/bin/$(TARGET)"
 
 .PHONY: test
-test: | install
+test:
 	@echo "The adapter must be installed for $< to work"
 	$(CMD_PFX) "$(PREFIX)/bin/$(TARGET_TEST)"
 	$(CMD_PFX) "$(PREFIX)/bin/$(TARGET_GTEST)"
