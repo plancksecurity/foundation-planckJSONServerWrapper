@@ -127,7 +127,7 @@ install: all
 	mkdir -v -p $(HTML_DIRECTORY)
 	cp -v ../html/* $(HTML_DIRECTORY)
 	cp -v libjson-adapter.a $(PREFIX)/lib
-	cp -v pep-json-server servertest $(PREFIX)/bin
+	cp -v pep-json-server servertest unittests $(PREFIX)/bin
 
 .PHONY: clean
 clean:
