@@ -73,6 +73,7 @@ macOS 10.12:
 ~~~~~
 PREFIX=$(HOME)/code/json-ad/build
 HTML_DIRECTORY=$(PREFIX)/share/pEp/json-adapter/html
+GTEST_DIR=$(HOME)/code/gtest/googletest
 
 BOOST_INC=-I$(HOME)/Cellar/boost/1.65.1/include
 BOOST_LIB=-L$(HOME)/Cellar/boost/1.65.1/lib
@@ -98,6 +99,7 @@ Debian 9:
 ~~~~~
 PREFIX=$(HOME)/code/json-ad/build
 HTML_DIRECTORY=$(PREFIX)/share/pEp/json-adapter/html
+GTEST_DIR=$(HOME)/code/gtest/googletest
 
 ENGINE_INC=-I$(HOME)/code/engine/build/include
 ENGINE_LIB=-L$(HOME)/code/engine/build/lib
