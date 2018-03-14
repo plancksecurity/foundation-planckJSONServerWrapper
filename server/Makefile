@@ -102,13 +102,13 @@ gtest_main.o: $(GTEST_DIR)/src/gtest_main.cc
 
 %.d: %.cpp
 	@set -e; rm -f $@; \
-	$(CXX) -MM $(CXXFLAGS) $< > $@.$$$$; \
+	$(CXX) -MM $(CPPFLAGS) $(CXXFLAGS) $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
 %.d: %.cc
 	@set -e; rm -f $@; \
-	$(CXX) -MM $(CXXFLAGS) $< > $@.$$$$; \
+	$(CXX) -MM $(CPPFLAGS) $(CXXFLAGS) $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
