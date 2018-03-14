@@ -2,7 +2,7 @@
 
 #ifdef _WIN32
 
-	void daemonize(std::function<void()> child_fn = std::function<void()>() )
+	void daemonize(std::function<void()> child_fn )
 	{
 		if(child_fn)
 			child_fn();
