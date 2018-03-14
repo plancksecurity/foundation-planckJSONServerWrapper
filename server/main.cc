@@ -29,6 +29,7 @@ void print_version()
 	std::cout << "pEp JSON Adapter.\n"
 		"\tversion " << JsonAdapter::version() << "\n"
 		"\tpEpEngine version " << get_engine_version() << "\n"
+		"\tpEp protocol version " << PEP_VERSION << "\n"
 		"\n";
 }
 
