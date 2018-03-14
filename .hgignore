@@ -45,6 +45,7 @@ libevent-*-stable/build/
 
 server/pep-json-server
 server/servertest
+server/unittests
 server/*.a
 server/prefix-config.cc
 server/local.conf

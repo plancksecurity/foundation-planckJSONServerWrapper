@@ -54,7 +54,7 @@ make install
 
 ### Build and install the JSON server
 ~~~~~
-cd cd ~/code/json-ad/server
+cd ~/code/json-ad/server
 ~~~~~
 
 Edit the build configuration to your needs in `./Makefile.conf`, or create a
