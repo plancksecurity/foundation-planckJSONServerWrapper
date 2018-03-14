@@ -131,7 +131,7 @@ install: all
 
 .PHONY: clean
 clean:
-	rm -vf pep-json-server servertest
+	rm -vf pep-json-server servertest unittests
 	rm -vf *.o json_spirit/*.o
 	rm -vf *.a json_spirit/*.a
 	rm -vf *.d json_spirit/*.d
