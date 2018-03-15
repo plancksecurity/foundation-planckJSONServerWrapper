@@ -65,11 +65,11 @@ const ServerVersion sv(0,13,0);  // add package_version, rename "version" into "
 ////////////////////////////////////////////////////////////////////////////
 
 ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
-: major(maj)
-, minor(min)
-, patch(p)
-, name (VersionName)
-, package_version( PackageVersion )
+: major{maj}
+, minor{min}
+, patch{p}
+, name {VersionName}
+, package_version{PackageVersion}
 {}
 
 const ServerVersion& server_version()
