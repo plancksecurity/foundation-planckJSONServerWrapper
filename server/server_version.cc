@@ -1,11 +1,20 @@
 #include "server_version.hh"
 #include "inout.hh"
 
+#include <pEp/pEpEngine.h> // for PEP_VERSION and get_engine_version()
+
 namespace {
+
+#ifdef PACKAGE_VERSION
+	const char* const PackageVersion = PACKAGE_VERSION;
+#else
+	const char* const PackageVersion = nullptr;
+#endif
+
 
 // version names comes from here:
 // https://de.wikipedia.org/wiki/Bundesautobahn_4
-static const std::string version_name =
+static const std::string VersionName =
 //	"(4) Kreuz Aachen"; // first version with this version scheme :-)
 //	"(5a) Eschweiler-West"; // add support for log_event() and trustwords()
 //	"(5b) Eschweiler-Ost";  // add support for get_identity() and get_languagelist()
@@ -41,15 +50,27 @@ static const std::string version_name =
 //	"(31) Altenkleusheim";   // JSON-57: change location of server token file. breaking API change, so API_VERSION=0x0003.
 //	"(32) Littfeld";         // JSON-72: add is_pep_user() to the API
 //	"(33) Hilchenbach";      // JSON-71: Setup C++11 Multi-threading in libevent properly to avoid deadlocks in MT server code"
-	"(34) Erndtebrück";      // remove apiVersion(), change version() to return a semver-compatible version number in a JSON object.
-
+//	"(34) Erndtebrück";      // remove apiVersion(), change version() to return a semver-compatible version number in a JSON object.
+//	"(35) Bad Berleburg";    // fix the fork() problem on MacOS. daemonize() now got a function parameter. \o/
+	"(36) Hatzfeld";         // JSON-81: add package_version, rename "version" into "api_version" in ServerVersion, add versions from the Engine, too
 
 //const ServerVersion sv{0, 10, 0, version_name};  // first version defined.
 //const ServerVersion sv{0, 11, 0, version_name};  // add set_own_key()
-const ServerVersion sv{0, 12, 0, version_name};  // rename mis-spelled undo_last_mitrust() into undo_last_mistrust()
+//const ServerVersion sv{0, 12, 0, version_name};  // rename mis-spelled undo_last_mitrust() into undo_last_mistrust()
+//const ServerVersion sv{0, 12, 1, version_name};  // add assert_utf8() for every string to/from the Engine (except blobdata)
+//const ServerVersion sv{0, 12, 2, version_name};  // fix the fork() problem on MacOS. daemonize() now got a function parameter.
+const ServerVersion sv(0,13,0);  // add package_version, rename "version" into "api_version" in ServerVersion, add versions from the Engine, too
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
+
+ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
+: major{maj}
+, minor{min}
+, patch{p}
+, name {VersionName}
+, package_version{PackageVersion}
+{}
 
 const ServerVersion& server_version()
 {
@@ -67,7 +88,12 @@ std::string ServerVersion::major_minor_patch() const
 
 std::ostream& operator<<(std::ostream& o, const ServerVersion& sv)
 {
-	return o << sv.major_minor_patch() << " \"" << sv.name << '\"';
+	o << sv.major_minor_patch() << " \"" << sv.name << '\"';
+	if(sv.package_version)
+	{
+		o << ". package_version=\"" << sv.package_version << "\" ";
+	}
+	return o;
 }
 
 
@@ -78,8 +104,13 @@ js::Value to_json<ServerVersion>(const ServerVersion& sv)
 	o.emplace_back("major", uint64_t(sv.major));
 	o.emplace_back("minor", uint64_t(sv.minor));
 	o.emplace_back("patch", uint64_t(sv.patch));
-	o.emplace_back("version", sv.major_minor_patch());
+	o.emplace_back("api_version", sv.major_minor_patch());
 	o.emplace_back("name", sv.name);
+	o.emplace_back("package_version",
+			(sv.package_version ? std::string(sv.package_version) : js::Value() )
+		);
+	o.emplace_back("engine_version", std::string(get_engine_version()));
+	o.emplace_back("pep_protocol_version", std::string(PEP_VERSION));
 	
 	return o;
 }

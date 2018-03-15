@@ -1,4 +1,5 @@
 #include "inout.hh"
+#include "nfc.hh"
 #include <stdexcept>
 #include <pEp/pEpEngine.h>
 
@@ -115,7 +116,9 @@ FROM_TO_JSON_INT64( long long )
 template<>
 std::string from_json<std::string>(const js::Value& v)
 {
-	return v.get_str();
+	const std::string& s = v.get_str();
+	assert_utf8(s); // whould throw an exception if s is not valid UTF-8
+	return s;
 }
 
 
@@ -128,19 +131,34 @@ js::Value to_json(const T& t)
 
 template js::Value to_json<bool>(const bool&);
 template js::Value to_json<int>(const int&);
-template js::Value to_json<std::string>(const std::string&);
+
+
+template<>
+js::Value to_json<std::string>(const std::string& s)
+{
+	assert_utf8(s);
+	return js::Value(s);
+}
+
+
+template<>
+js::Value to_json<const char*>(const char* const & s)
+{
+	if(s)
+	{
+		const std::string ss{s};
+		assert_utf8(s);
+		return js::Value(ss);
+	}else{
+		return js::Value{};
+	}
+}
 
 
 template<>
 js::Value to_json<char*>(char* const & s)
 {
-	return s ? js::Value(std::string(s)) : js::Value{};
-}
-
-template<>
-js::Value to_json<const char*>(const char* const & s)
-{
-	return s ? js::Value(std::string(s)) : js::Value{};
+	return to_json<const char*>( const_cast<const char*>(s) );
 }
 
 

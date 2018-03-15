@@ -162,6 +162,25 @@ illegal_utf8::illegal_utf8( const std::string& msg )
 {}
 
 
+void assert_utf8(const std::string& s)
+{
+	const char* begin = s.data();
+	const char* const end = s.data() + s.size();
+	try
+	{
+		while(begin<end)
+		{
+			getUni(begin, end);
+			++begin;
+		}
+	}
+	catch(const utf8_exception& e)
+	{
+		throw illegal_utf8(s, e.octet, e.reason());
+	}
+}
+
+
 IsNFC isNFC_quick_check(const std::string& s)
 {
 	const char* begin = s.data();
