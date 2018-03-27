@@ -39,6 +39,10 @@ std::shared_ptr<std::ostream> real_logfile;
 int main(int argc, char** argv)
 try
 {
+#ifdef _WIN32
+	std::ios::sync_with_stdio(false);
+#endif
+
 	po::options_description desc("Program options for the JSON Server Adapter");
 	desc.add_options()
 		("help,h", "print this help messages")
