@@ -3,7 +3,7 @@
 
 // fork(), go into background, close all ttys etc...
 // system-specific! (POSIX, Windows, ...?)
-void daemonize();
-void daemonize_end();
+void daemonize(const bool daemonize, void * winsrv);
+void daemonize_commit(int retval);
 
 #endif

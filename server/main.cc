@@ -16,6 +16,7 @@ namespace po = boost::program_options;
 bool debug_mode = false;
 bool do_sync    = false;
 bool ignore_missing_session = false;
+uintptr_t winsrv = 0;
 
 std::string address = "127.0.0.1";
 std::string logfile = "";
@@ -50,6 +51,9 @@ try
 		("html-directory,H", po::value<boost::filesystem::path>(&ev_server::path_to_html)->default_value(ev_server::path_to_html), "Path to the HTML and JavaScript files")
 		("logfile,l", po::value<std::string>(&logfile)->default_value(logfile),   "Name of the logfile. Can be \"stderr\" for log to stderr or empty for no log.")
 		("ignore-missing-session", po::bool_switch(&ignore_missing_session), "Ignore when no PEP_SESSION can be created.")
+#ifdef _WIN32
+		("winsrv", po::value<uintptr_t>(&winsrv)->default_value(0), "For internal use (runs the daemon process)")
+#endif	
 	;
 	
 	po::variables_map vm;
@@ -78,6 +82,9 @@ try
 		my_logfile = real_logfile.get();
 	}
 	
+	if( debug_mode == false )
+		daemonize (!debug_mode, (void *) winsrv);
+
 	JsonAdapter ja( my_logfile );
 	ja.do_sync( do_sync)
 	  .ignore_session_errors( ignore_missing_session)
@@ -88,6 +95,7 @@ try
 	if( debug_mode )
 	{
 		ja.run();
+		// daemonize_commit(0);
 		// run until "Q" from stdin
 		int input = 0;
 		do{
@@ -96,8 +104,8 @@ try
 			std::cout << "Oh, I got a '" << input << "'. \n";
 		}while(std::cin && input != 'q' && input != 'Q');
 	}else{
-		daemonize();
 		ja.run();
+		daemonize_commit(0);
 		do{
 			std::this_thread::sleep_for(std::chrono::seconds(3));
 		}while(ja.running());
@@ -108,11 +116,13 @@ try
 catch (std::exception const &e)
 {
 	std::cerr << "Exception caught in main(): \"" << e.what() << "\"" << std::endl;
+	daemonize_commit(1);
 	return 1;
 }
 catch (...)
 {
 	std::cerr << "Unknown Exception caught in main()." << std::endl;
+	daemonize_commit(20);
 	return 20;
 }
 

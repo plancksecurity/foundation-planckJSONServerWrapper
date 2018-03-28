@@ -670,12 +670,11 @@ try
 	{
 		Log() << "\tthread_id()=" << t->get_id() << "." << std::endl;
 	}
-	daemonize_end();
 }
 catch (std::exception const &e)
 {
 	Log() << "Exception caught in JsonAdapter::run(): \"" << e.what() << "\"" << std::endl;
-	daemonize_end();
+	daemonize_commit(1);   /* FIXME: why do we need it here, why is the catch in main() not effective? */
 	throw;
 }
 
