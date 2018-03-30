@@ -2,17 +2,162 @@
 
 #ifdef _WIN32
 
-	void daemonize (const bool daemonize, void * winsrv)
-	{
-		// do nothing
+#include <windows.h>
+#include <tchar.h>
+#include <stdio.h>
+#include <strsafe.h>
+#include <inttypes.h>
 
+#include <thread>
+#include <iostream>
+#include <stdexcept>
+#include <system_error>
+
+HANDLE gPipeRd = NULL;
+HANDLE gPipeWr = NULL;
+
+void daemonize (const bool daemonize, const void * winsrv)
+{
+	TCHAR * tzWinFrontCmdline, *tzWinSrvCmdline;
+	SECURITY_ATTRIBUTES saAttr;
+	PROCESS_INFORMATION piProcInfo;
+	STARTUPINFO siStartInfo;
+	HANDLE hwinsrv = (HANDLE) winsrv;
+	BOOL bStatusReceived = FALSE;
+	DWORD dwRead = 0, dwTotRead = 0;
+	DWORD retval = 1, newRetval = 0;
+	BOOL bSuccess = FALSE;
+
+	/*
+	 * On Windows there is no need and possibility for a daemonization fork-dance.
+	 * Instead we launch the same binary ("image") again, passing it
+	 * additional open file handles. But the new process must learn about the
+	 * value of the filehandles somehow; only handles dedicated to stderr/stdout/stdin
+	 * redirection can be passed "internally" via system call. So we simply pass the
+	 * handle as a string over the command line; as "winsrv" argument. See CreateProcess
+	 * documentation for more information.
+	 */
+
+	gPipeWr = hwinsrv;
+
+	if (hwinsrv == NULL)
+	{
+		saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+		saAttr.bInheritHandle = TRUE;
+		saAttr.lpSecurityDescriptor = NULL;
+
+		if (!CreatePipe(&gPipeRd, &gPipeWr, &saAttr, 0))
+			throw std::runtime_error("Cannot create pipe!");
+
+		/* Ensure the read handle to the pipe is not inherited */
+		if (!SetHandleInformation(gPipeRd, HANDLE_FLAG_INHERIT, 0))
+			throw std::runtime_error("Cannot configure pipe handle!");
+
+		/* Add " --winsrv <handle>" to the current command line */
+		tzWinFrontCmdline = GetCommandLine();   // FIXME: Unicode GetCommandLineW, and wmain()
+		if (!(tzWinSrvCmdline = (TCHAR *)calloc(MAX_PATH + 1, sizeof(TCHAR))))
+			throw std::runtime_error("Memory allocation for background process command line failed!");
+		_stprintf(tzWinSrvCmdline, _T("%s --winsrv %" PRIuPTR), tzWinFrontCmdline,
+			                                                    ((uintptr_t)(void*)gPipeWr));
+
+		ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
+
+		ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
+		siStartInfo.cb = sizeof(STARTUPINFO);
+		siStartInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+		siStartInfo.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+		siStartInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+		siStartInfo.dwFlags |= /* STARTF_USESTDHANDLES | */ STARTF_USESHOWWINDOW;
+		siStartInfo.wShowWindow = SW_HIDE;
+
+		bSuccess = CreateProcess(
+			NULL, 		      // application name
+			tzWinSrvCmdline,  // command line
+			&saAttr,          // process security attributes
+			NULL,             // primary thread security attributes
+			TRUE,             // handles are inherited
+			0,                // creation flags, e.g. CREATE_UNICODE_ENVIRONMENT
+			NULL,             // use parent's environment
+			NULL,             // use parent's current directory
+			&siStartInfo,     // STARTUPINFO pointer
+			&piProcInfo       // receives PROCESS_INFORMATION
+		);
+
+		free(tzWinSrvCmdline);
+
+		if (!bSuccess)
+			throw std::runtime_error("Failed to start background process!");
+
+		/*
+		 * Now wait for the background process to give status feedback
+		 * via the pipe or for the process to have exited.
+		 *
+		 * Close the writing side in the foreground process so that we get EOF when
+		 * the background process crashes
+		 */
+		if (!CloseHandle(gPipeWr))
+			throw std::runtime_error("Can not close pipe's write end in foreground process!");
+
+		do
+		{
+			bSuccess = ReadFile(gPipeRd, &newRetval + dwTotRead, sizeof(DWORD) - dwTotRead, &dwRead, NULL);
+			dwTotRead += dwRead;
+			if (bSuccess == FALSE) {
+				if (GetLastError() == ERROR_BROKEN_PIPE) {
+					break;
+				}
+				throw std::runtime_error("Error while reading pipe in foreground process!");
+			}
+			if (dwTotRead < sizeof(DWORD))
+				continue;
+			retval = newRetval;
+			bStatusReceived = TRUE;
+		} while (1);
+
+		/*
+		 * If status reporting was not complete, wait for the process to exit, and proxy
+		 * the return value.
+		 */
+		newRetval = 0;   /* STILL_ACTIVE = 259 */
+		do
+		{
+			if (newRetval == STILL_ACTIVE)
+				std::this_thread::sleep_for(std::chrono::milliseconds(250));
+			if (!(bSuccess = GetExitCodeProcess(piProcInfo.hProcess, &newRetval)))
+				throw std::runtime_error("Can not read exit code from background process!");
+		} while (bStatusReceived == FALSE && newRetval == STILL_ACTIVE);
+		if (bStatusReceived == FALSE && newRetval != STILL_ACTIVE)
+			retval = newRetval;
+
+		exit(retval);
 	}
 
-	void daemonize_commit (int retval)
-	{
-		// do nothing
+}
 
+void daemonize_commit (int retval)
+{
+	DWORD dwWritten = 0;
+	DWORD dwRetval = 0;
+	BOOL bSuccess = FALSE;
+
+	dwRetval = (DWORD) retval;
+
+	if (gPipeWr == NULL)
+	{
+		if (dwRetval) exit(dwRetval);   /* FIXME: see comment in UNIX implementation */
+		return;
 	}
+
+	bSuccess = WriteFile(gPipeWr, &dwRetval, sizeof(DWORD), &dwWritten, NULL);
+	if (bSuccess == FALSE && GetLastError() != ERROR_BROKEN_PIPE)
+		throw std::runtime_error("Can not write to pipe's write end in background process!");
+
+	if (!(bSuccess = FreeConsole()))
+		throw std::runtime_error("Can not detach from console in background process!");
+
+	if (!CloseHandle(gPipeWr))
+		throw std::runtime_error("Can not close pipe's write end in background process!");
+}
 
 #else
 
@@ -41,7 +186,7 @@ void handle_sig_term (int signal)
     sig_term_recv = 1;
 }
 
-void daemonize (const bool daemonize, void * winsrv)
+void daemonize (const bool daemonize, const void * winsrv)
 {
 	int retval = EXIT_FAILURE;
 	pid_t pid, sid, daemon_pid;

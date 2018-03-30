@@ -52,7 +52,7 @@ try
 		("logfile,l", po::value<std::string>(&logfile)->default_value(logfile),   "Name of the logfile. Can be \"stderr\" for log to stderr or empty for no log.")
 		("ignore-missing-session", po::bool_switch(&ignore_missing_session), "Ignore when no PEP_SESSION can be created.")
 #ifdef _WIN32
-		("winsrv", po::value<uintptr_t>(&winsrv)->default_value(0), "For internal use (runs the daemon process)")
+		("winsrv", po::value<uintptr_t>(&winsrv)->default_value(0), "For internal use (HANDLE)")
 #endif	
 	;
 	
@@ -83,7 +83,7 @@ try
 	}
 	
 	if( debug_mode == false )
-		daemonize (!debug_mode, (void *) winsrv);
+		daemonize (!debug_mode, (const void *) winsrv);
 
 	JsonAdapter ja( my_logfile );
 	ja.do_sync( do_sync)
@@ -95,7 +95,6 @@ try
 	if( debug_mode )
 	{
 		ja.run();
-		// daemonize_commit(0);
 		// run until "Q" from stdin
 		int input = 0;
 		do{
