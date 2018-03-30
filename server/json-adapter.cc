@@ -693,7 +693,6 @@ try
 catch (std::exception const &e)
 {
 	Log() << "Exception caught in JsonAdapter::run(): \"" << e.what() << "\"" << std::endl;
-	daemonize_commit(1);   /* FIXME: why do we need it here, why is the catch in main() not effective? */
 	throw;
 }
 

@@ -143,10 +143,7 @@ void daemonize_commit (int retval)
 	dwRetval = (DWORD) retval;
 
 	if (gPipeWr == NULL)
-	{
-		if (dwRetval) exit(dwRetval);   /* FIXME: see comment in UNIX implementation */
 		return;
-	}
 
 	bSuccess = WriteFile(gPipeWr, &dwRetval, sizeof(DWORD), &dwWritten, NULL);
 	if (bSuccess == FALSE && GetLastError() != ERROR_BROKEN_PIPE)
@@ -326,11 +323,8 @@ void daemonize_commit (const int retval)
 	pid = getpid();
 
 	/* nothing to do if not the daemon process */
-	if ( fpid == 1 || fpid == pid ) {
-		/* FIXME: throw in json-adapter.cc is not catched in main ... */
-		if (retval) exit(retval);          /*   ... so, we exit here. */
+	if ( fpid == 1 || fpid == pid )
 		return;
-	}
 
 	if (commited) return;
 	commited = 1;

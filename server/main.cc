@@ -94,29 +94,41 @@ try
 	ja.do_sync( do_sync)
 	  .ignore_session_errors( ignore_missing_session)
 	  ;
-	  
-	ja.prepare_run(address, start_port, end_port);
+	/*
+	 * FIXME: why are exceptions risen after the instantiation of JsonAdapter
+	 *        not catched in the outer try/catch?
+	 */
 
-	if( debug_mode )
+	try
 	{
-		ja.run();
-		// run until "Q" from stdin
-		int input = 0;
-		do{
-			std::cout << "Press <Q> <Enter> to quit." << std::endl;
-			input = std::cin.get();
-			std::cout << "Oh, I got a '" << input << "'. \n";
-		}while(std::cin && input != 'q' && input != 'Q');
-	}else{
-		ja.run();
-		daemonize_commit(0);
-		do{
-			std::this_thread::sleep_for(std::chrono::seconds(3));
-		}while(ja.running());
+		ja.prepare_run(address, start_port, end_port);
+
+		if( debug_mode )
+		{
+			ja.run();
+			// run until "Q" from stdin
+			int input = 0;
+			do{
+				std::cout << "Press <Q> <Enter> to quit." << std::endl;
+				input = std::cin.get();
+				std::cout << "Oh, I got a '" << input << "'. \n";
+			}while(std::cin && input != 'q' && input != 'Q');
+		}else{
+			ja.run();
+			daemonize_commit(0);
+			do{
+				std::this_thread::sleep_for(std::chrono::seconds(3));
+			}while(ja.running());
+		}
+		ja.shutdown(nullptr);
+		ja.Log() << "Good bye. :-)" << std::endl;
+		JsonAdapter::global_shutdown();
 	}
-	ja.shutdown(nullptr);
-	ja.Log() << "Good bye. :-)" << std::endl;
-	JsonAdapter::global_shutdown();
+	catch (...)
+	{
+		daemonize_commit(1);
+		exit(1);
+	}
 }
 catch (std::exception const &e)
 {
