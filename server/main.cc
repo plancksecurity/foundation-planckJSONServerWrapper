@@ -30,15 +30,20 @@ void print_version()
 	std::cout << "pEp JSON Adapter.\n"
 		"\tversion " << JsonAdapter::version() << "\n"
 		"\tpEpEngine version " << get_engine_version() << "\n"
+		"\tpEp protocol version " << PEP_VERSION << "\n"
 		"\n";
 }
 
 std::ostream* my_logfile = nullptr;
-std::unique_ptr<std::ostream> real_logfile;
+std::shared_ptr<std::ostream> real_logfile;
 
 int main(int argc, char** argv)
 try
 {
+#ifdef _WIN32
+	std::ios::sync_with_stdio(false);
+#endif
+
 	po::options_description desc("Program options for the JSON Server Adapter");
 	desc.add_options()
 		("help,h", "print this help messages")
@@ -78,7 +83,7 @@ try
 	{
 		my_logfile = &std::cerr;
 	}else{
-		real_logfile.reset( new std::ofstream( logfile, std::ios::app ) );
+		real_logfile = std::make_shared<std::ofstream>( logfile, std::ios::app );
 		my_logfile = real_logfile.get();
 	}
 	
@@ -111,6 +116,7 @@ try
 	}
 	ja.shutdown(nullptr);
 	ja.Log() << "Good bye. :-)" << std::endl;
+	JsonAdapter::global_shutdown();
 }
 catch (std::exception const &e)
 {

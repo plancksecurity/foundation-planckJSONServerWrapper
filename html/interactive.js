@@ -571,7 +571,7 @@ function create_doc()
 	}
 	
 	output =
-		fd.section_start + 'Function reference for the p≡p JSON Server Adapter. Version “' + server_version + '”' + fd.section_end
+		fd.section_start + 'Function reference for the p≡p JSON Server Adapter. Version “' + server_version_name + '”, API version ' + server_version + fd.section_end
 		+ 'Output parameters are denoted by a ' + fd.b_start + '⇑' + fd.b_end + ', '
 		+ 'InOut parameters are denoted by a ' + fd.b_start + '⇕' + fd.b_end + ' after the parameter type.\n\n'
 		+ output + fd.table_end;

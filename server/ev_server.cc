@@ -98,7 +98,8 @@ const FunctionMap functions = {
 		FP( "get_trust"     , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &get_trust) ),
 		FP( "own_key_is_listed", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<c_string>, Out<bool>> ( &own_key_is_listed) ),
 		FP( "own_identities_retrieve", new Func<PEP_STATUS, In<PEP_SESSION,false>, Out<identity_list*>>( &own_identities_retrieve ) ),
-		FP( "undo_last_mitrust", new Func<PEP_STATUS, In<PEP_SESSION,false>>( &undo_last_mistrust ) ),
+		FP( "set_own_key", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>, In<c_string>>( &set_own_key ) ),
+		FP( "undo_last_mistrust", new Func<PEP_STATUS, In<PEP_SESSION,false>>( &undo_last_mistrust ) ),
 		
 		FP( "myself"        , new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &myself) ),
 		FP( "update_identity", new Func<PEP_STATUS, In<PEP_SESSION,false>, InOut<pEp_identity*>> ( &update_identity) ),
@@ -155,7 +156,7 @@ void ev_server::sendReplyString(evhttp_request* req, const char* contentType, co
 		evhttp_send_reply(req, 500, "evbuffer_add() failed.", outBuf);
 	}
 	
-	std::cerr << "\n=== sendReplyString(): ret=" << ret << ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL") 
+	Log() << "\n=== sendReplyString(): ret=" << ret << ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL") 
 		<< ", output=«" << outputText << "»." << std::endl;
 }
 
@@ -194,23 +195,31 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 	const evhttp_uri* uri = evhttp_request_get_evhttp_uri(req);
 	const char* path = evhttp_uri_get_path(uri);
 	const char* uri_string = evhttp_request_get_uri(req);
-	std::cerr << "** Request: [" << uri_string << "] " << (path? " Path: [" + std::string(path) + "]" : "null path") << "\n";
+	Log() << "** Request: [" << uri_string << "] " << (path? " Path: [" + std::string(path) + "]" : "null path") << "\n";
 	
-	if(path)
-	{
-		const auto q = files.find(path);
-		if(q != files.end()) // found in "files" map
+	try{
+		if(path)
 		{
-			std::cerr << "\t found file \"" << q->second.fileName << "\", type=" << q->second.mimeType << ".\n";
-			sendFile( req, q->second.mimeType, q->second.fileName);
-			return;
+			const auto q = files.find(path);
+			if(q != files.end()) // found in "files" map
+			{
+			Log() << "\t found file \"" << q->second.fileName << "\", type=" << q->second.mimeType << ".\n";
+				sendFile( req, q->second.mimeType, q->second.fileName);
+				return;
+			}
 		}
+	
+		const std::string reply = std::string("URI \"") + uri_string + "\" not found! "
+			+ (!path ? "NULL Path" : "Path: \"" + std::string(path) + "\"");
+		evhttp_send_error(req, HTTP_NOTFOUND, reply.c_str());
 	}
-
-	const std::string reply = std::string("=== Catch-All-Reply ===\nRequest URI: [") + uri_string + "]\n===\n"
-		+ (path ? "NULL Path" : "Path: [ " + std::string(path) + "]" ) + "\n";
-	std::cerr << "\t ERROR: " << reply ;
-	sendReplyString(req, "text/plain", reply.c_str());
+	catch(const std::runtime_error& e)
+	{
+		const std::string error_msg = "Internal error caused by URI \"" + std::string(uri_string) + "\"";
+		// TODO: log e.what() to log file, but don't send it in HTTP error message
+		//       because it might contain sensitive information, e.g. local file paths etc.!
+		evhttp_send_error(req, HTTP_INTERNAL, error_msg.c_str() );
+	}
 };
 
 
@@ -290,10 +299,25 @@ void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << "\tException: \"" << e.what() << "\"\n";
+		Log() << "\tException: \"" << e.what() << "\"\n";
 		answer = make_error( JSON_RPC::INTERNAL_ERROR, "Got a std::exception: \"" + std::string(e.what()) + "\"", p, request_id );
 	}
 
 	sendReplyString(req, "text/plain", js::write(answer, js::raw_utf8));
 };
 
+
+std::ostream& ev_server::Log()
+{
+	*log_file << "evserver: ";
+	return *log_file;
+}
+
+
+void ev_server::setLogfile(std::ostream* new_logfile)
+{
+	log_file = new_logfile ? new_logfile : &nulllogger;
+}
+
+
+std::ostream* ev_server::log_file = &nulllogger;
