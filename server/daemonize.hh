@@ -3,14 +3,11 @@
 
 #include <cstdint>
 
-// cstdint uintptr_t is optional
-#ifndef uintptr_t
-#define ptrdiff_t uintptr_t
-#endif
+#define STATUS_HANDLE "status-handle"
 
 // fork(), go into background, close all ttys etc...
 // system-specific! (POSIX, Windows, ...?)
-void daemonize(const bool daemonize, const uintptr_t winsrv);
+void daemonize(const bool daemonize, const uintptr_t status_handle);
 void daemonize_commit(int retval);
 
 #endif

@@ -16,7 +16,7 @@ namespace po = boost::program_options;
 bool debug_mode = false;
 bool do_sync    = false;
 bool ignore_missing_session = false;
-uintptr_t winsrv = 0;
+uintptr_t status_handle = 0;
 
 std::string address = "127.0.0.1";
 std::string logfile = "";
@@ -57,7 +57,7 @@ try
 		("logfile,l", po::value<std::string>(&logfile)->default_value(logfile),   "Name of the logfile. Can be \"stderr\" for log to stderr or empty for no log.")
 		("ignore-missing-session", po::bool_switch(&ignore_missing_session), "Ignore when no PEP_SESSION can be created.")
 #ifdef _WIN32
-		("winsrv", po::value<uintptr_t>(&winsrv)->default_value(0), "For internal use (HANDLE)")
+		((STATUS_HANDLE), po::value<uintptr_t>(&status_handle)->default_value(0), "Status file handle, for internal use.")
 #endif	
 	;
 	
@@ -88,7 +88,7 @@ try
 	}
 	
 	if( debug_mode == false )
-		daemonize (!debug_mode, (const uintptr_t) winsrv);
+		daemonize (!debug_mode, (const uintptr_t) status_handle);
 
 	JsonAdapter ja( my_logfile );
 	ja.do_sync( do_sync)

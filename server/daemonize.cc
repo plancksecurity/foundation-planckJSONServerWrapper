@@ -16,7 +16,7 @@
 HANDLE gPipeRd = NULL;
 HANDLE gPipeWr = NULL;
 
-void daemonize (const bool daemonize, const uintptr_t winsrv)
+void daemonize (const bool daemonize, const uintptr_t status_handle)
 {
     TCHAR * szWinFrontCmdline, * szWinSrvCmdline;
     DWORD dwWinFrontCmdlineLen;
@@ -34,11 +34,11 @@ void daemonize (const bool daemonize, const uintptr_t winsrv)
      * additional open file handles. But the new process must learn about the
      * value of the filehandles somehow; only handles dedicated to stderr/stdout/stdin
      * redirection can be passed "internally" via system call. So we simply pass the
-     * handle as a string over the command line; as "winsrv" argument. See CreateProcess
-     * documentation for more information.
+     * handle as a string over the command line; #defined STATUS_HANDLE "status-handle".
+     * See CreateProcess documentation for more information.
      */
 
-    gPipeWr = (HANDLE) winsrv;
+    gPipeWr = (HANDLE) status_handle;
 
     if (gPipeWr == NULL)
     {
@@ -54,19 +54,19 @@ void daemonize (const bool daemonize, const uintptr_t winsrv)
             throw std::runtime_error("Cannot configure pipe read handle!");
 
         /*
-         * Create new command line with appended " --winsrv <handle>"
+         * Create new command line with appended " --status-handle <handle>"
          */
         szWinFrontCmdline = GetCommandLine();           // FIXME: Unicode GetCommandLineW, and wmain()
-        dwWinFrontCmdlineLen = _tcslen(szWinFrontCmdline);
-        if (dwWinFrontCmdlineLen + 50 >= MAX_PATH)      // + 50 to accommodate " --winsrv PRIuPRT"
+        dwWinFrontCmdlineLen = _tcslen(szWinFrontCmdline) + _tcslen(_T(" -- ")) + _tcslen(_T(STATUS_HANDLE));
+        if (dwWinFrontCmdlineLen + 40 >= MAX_PATH)      // + 40 to accommodate PRIuPRT
             throw std::runtime_error("Command line too long to be extend!");
 
-        if (!(szWinSrvCmdline = (TCHAR *)calloc(dwWinFrontCmdlineLen + 50 + 1, sizeof(TCHAR))))
+        if (!(szWinSrvCmdline = (TCHAR *)calloc(dwWinFrontCmdlineLen + 40 + 1, sizeof(TCHAR))))
             throw std::runtime_error("Memory allocation for background process command line failed!");
 
-        _stprintf_s(szWinSrvCmdline, dwWinFrontCmdlineLen + 50 + 0,
-                    _T("%s --winsrv %" PRIuPTR), szWinFrontCmdline,
-                                                 ((uintptr_t)(void*)gPipeWr));
+        _stprintf_s(szWinSrvCmdline, dwWinFrontCmdlineLen + 40 + 0,
+                    _T("%s --" STATUS_HANDLE " %") PRIuPTR, szWinFrontCmdline,
+                                                            ((uintptr_t)gPipeWr));
 
         ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
 
@@ -196,7 +196,7 @@ void handle_sig_term (int signal)
     sig_term_recv = 1;
 }
 
-void daemonize (const bool daemonize, const uintptr_t winsrv)
+void daemonize (const bool daemonize, const uintptr_t status_handle)
 {
     int retval = EXIT_FAILURE;
     pid_t pid, sid, daemon_pid;
