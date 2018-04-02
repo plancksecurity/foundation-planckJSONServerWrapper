@@ -16,16 +16,16 @@
 HANDLE gPipeRd = NULL;
 HANDLE gPipeWr = NULL;
 
-void daemonize (const bool daemonize, const void * winsrv)
+void daemonize (const bool daemonize, const uintptr_t winsrv)
 {
-    TCHAR * tzWinFrontCmdline, *tzWinSrvCmdline;
+    TCHAR * szWinFrontCmdline, * szWinSrvCmdline;
+    DWORD dwWinFrontCmdlineLen;
     SECURITY_ATTRIBUTES saAttr;
     PROCESS_INFORMATION piProcInfo;
     STARTUPINFO siStartInfo;
-    HANDLE hwinsrv = (HANDLE) winsrv;
     BOOL bStatusReceived = FALSE;
     DWORD dwRead = 0, dwTotRead = 0;
-    DWORD retval = 1, newRetval = 0;
+    DWORD dwRetVal = 1, dwNewRetVal = 0;
     BOOL bSuccess = FALSE;
 
     /*
@@ -38,10 +38,11 @@ void daemonize (const bool daemonize, const void * winsrv)
      * documentation for more information.
      */
 
-    gPipeWr = hwinsrv;
+    gPipeWr = (HANDLE) winsrv;
 
-    if (hwinsrv == NULL)
+    if (gPipeWr == NULL)
     {
+        ZeroMemory(&saAttr, sizeof(SECURITY_ATTRIBUTES));
         saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
         saAttr.bInheritHandle = TRUE;
         saAttr.lpSecurityDescriptor = NULL;
@@ -49,16 +50,23 @@ void daemonize (const bool daemonize, const void * winsrv)
         if (!CreatePipe(&gPipeRd, &gPipeWr, &saAttr, 0))
             throw std::runtime_error("Cannot create pipe!");
 
-        /* Ensure the read handle to the pipe is not inherited */
         if (!SetHandleInformation(gPipeRd, HANDLE_FLAG_INHERIT, 0))
-            throw std::runtime_error("Cannot configure pipe handle!");
+            throw std::runtime_error("Cannot configure pipe read handle!");
 
-        /* Add " --winsrv <handle>" to the current command line */
-        tzWinFrontCmdline = GetCommandLine();   // FIXME: Unicode GetCommandLineW, and wmain()
-        if (!(tzWinSrvCmdline = (TCHAR *)calloc(MAX_PATH + 1, sizeof(TCHAR))))
+        /*
+         * Create new command line with appended " --winsrv <handle>"
+         */
+        szWinFrontCmdline = GetCommandLine();           // FIXME: Unicode GetCommandLineW, and wmain()
+        dwWinFrontCmdlineLen = _tcslen(szWinFrontCmdline);
+        if (dwWinFrontCmdlineLen + 50 >= MAX_PATH)      // + 50 to accommodate " --winsrv PRIuPRT"
+            throw std::runtime_error("Command line too long to be extend!");
+
+        if (!(szWinSrvCmdline = (TCHAR *)calloc(dwWinFrontCmdlineLen + 50 + 1, sizeof(TCHAR))))
             throw std::runtime_error("Memory allocation for background process command line failed!");
-        _stprintf(tzWinSrvCmdline, _T("%s --winsrv %" PRIuPTR), tzWinFrontCmdline,
-                                                                ((uintptr_t)(void*)gPipeWr));
+
+        _stprintf_s(szWinSrvCmdline, dwWinFrontCmdlineLen + 50 + 0,
+                    _T("%s --winsrv %" PRIuPTR), szWinFrontCmdline,
+                                                 ((uintptr_t)(void*)gPipeWr));
 
         ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
 
@@ -72,64 +80,68 @@ void daemonize (const bool daemonize, const void * winsrv)
 
         bSuccess = CreateProcess(
             NULL,               // application name
-            tzWinSrvCmdline,  // command line
-            &saAttr,          // process security attributes
-            NULL,             // primary thread security attributes
-            TRUE,             // handles are inherited
-            0,                // creation flags, e.g. CREATE_UNICODE_ENVIRONMENT
-            NULL,             // use parent's environment
-            NULL,             // use parent's current directory
-            &siStartInfo,     // STARTUPINFO pointer
-            &piProcInfo       // receives PROCESS_INFORMATION
+            szWinSrvCmdline,    // command line (len+NULL <= MAX_PATH | if appl. name == NULL)
+            &saAttr,            // process security attributes
+            NULL,               // primary thread security attributes
+            TRUE,               // handles are inherited
+            0,                  // creation flags, e.g. CREATE_UNICODE_ENVIRONMENT (FIXME: wmain)
+            NULL,               // use parent's environment
+            NULL,               // use parent's current directory
+            &siStartInfo,       // STARTUPINFO pointer
+            &piProcInfo         // receives PROCESS_INFORMATION
         );
 
-        free(tzWinSrvCmdline);
+        free(szWinSrvCmdline);
 
         if (!bSuccess)
             throw std::runtime_error("Failed to start background process!");
 
         /*
          * Now wait for the background process to give status feedback
-         * via the pipe or for the process to have exited.
+         * via the pipe or for the process to exit (unexpectendly).
          *
          * Close the writing side in the foreground process so that we get EOF when
-         * the background process crashes
+         * the background process crashes.
          */
         if (!CloseHandle(gPipeWr))
-            throw std::runtime_error("Can not close pipe's write end in foreground process!");
+            throw std::runtime_error("Foreground process could not close pipe's write end!");
 
         do
         {
-            bSuccess = ReadFile(gPipeRd, &newRetval + dwTotRead, sizeof(DWORD) - dwTotRead, &dwRead, NULL);
+            bSuccess = ReadFile(gPipeRd, &dwNewRetVal + dwTotRead, sizeof(DWORD) - dwTotRead, &dwRead, NULL);
             dwTotRead += dwRead;
             if (bSuccess == FALSE) {
-                if (GetLastError() == ERROR_BROKEN_PIPE) {
+                if (GetLastError() == ERROR_BROKEN_PIPE)
                     break;
-                }
-                throw std::runtime_error("Error while reading pipe in foreground process!");
+
+                throw std::runtime_error("Error in foreground process while reading pipe!");
             }
-            if (dwTotRead < sizeof(DWORD))
-                continue;
-            retval = newRetval;
+
+            if (dwTotRead < sizeof(DWORD)) continue;
+
+            dwRetVal = dwNewRetVal;
             bStatusReceived = TRUE;
         } while (1);
 
         /*
-         * If status reporting was not complete, wait for the process to exit, and proxy
-         * the return value.
+         * If status reporting was not complete, wait for the process to exit,
+         * and proxy the return value.
          */
-        newRetval = 0;   /* STILL_ACTIVE = 259 */
-        do
+        if (bStatusReceived == FALSE)
         {
-            if (newRetval == STILL_ACTIVE)
-                std::this_thread::sleep_for(std::chrono::milliseconds(250));
-            if (!(bSuccess = GetExitCodeProcess(piProcInfo.hProcess, &newRetval)))
-                throw std::runtime_error("Can not read exit code from background process!");
-        } while (bStatusReceived == FALSE && newRetval == STILL_ACTIVE);
-        if (bStatusReceived == FALSE && newRetval != STILL_ACTIVE)
-            retval = newRetval;
+            dwNewRetVal = STILL_ACTIVE;   /* STILL_ACTIVE = 259 */
+            while (dwNewRetVal == STILL_ACTIVE)
+            {
+                if (!(bSuccess = GetExitCodeProcess(piProcInfo.hProcess, &dwNewRetVal)))
+                    throw std::runtime_error("Can not read exit code from background process!");
 
-        exit(retval);
+                if (dwNewRetVal == STILL_ACTIVE)
+                    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+            }
+            dwRetVal = dwNewRetVal;
+        }
+
+        exit(dwRetVal);
     }
 
 }
@@ -137,15 +149,16 @@ void daemonize (const bool daemonize, const void * winsrv)
 void daemonize_commit (int retval)
 {
     DWORD dwWritten = 0;
-    DWORD dwRetval = 0;
+    DWORD dwRetVal;
     BOOL bSuccess = FALSE;
 
-    dwRetval = (DWORD) retval;
+    dwRetVal = (DWORD) retval;
 
     if (gPipeWr == NULL)
         return;
 
-    bSuccess = WriteFile(gPipeWr, &dwRetval, sizeof(DWORD), &dwWritten, NULL);
+    bSuccess = WriteFile(gPipeWr, &dwRetVal, sizeof(DWORD), &dwWritten, NULL);
+
     if (bSuccess == FALSE && GetLastError() != ERROR_BROKEN_PIPE)
         throw std::runtime_error("Can not write to pipe's write end in background process!");
 
@@ -175,7 +188,7 @@ void daemonize_commit (int retval)
 
 
 volatile sig_atomic_t sig_term_recv = 0;
-int retval_pipefd[2];  /* read fd, write fd */
+int retval_pipefd[2];   /* read fd, write fd */
 pid_t fpid = 1;         /* frontend process PID */
 
 void handle_sig_term (int signal)
@@ -183,7 +196,7 @@ void handle_sig_term (int signal)
     sig_term_recv = 1;
 }
 
-void daemonize (const bool daemonize, const void * winsrv)
+void daemonize (const bool daemonize, const uintptr_t winsrv)
 {
     int retval = EXIT_FAILURE;
     pid_t pid, sid, daemon_pid;
@@ -204,12 +217,12 @@ void daemonize (const bool daemonize, const void * winsrv)
 
     if (pipe (retval_pipefd))
         throw std::runtime_error ("Cannot create return-value pipe!");
-    
+
     /* now fork the intermediate process */
     pid = fork ();
     if (pid < 0)
         throw std::runtime_error ("Cannot fork child process!");
-    
+
     if (pid > 0)
     {
         /*
@@ -246,15 +259,15 @@ void daemonize (const bool daemonize, const void * winsrv)
                 }
             }
         } while (!this_process_should_term);
-        
+
         exit (retval); /* exit the foreground process */
     }
-    
+
     /*
      * At this point we are the intermediate child process,
      * which now needs to fork the daemon process.
      */
-    
+
     /* close the read end of the pipe, belonging to the foreground process */
     close (retval_pipefd[0]);
 
@@ -269,7 +282,6 @@ void daemonize (const bool daemonize, const void * winsrv)
 
     if (daemon_pid > 0)
     {
-    
         /*
          * This now sticks around until it gets the TERM signal from the
          * foreground process. At that point, it will see if the daemon

@@ -88,7 +88,7 @@ try
 	}
 	
 	if( debug_mode == false )
-		daemonize (!debug_mode, (const void *) winsrv);
+		daemonize (!debug_mode, (const uintptr_t) winsrv);
 
 	JsonAdapter ja( my_logfile );
 	ja.do_sync( do_sync)
