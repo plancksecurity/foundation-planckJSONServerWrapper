@@ -59,8 +59,15 @@ try
 	;
 	
 	po::variables_map vm;
-	po::store(po::parse_command_line(argc, argv, desc), vm);
-	po::notify(vm);
+	
+	try{
+		po::store(po::parse_command_line(argc, argv, desc), vm);
+		po::notify(vm);
+	}catch(const po::error& e)
+	{
+		std::cerr << "Cannot parse command line: " << e.what() << "\n\n" << desc << std::endl;
+		return 2;
+	}
 	
 	if (vm.count("help"))
 	{
@@ -113,7 +120,7 @@ try
 	ja.Log() << "Good bye. :-)" << std::endl;
 	JsonAdapter::global_shutdown();
 }
-catch (std::exception const &e)
+catch(std::exception const& e)
 {
 	std::cerr << "Exception caught in main(): \"" << e.what() << "\"" << std::endl;
 	return 1;
