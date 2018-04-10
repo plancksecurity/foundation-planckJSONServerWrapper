@@ -1,11 +1,13 @@
 #ifndef JSON_SERVER_ADAPTER_DAEMONIZE_HH
 #define JSON_SERVER_ADAPTER_DAEMONIZE_HH
 
-#include <functional>
+#include <cstdint>
+
+#define STATUS_HANDLE "status-handle"
 
 // fork(), go into background, close all ttys etc...
-// child_fn is called in the child process, before it detaches from the tty.
 // system-specific! (POSIX, Windows, ...?)
-void daemonize( std::function<void()> child_fn = std::function<void()>() );
+void daemonize(const bool daemonize, const uintptr_t status_handle);
+void daemonize_commit(int retval);
 
 #endif
