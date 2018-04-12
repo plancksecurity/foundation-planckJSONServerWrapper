@@ -75,5 +75,10 @@ echo -en '\n\t};\n\n'
 
 )
 
+echo 'const std::map<unsigned, unsigned> NFC_CombiningClass = {'
+
+cat /usr/share/unicode/UnicodeData.txt | cut -d';' -f 1,4 | grep -v -E ';0$' | sed 's/\([0-9A-F]*\);\([0-9]*\)/	{0x\1, \2},/g'
+
+echo '};'
 
 # end of file
