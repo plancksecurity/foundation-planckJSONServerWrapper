@@ -53,7 +53,7 @@ static const std::string VersionName =
 //	"(34) Erndtebrück";      // remove apiVersion(), change version() to return a semver-compatible version number in a JSON object.
 //	"(35) Bad Berleburg";    // fix the fork() problem on MacOS. daemonize() now got a function parameter. \o/
 //	"(36) Hatzfeld";         // JSON-81: add package_version, rename "version" into "api_version" in ServerVersion, add versions from the Engine, too
-	"(37) Test";             // JSON-75: FIXME
+	"(37) Battenberg";       // JSON-75: change debonize() behavior, especially on MS Windows
 
 //const ServerVersion sv{0, 10, 0, version_name};  // first version defined.
 //const ServerVersion sv{0, 11, 0, version_name};  // add set_own_key()
@@ -62,7 +62,7 @@ static const std::string VersionName =
 //const ServerVersion sv{0, 12, 2, version_name};  // fix the fork() problem on MacOS. daemonize() now got a function parameter.
 //const ServerVersion sv(0,13,0);  // add package_version, rename "version" into "api_version" in ServerVersion, add versions from the Engine, too
 //const ServerVersion sv(0,13,1);  // JSON-91: add MIME_encrypt_message_for_self() and encrypt_message_for_self()
-const ServerVersion sv(0,14,0);  // FIXME
+const ServerVersion sv(0,14,0);  // JSON-75: incompatible behavior of daemonize() especially in MS Windows
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
