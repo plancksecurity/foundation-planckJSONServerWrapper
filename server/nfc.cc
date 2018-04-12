@@ -102,6 +102,18 @@ namespace
 		return ret;
 	}
 
+	// returns the "CanonicalCombinincClass" of the given Unicode codpoint u
+	unsigned canonicalClass(unsigned u)
+	{
+		const auto q = NFC_CombiningClass.find(u);
+		if(q==NFC_CombiningClass.end())
+		{
+			return 0; // not found in map.
+		}else{
+			return q->second;
+		}
+	}
+	
 } // end of anonymous namespace
 
 
@@ -225,12 +237,19 @@ IsNFC isNFC_quick_check(const std::string& s)
 	const char* const end = s.data() + s.size();
 	try
 	{
+		unsigned last_cc = 0;
 		while(begin<end)
 		{
 			const uint32_t u = parseUtf8(begin, end);
+			const unsigned cc = canonicalClass(u);
+			if( (cc!=0) && (last_cc > cc) )
+			{
+				return IsNFC::No;
+			}
 			if(NFC_No.count(u)) return IsNFC::No;
 			if(NFC_Maybe.count(u)) return IsNFC::Maybe;
 			++begin;
+			last_cc = cc;
 		}
 	}
 	catch(const utf8_exception& e)
