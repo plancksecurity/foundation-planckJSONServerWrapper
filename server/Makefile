@@ -86,7 +86,7 @@ $(TARGET)-static: main.o libjson-adapter.a
 $(TARGET_TEST): servertest.o libjson-adapter.a
 	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-$(TARGET_GTEST): unittest_json.o gtest-all.o gtest_main.o libjson-adapter.a
+$(TARGET_GTEST): unittest_json.o unittest_nfc.o gtest-all.o gtest_main.o libjson-adapter.a
 	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 libjson-adapter.a: $(ALL_OBJECTS)
