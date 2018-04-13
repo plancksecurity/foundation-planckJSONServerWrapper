@@ -16,6 +16,7 @@
 #include <mutex>
 
 #include "json-adapter.hh"
+#include "daemonize.hh"
 #include "pep-types.hh"
 #include "json_rpc.hh"
 #include "security-token.hh"
