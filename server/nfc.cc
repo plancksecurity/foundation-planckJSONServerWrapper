@@ -3,6 +3,7 @@
 #include "nfc.hh"
 #include <cstdint>
 #include <set>
+#include <ostream>
 
 #include "nfc_sets.hh"
 
@@ -115,6 +116,18 @@ namespace
 	}
 	
 } // end of anonymous namespace
+
+
+std::ostream& operator<<(std::ostream& o, IsNFC is_nfc)
+{
+	switch(is_nfc)
+	{
+		case IsNFC::No    : return o << "No";
+		case IsNFC::Maybe : return o << "Maybe";
+		case IsNFC::Yes   : return o << "Yes";
+	}
+	throw std::logic_error("Unknown value of IsNFC");
+}
 
 
 uint32_t parseUtf8(const char*& c, const char* end)

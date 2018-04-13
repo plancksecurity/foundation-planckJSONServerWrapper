@@ -3,6 +3,7 @@
 
 #include <string>
 #include <stdexcept>
+#include <iosfwd>
 
 enum class IsNFC
 {
@@ -10,6 +11,8 @@ enum class IsNFC
 	Maybe=1, // contains a character that is only allowed in certain positions in NFC
 	Yes=2    // contains no invalid or partially valid character
 };
+
+std::ostream& operator<<(std::ostream& o, IsNFC is_nfc);
 
 
 class illegal_utf8 : public std::runtime_error
