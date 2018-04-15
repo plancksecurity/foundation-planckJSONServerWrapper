@@ -22,7 +22,7 @@ ifdef BUILD_CONFIG
     $(info ================================================)
 endif
 
-NO_SOURCE=main.cc servertest.cc unittest_json.cc
+NO_SOURCE=main.cc servertest.cc unittest_json.cc unittest_nfc.cc
 
 ALL_SOURCE=$(filter-out $(NO_SOURCE),$(wildcard json_spirit/*.cpp))
 ALL_SOURCE+= prefix-config.cc
