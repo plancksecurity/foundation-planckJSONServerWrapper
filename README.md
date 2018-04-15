@@ -99,7 +99,7 @@ Debian 9:
 ~~~~~
 PREFIX=$(HOME)/code/json-ad/build
 HTML_DIRECTORY=$(PREFIX)/share/pEp/json-adapter/html
-GTEST_DIR=$(HOME)/code/gtest/googletest
+GTEST_DIR=/usr/src/googletest/googletest/
 
 ENGINE_INC=-I$(HOME)/code/engine/build/include
 ENGINE_LIB=-L$(HOME)/code/engine/build/lib
