@@ -29,7 +29,7 @@ Debian 9:
 ~~~~~
 apt install -y build-essential libboost1.62-dev libboost-system1.62-dev \
     libboost-filesystem1.62-dev libboost-program-options1.62-dev \
-    libboost-thread1.62-dev libgpgme-dev uuid-dev
+    libboost-thread1.62-dev libgpgme-dev uuid-dev googletest
 ~~~~~
 
 macOS 10.12:
