@@ -31,6 +31,9 @@ uint32_t parseUtf8(const char*& c, const char* end);
 // throws illegal_utf8 exception if s is not valid UTF-8
 void assert_utf8(const std::string& s);
 
+// creates an NFD u32string from UTF-8 input string s
+std::u32string fromUtf8_decompose(const std::string& s);
+
 // return No or Maybe, if at least one character with NFC_Quickcheck class is "No" or "Maybe"
 // might throw illegal_utf8 exception
 IsNFC isNFC_quick_check(const std::string& s);

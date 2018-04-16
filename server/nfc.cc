@@ -115,7 +115,63 @@ namespace
 		}
 	}
 	
+	std::pair<int,int> decompose(unsigned u)
+	{
+		const auto q = NFC_Decompose.find(u);
+		if(q==NFC_Decompose.end())
+		{
+			return std::make_pair(-1, -1);
+		}else{
+			return q->second;
+		}
+	}
+	
+	std::u32string decompose_full(unsigned u)
+	{
+		const std::pair<int,int> d = decompose(u);
+		if(d.first<0)
+		{
+			return std::u32string( 1, char32_t(u) );
+		}else{
+			if(d.second<0)
+			{
+				return decompose_full(d.first);
+			}
+		}
+		return decompose_full(d.first) + decompose_full(d.second);
+	}
+	
+
+	// according to Unicode Standard, clause D108:
+	bool isReorderablePair(unsigned a, unsigned b)
+	{
+		const unsigned cca = canonicalClass(a);
+		const unsigned ccb = canonicalClass(b);
+		
+		return (cca > ccb) && (ccb>0);
+	}
+
+	// Unicode standard requires bubble sort, for stability reasons?
+	void canonicalOrdering(std::u32string& us)
+	{
+		if(us.size()<2)
+			return;
+		
+		for(unsigned n=us.size(); n>1; --n)
+		for(unsigned i=0; i<n-1; ++i)
+		{
+			char32_t& a = us[i];
+			char32_t& b = us[i+1];
+			if( isReorderablePair(a,b) )
+			{
+				std::swap(a,b);
+			}
+		}
+	}
+
 } // end of anonymous namespace
+
+
 
 
 std::ostream& operator<<(std::ostream& o, IsNFC is_nfc)
@@ -244,6 +300,23 @@ void assert_utf8(const std::string& s)
 }
 
 
+// creates a NFD string from s
+std::u32string fromUtf8_decompose(const std::string& s)
+{
+	std::u32string u32s;
+	u32s.reserve(s.size()*1.25);
+	const char* begin = s.c_str();
+	const char* end   = s.c_str() + s.size();
+	for(; begin<end; ++begin)
+	{
+		unsigned u = parseUtf8(begin, end);
+		u32s += decompose_full(u);
+	}
+	canonicalOrdering(u32s); // works inplace.
+	return u32s;
+}
+
+
 IsNFC isNFC_quick_check(const std::string& s)
 {
 	const char* begin = s.data();
@@ -292,7 +365,7 @@ bool isNFC(const std::string& s)
 // s is ''moved'' to the return value if possible so no copy is done here.
 std::string toNFC(std::string s)
 {
-	if(isNFC(s))
+	if(isNFC_quick_check(s)==IsNFC::Yes)
 		return s;
 	
 	// TODO:
