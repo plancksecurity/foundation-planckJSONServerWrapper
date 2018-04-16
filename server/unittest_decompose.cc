@@ -51,6 +51,8 @@ const std::vector<TestEntry> testValues =
 
 		{ "a\xcc\x85\xcc\xbc", U"a\u033c\u0305" }, // a + <U+0305> + <U+033C> ( overline + seagull_below) -> canonicalOrdering reorders the accents!
 		{ "a\xcc\xbc\xcc\x85", U"a\u033c\u0305" }, // a + <U+033C> + <U+0305> ( seagull_below + overline)
+		{ "\xe1\xba\xad", U"a\u0323\u0302" }, // Vietnamese: ậ <U+1EAD> = a + <U+0323> + <U+0302> = a + dot below + circumflex
+		{ "\xe1\xba\xad\xcc\x88\xcc\xa7", U"a\u0327\u0323\u0302\u0308" }, // Vietnamese: ậ <U+1EAD> + diaeresis + cedilla = a + <U+0323> + <U+0302> = a + cedilla + dot below + circumflex + diaeresis
 
 		{ std::string(nullo, nullo+1), std::u32string(nullo32, nullo32+1) },  // Yeah, 1 NUL byte
 		{ std::string(nullo, nullo+4), std::u32string(nullo32, nullo32+4) },  // Yeah, 4 NUL bytes
