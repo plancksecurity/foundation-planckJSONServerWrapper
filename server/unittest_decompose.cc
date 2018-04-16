@@ -53,7 +53,14 @@ const std::vector<TestEntry> testValues =
 		{ "a\xcc\xbc\xcc\x85", U"a\u033c\u0305" }, // a + <U+033C> + <U+0305> ( seagull_below + overline)
 		{ "\xe1\xba\xad", U"a\u0323\u0302" }, // Vietnamese: ậ <U+1EAD> = a + <U+0323> + <U+0302> = a + dot below + circumflex
 		{ "\xe1\xba\xad\xcc\x88\xcc\xa7", U"a\u0327\u0323\u0302\u0308" }, // Vietnamese: ậ <U+1EAD> + diaeresis + cedilla = a + <U+0323> + <U+0302> = a + cedilla + dot below + circumflex + diaeresis
-
+		
+		// Non-BMP stuff:
+		{ "\xf0\x9d\x85\xa0", U"\U0001D158\U0001D165\U0001D16E"}, // <U+1D160> MUSICAL SYMBOL EIGHTH NOTE
+		{ "\xf0\xaf\xa0\xb4", U"\U00020A2C"}, // <U+2F834> -> <U+20A2C>
+		
+		// complex canonical ordering tests from Unicode's NormalizationTest.txt
+		{ "x\xcc\x95\xcc\x80\xd6\xae\xcc\x80y", U"x\u05AE\u0300\u0300\u0315y" }, // "a" <U+0315><U+0300><U+05AE><U+0300> "b"  --> "a" <U+05AE><U+0300><U+0300><U+0315> "b"
+		
 		{ std::string(nullo, nullo+1), std::u32string(nullo32, nullo32+1) },  // Yeah, 1 NUL byte
 		{ std::string(nullo, nullo+4), std::u32string(nullo32, nullo32+4) },  // Yeah, 4 NUL bytes
 		
