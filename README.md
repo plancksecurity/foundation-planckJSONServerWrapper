@@ -29,7 +29,7 @@ Debian 9:
 ~~~~~
 apt install -y build-essential libboost1.62-dev libboost-system1.62-dev \
     libboost-filesystem1.62-dev libboost-program-options1.62-dev \
-    libboost-thread1.62-dev libgpgme-dev uuid-dev
+    libboost-thread1.62-dev libgpgme-dev uuid-dev googletest
 ~~~~~
 
 macOS 10.12:
@@ -46,7 +46,7 @@ Build and install the pEp Engine.  Instructions can be found here:
 ~~~~~
 mkdir ~/code/json-ad
 hg clone https://cacert.pep.foundation/dev/repos/pEpJSONServerAdapter/ ~/code/json-ad
-cd ~/code/json-ad
+cd ~/code/json-ad/libevent-2.0.22-stable
 ./configure --prefix="$HOME/code/json-ad/libevent-2.0.22-stable/build/" --disable-openssl
 make
 make install
@@ -54,7 +54,7 @@ make install
 
 ### Build and install the JSON server
 ~~~~~
-cd cd ~/code/json-ad/server
+cd ~/code/json-ad/server
 ~~~~~
 
 Edit the build configuration to your needs in `./Makefile.conf`, or create a
@@ -73,6 +73,7 @@ macOS 10.12:
 ~~~~~
 PREFIX=$(HOME)/code/json-ad/build
 HTML_DIRECTORY=$(PREFIX)/share/pEp/json-adapter/html
+GTEST_DIR=$(HOME)/code/gtest/googletest
 
 BOOST_INC=-I$(HOME)/Cellar/boost/1.65.1/include
 BOOST_LIB=-L$(HOME)/Cellar/boost/1.65.1/lib
@@ -98,6 +99,7 @@ Debian 9:
 ~~~~~
 PREFIX=$(HOME)/code/json-ad/build
 HTML_DIRECTORY=$(PREFIX)/share/pEp/json-adapter/html
+GTEST_DIR=/usr/src/googletest/googletest/
 
 ENGINE_INC=-I$(HOME)/code/engine/build/include
 ENGINE_LIB=-L$(HOME)/code/engine/build/lib
