@@ -3013,3 +3013,5 @@ const std::map<unsigned, std::pair<int,int>> NFC_Decompose = {
 {0x2FA1D, {0x2A600, -1}},
 };
 
+std::map< std::pair<unsigned, unsigned>, unsigned> generate_nfc_compose();
+const std::map< std::pair<unsigned, unsigned>, unsigned> NFC_Compose = generate_nfc_compose();

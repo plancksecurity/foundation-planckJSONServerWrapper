@@ -371,3 +371,19 @@ std::string toNFC(std::string s)
 	// TODO:
 	throw std::logic_error("NFC normalization is necessary, but unimplemented. Sorry.");
 }
+
+
+// used only to initialize the NFC Compose mapping:
+std::map< std::pair<unsigned, unsigned>, unsigned> generate_nfc_compose()
+{
+	std::map< std::pair<unsigned, unsigned>, unsigned> m;
+	for(const auto& decomp : NFC_Decompose)
+	{
+		if(decomp.second.second >= 0) // skip singleton decompositions
+		{
+			m[ decomp.second ] = decomp.first;
+		}
+	}
+	
+	return m;
+}

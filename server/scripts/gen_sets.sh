@@ -93,4 +93,7 @@ cat /usr/share/unicode/UnicodeData.txt | cut -d';' -f 1,6 | grep -v '<' | \
 
 echo -en '};\n\n'
 
+echo 'std::map< std::pair<unsigned, unsigned>, unsigned> generate_nfc_compose();'
+echo -en 'const std::map< std::pair<unsigned, unsigned>, unsigned> NFC_Compose = generate_nfc_compose();\n\n'
+
 # end of file
