@@ -34,6 +34,9 @@ void assert_utf8(const std::string& s);
 // creates an NFD u32string from UTF-8 input string s
 std::u32string fromUtf8_decompose(const std::string& s);
 
+// convert NFD to NFC
+std::u32string createNFC(std::u32string nfd_string);
+
 // return No or Maybe, if at least one character with NFC_Quickcheck class is "No" or "Maybe"
 // might throw illegal_utf8 exception
 IsNFC isNFC_quick_check(const std::string& s);

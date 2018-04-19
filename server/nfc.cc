@@ -270,6 +270,36 @@ uint32_t parseUtf8(const char*& c, const char* end)
 }
 
 
+std::string toUtf8(const std::u32string& u32)
+{
+	std::string ret;
+	for(char32_t c : u32)
+	{
+		if(c<=0x7F)
+		{
+			ret += char(c);
+		}else if(c<=0x7FF)
+		{
+			ret += char( 0xC0 + (c>>6) );
+			ret += char( 0x80 + (c & 63));
+		}else if(c<=0xFFFF)
+		{
+			ret += char( 0xE0 + (c>>12) );
+			ret += char( 0x80 + ((c>>6) & 63));
+			ret += char( 0x80 + (c & 63));
+		}else if(c<=0x10FFFF)
+		{
+			ret += char( 0xF0 + (c>>18) );
+			ret += char( 0x80 + ((c>>12) & 63));
+			ret += char( 0x80 + ((c>>6) & 63));
+			ret += char( 0x80 + (c & 63));
+		}else{
+			throw too_big(0, c);
+		}
+	}
+	return ret;
+}
+
 
 illegal_utf8::illegal_utf8( const std::string& s, unsigned position, const std::string& reason)
 : std::runtime_error( "Illegal UTF-8 string \"" + escape(s) + "\" at position " + std::to_string(position) + ": " + reason  )
@@ -317,6 +347,71 @@ std::u32string fromUtf8_decompose(const std::string& s)
 }
 
 
+template<class Iter>
+bool blocked(Iter L, Iter C)
+{
+	Iter B = L; ++B;
+	for(;B!=C;++B)
+	{
+		if(canonicalClass(*B)==0 || canonicalClass(*B)==canonicalClass(*C))
+			return true;
+	}
+	return false;
+}
+
+
+template<class Iter>
+void combine(std::u32string& nfc, Iter starter, Iter next_starter)
+{
+	Iter c = starter; ++c;
+	for(;c!=next_starter; ++c)
+	{
+		if(!blocked(starter, c))
+		{
+			auto q = NFC_Compose.find( std::make_pair<unsigned>(*starter,*c) );
+			if(q!=NFC_Compose.end())
+			{
+				*starter = q->second;
+				*c = -1;
+			}
+		}
+	}
+	
+	// now add the remaining/changed characters to the NFC string:
+	for(Iter c = starter; c!=next_starter; ++c)
+	{
+		if( int(*c) >= 0)
+		{
+			nfc += *c;
+		}
+	}
+}
+
+// the nfd string is changed during composing process. So it works on a copy or call with std::move().
+std::u32string createNFC(std::u32string nfd)
+{
+	if(nfd.size()<=1)
+		return nfd;
+	
+	std::u32string nfc;
+	nfc.reserve(nfd.size());
+	auto starter = nfd.begin();
+	while( starter != nfd.end() )
+	{
+		if( canonicalClass(*starter)!=0 )
+		{
+			nfc += *starter;
+			++starter;
+		}else{
+			auto next_starter = std::find_if(starter+1, nfd.end(), [](char32_t c){return canonicalClass(c)==0;} );
+			combine(nfc, starter, next_starter);
+			starter = next_starter; 
+		}
+	}
+	return nfc;
+}
+
+
 IsNFC isNFC_quick_check(const std::string& s)
 {
 	const char* begin = s.data();
@@ -354,7 +449,7 @@ bool isNFC(const std::string& s)
 		case IsNFC::No  : return false;
 		case IsNFC::Maybe:
 			{
-				throw std::logic_error("Deep NGC check is not yet implemented. Sorry.");
+				return s == toNFC(s); // very expensive!
 			}
 	}
 	
@@ -368,8 +463,7 @@ std::string toNFC(std::string s)
 	if(isNFC_quick_check(s)==IsNFC::Yes)
 		return s;
 	
-	// TODO:
-	throw std::logic_error("NFC normalization is necessary, but unimplemented. Sorry.");
+	return toUtf8( createNFC( fromUtf8_decompose(s) ));
 }
 
 
