@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <set>
 #include <ostream>
+#include <algorithm>
 
 #include "nfc_sets.hh"
 
