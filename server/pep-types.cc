@@ -97,6 +97,7 @@ std::string status_to_string(PEP_STATUS status)
 		case PEP_DECRYPT_SIGNATURE_DOES_NOT_MATCH : status_string = "PEP_DECRYPT_SIGNATURE_DOES_NOT_MATCH"; break;
 		case PEP_VERIFY_NO_KEY                    : status_string = "PEP_VERIFY_NO_KEY"; break;
 		case PEP_VERIFIED_AND_TRUSTED             : status_string = "PEP_VERIFIED_AND_TRUSTED"; break;
+		case PEP_CANNOT_REENCRYPT                 : status_string = "PEP_CANNOT_REENCRYPT"; break;
 		case PEP_CANNOT_DECRYPT_UNKNOWN           : status_string = "PEP_CANNOT_DECRYPT_UNKNOWN"; break;
 		
 		case PEP_TRUSTWORD_NOT_FOUND              : status_string = "PEP_TRUSTWORD_NOT_FOUND"; break;

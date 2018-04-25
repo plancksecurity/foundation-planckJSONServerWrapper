@@ -238,6 +238,13 @@ struct Type2String<InOut<T, true>>
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "InOut"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
 
+template<class T>
+struct Type2String<InOutP<T, true>>
+{
+	static js::Value get() { js::Object ret; ret.emplace_back("direction", "InOut"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
+};
+
+
 template<class... Args> struct Type2Json;
 
 template<class T, class... Args>
