@@ -29,16 +29,14 @@ const std::vector<TestEntry> testValues =
 		{ "\n\\\b", 1, IsNFC::Yes      },  // backslash escapes for ASCII and control chars
 		{ "ä"     , 1, IsNFC::Yes        },  // <U+00E4> small a with diaeresis
 		{ "\xc4\x85" , 1, IsNFC::Yes     },  // <U+0105> small a with ogonek
-// Not implemented, yet:
-		{ "a\xcc\x88", -1,  IsNFC::Maybe }, // a + <U+0308> combining diaresis
-		{ "a\xcc\xa8", -1,  IsNFC::Maybe }, // a + <U+0328> combining ogonek
-		{ "a\xcc\xa8\xcc\x88", -1,  IsNFC::Maybe }, // a + <U+0328> + <U+0308> ( ogonek +  diaresis)
-		{ "a\xcc\x88\xcc\xa8", -1,  IsNFC::Maybe }, // a + <U+0308> + <U+0328> ( diaeresis + ogonek)
-// use these values when full NFC check is implemented:
-//		{ "a\xcc\x88",  1,  IsNFC::Yes }, // a + <U+0308> combining diaresis
-//		{ "a\xcc\xa8",  1,  IsNFC::Yes }, // a + <U+0328> combining ogonek
-//		{ "a\xcc\xa8\xcc\x88",  1,  IsNFC::Yes }, // a + <U+0328> + <U+0308> ( ogonek +  diaresis)
-//		{ "a\xcc\x88\xcc\xa8",  0,  IsNFC::No }, // a + <U+0308> + <U+0328> ( diaeresis + ogonek)
+
+		{ "a\xcc\x88",  0,  IsNFC::Maybe }, // a + <U+0308> combining diaresis
+		{ "a\xcc\xa8",  0,  IsNFC::Maybe }, // a + <U+0328> combining ogonek
+		{ "a\xcc\xa8\xcc\x88",  0,  IsNFC::Maybe }, // a + <U+0328> + <U+0308> ( ogonek +  diaresis)
+		{ "a\xcc\x88\xcc\xa8",  0,  IsNFC::Maybe }, // a + <U+0308> + <U+0328> ( diaeresis + ogonek)
+
+		{ "\xc4\x85\xcc\x88" , 1, IsNFC::Maybe   },  // <U+0105> small a with ogonek + combining diaeresis
+		{ "ä\xcc\xa8",  0,  IsNFC::Maybe }, // a diaeresis + <U+0328> combining ogonek
 
 // Already implemented, because <U+305> and <U+33C> have neither "No" nor "Maybe" NFC class:
 		{ "a\xcc\x85\xcc\xbc",  0,  IsNFC::No  }, // a + <U+0305> + <U+033C> ( overline + seagull_below)
