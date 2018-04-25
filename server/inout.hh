@@ -85,7 +85,8 @@ struct InRaw
 };
 
 
-// helper classes to specify in- and out-parameters
+// helper classes to specify in- and out-parameters whose output is in-place.
+// Use InOutP<T> for in/out parameters where the function might change the object and expects a pointer
 template<class T, bool NeedInput=true>
 struct InOut : public In<T,NeedInput>
 {
@@ -115,9 +116,12 @@ struct Out
 	typedef T* c_type; // the according type in C function parameter
 	enum { is_output = true, need_input = NeedInput }; // if need_input=false it would no longer consume an element in the input parameter array.
 	
-	Out() : value{ new T{} }
+	explicit Out() : value{ new T{} }
 	{ }
-	
+
+	explicit Out(const T& t) : value{ new T{t} }
+	{ }
+
 	~Out();
 	
 	Out(const Out<T,NeedInput>& other) = delete;
@@ -158,6 +162,25 @@ struct Out
 		return o;
 	}
 	
+};
+
+
+// helper classes to specify in- and out-parameters whose output might change by the called function.
+// Use InOut<T> for in/out parameters where the function only makes in-place changes.
+template<class T, bool NeedInput=true>
+struct InOutP : public Out<T,NeedInput>
+{
+	typedef Out<T,NeedInput> Base;
+	enum { is_output = true, need_input = NeedInput };
+
+	explicit InOutP(const T& t) : Base(t) {}
+	
+	InOutP<T,NeedInput>& operator=(const InOutP<T,NeedInput>&) = delete;
+	
+	// default implementation:
+	InOutP(const js::Value& v, Context*)
+	: Base( from_json<T>(v) )
+	{ }
 };
 
 
