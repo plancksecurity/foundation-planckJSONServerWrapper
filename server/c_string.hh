@@ -47,8 +47,11 @@ struct Out<c_string, true>
 	typedef Out<c_string, true> Self;
 	
 	typedef char** c_type;
-	enum { is_output = true, need_input = false };
+	enum { is_output = true, need_input = true };
 	
+	Out(const js::Value&, Context*) // ignore dummy value, ignore context
+	{ }
+
 	~Out();
 	
 	Out(const Self& other) = delete;
@@ -60,9 +63,9 @@ struct Out<c_string, true>
 		return value ? ::to_json<std::string>(value) : js::Value();
 	}
 	
-	c_type get_value() { return &value; }
+	c_type get_value() const { return &value; }
 	
-	char* value = nullptr;
+	mutable char* value = nullptr;
 };
 
 
