@@ -173,7 +173,10 @@ public:
 		rs.emplace_back("outParams", std::move(out_params));
 		rs.emplace_back("return", std::move(ret));
 		
-		context->augment(rs);  // used e.g. add some debug infos to the status return value
+		if(context)
+		{
+			context->augment(rs);  // used e.g. add some debug infos to the status return value
+		}
 		return rs;
 	}
 
