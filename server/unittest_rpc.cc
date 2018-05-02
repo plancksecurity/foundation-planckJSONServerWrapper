@@ -41,7 +41,7 @@ char* add_mul_inout(int x, const char* y_str, int* z_result, char** result)
 	const std::string rs = std::to_string(r);
 	char* rcs = new_string( rs.c_str(), 0 ); // == strdup() but allocated on Engine's heap
 	*result = rcs;
-	return rcs;
+	return new_string( ("x" + rs + "x").c_str(), 0);
 }
 
 const FunctionMap test_functions = {
@@ -69,6 +69,12 @@ const std::vector<TestEntry> testValues =
 	{
 		{ "{\"jsonrpc\":\"2.0\", \"id\":23, \"method\":\"add_mul_simple\", \"params\":[10,11,12]}",
 		  "{\"jsonrpc\":\"2.0\", \"id\":23, \"result\":{ \"outParams\":[], \"return\":252}}"
+		},
+		{ "{\"jsonrpc\":\"2.0\", \"id\":23, \"method\":\"add_mul_simple\", \"params\":[10,-11,-12]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":23, \"result\":{ \"outParams\":[], \"return\":12}}"
+		},
+		{ "{\"jsonrpc\":\"2.0\", \"id\":23, \"method\":\"add_mul_inout\", \"params\":[100,\"111\",123, \"dummy\"]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":23, \"result\":{ \"outParams\":[\"25953\",25953], \"return\":\"x25953x\"}}"
 		},
 	};
 
