@@ -32,6 +32,12 @@ GpgEnvironment getGpgEnvironment()
 
 
 template<>
+Out<GpgEnvironment>::~Out()
+{
+}
+
+
+template<>
 js::Value to_json<GpgEnvironment>(const GpgEnvironment& ge)
 {
 	js::Object obj;
@@ -40,6 +46,7 @@ js::Value to_json<GpgEnvironment>(const GpgEnvironment& ge)
 	obj.emplace_back("gpg_agent_info", (ge.gpg_agent_info ? ge.gpg_agent_info.get() : js::Value{}) );
 	return obj;
 }
+
 
 template<>
 js::Value Type2String<GpgEnvironment>::get()  { return "GpgEnvironment"; }

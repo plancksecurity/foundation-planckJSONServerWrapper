@@ -268,6 +268,12 @@ Out<PEP_comm_type>::~Out()
 }
 
 
+template<>
+Out<PEP_STATUS>::~Out()
+{
+}
+
+
 // used for strings that shall be _owned_ by the pEpEngine only!
 template<>
 char* from_json<char*>(const js::Value& v)

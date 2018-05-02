@@ -38,7 +38,8 @@ public:
 
 	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
-		return to_json( fn(args.get_value()...) );
+		Out<R> o{ fn(args.get_value()...) };
+		return to_json( o );
 	}
 };
 

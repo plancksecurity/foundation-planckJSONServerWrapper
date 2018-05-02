@@ -119,4 +119,10 @@ js::Value to_json<ServerVersion>(const ServerVersion& sv)
 }
 
 template<>
+Out<ServerVersion>::~Out()
+{
+}
+
+
+template<>
 js::Value Type2String<ServerVersion>::get()  { return "ServerVersion"; }
