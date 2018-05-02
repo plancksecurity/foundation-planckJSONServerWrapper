@@ -116,10 +116,10 @@ struct Out
 	typedef T* c_type; // the according type in C function parameter
 	enum { is_output = true, need_input = NeedInput }; // if need_input=false it would no longer consume an element in the input parameter array.
 	
-	explicit Out() : value{ new T{} }
+	explicit Out() : value{}
 	{ }
 
-	explicit Out(const T& t) : value{ new T{t} }
+	explicit Out(const T& t) : value{t}
 	{ }
 
 	~Out();
@@ -137,31 +137,23 @@ struct Out
 	
 	js::Value to_json() const
 	{
-		return ::to_json<T>(*value);
+		return ::to_json<T>(value);
 	}
 	
-	c_type get_value() const { return value; }
+	c_type get_value() const { return &value; }
 	
-	T* value = nullptr;
+	mutable T value;
 	
+	/*
 	friend
 	std::ostream& operator<<(std::ostream& o, const Out<T,NeedInput>& out)
 	{
-		o << (const void*)&out;
+		o << (const void*)out;
 		
-// the if() was added to avoid crashes on memory corruptuon. But clang++ warns, that this check is always true on "well-formed" programs, and he is right. In an ideal world there are no memory corruptions. ;-(
-//		if(&out)
-		{
-			o << ", value=" << (const void*)out.value;
-			if(out.value)
-			{
-				o << ", *value=" << *(out.value);
-			}
-		}
-		
+		o << ", value=" << (const void*)out.value;
 		return o;
 	}
-	
+	*/
 };
 
 
@@ -187,7 +179,7 @@ struct InOutP : public Out<T,NeedInput>
 template<class T, bool NeedInput>
 js::Value to_json(const Out<T,NeedInput>& o)
 {
-	return ::to_json(*o.value);
+	return ::to_json(o.value);
 }
 
 template<class T, bool NeedInput>

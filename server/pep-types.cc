@@ -197,21 +197,13 @@ In<const pEp_identity*>::~In()
 template<>
 Out<pEp_identity*>::~Out()
 {
-	if(value)
-	{
-		free_identity(*value);
-	}
-	delete value;
+	free_identity(value);
 }
 
 template<>
 Out<identity_list*>::~Out()
 {
-	if(value)
-	{
-		free_identity_list(*value);
-	}
-	delete value;
+	free_identity_list(value);
 }
 
 
@@ -247,43 +239,32 @@ In<sync_handshake_result>::~In()
 template<>
 Out<stringlist_t*>::~Out()
 {
-	if(value) free_stringlist(*value);
-	delete value;
+	free_stringlist(value);
 }
 
 template<>
 Out<stringpair_list_t*>::~Out()
 {
-	if(value) free_stringpair_list(*value);
-	delete value;
+	free_stringpair_list(value);
 }
 
 
 template<>
 Out<_message*>::~Out()
 {
-///////////////////////////////////////////////////////////////////////////////
-//  FIXME: due to memory corruption(?) the free_message() call crashes! :-(  //
-//  Without it we leak memory but at least it works for now... :-/           //
-///////////////////////////////////////////////////////////////////////////////
-	std::cerr << "$|  ~Out<message*>: this=" << *this << ".\n";
-
-	if(value) free_message(*value);
-	delete value;
+	free_message(value);
 }
 
 
 template<>
 Out<PEP_rating>::~Out()
 {
-	delete value;
 }
 
 
 template<>
 Out<PEP_comm_type>::~Out()
 {
-	delete value;
 }
 
 
