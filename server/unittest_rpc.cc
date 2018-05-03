@@ -5,6 +5,7 @@
 #include "json_spirit/json_spirit_reader.h"
 
 #include <pEp/pEp_string.h> // for new_string()
+#include <pEp/stringlist.h>
 
 #include <vector>
 
@@ -47,6 +48,7 @@ char* add_mul_inout(int x, const char* y_str, int* z_result, char** result)
 const FunctionMap test_functions = {
 		FP( "add_mul_simple", new Func<int, In<int>, In<int>, In<int>>( &add_mul_simple )),
 		FP( "add_mul_inout", new Func<char*, In<int>, In<c_string>, InOutP<int>, Out<char*>>( &add_mul_inout )),
+		FP( "stringlist_add", new Func<stringlist_t*, In<stringlist_t*>, In<c_string>>( &stringlist_add )),
 	};
 
 
@@ -67,15 +69,20 @@ std::ostream& operator<<(std::ostream& o, const TestEntry& tt)
 
 const std::vector<TestEntry> testValues =
 	{
-		{ "{\"jsonrpc\":\"2.0\", \"id\":23, \"method\":\"add_mul_simple\", \"params\":[10,11,12]}",
-		  "{\"jsonrpc\":\"2.0\", \"id\":23, \"result\":{ \"outParams\":[], \"return\":252}}"
+		{ "{\"jsonrpc\":\"2.0\", \"id\":21, \"method\":\"add_mul_simple\", \"params\":[10,11,12]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":21, \"result\":{ \"outParams\":[], \"return\":252}}"
 		},
-		{ "{\"jsonrpc\":\"2.0\", \"id\":23, \"method\":\"add_mul_simple\", \"params\":[10,-11,-12]}",
-		  "{\"jsonrpc\":\"2.0\", \"id\":23, \"result\":{ \"outParams\":[], \"return\":12}}"
+		{ "{\"jsonrpc\":\"2.0\", \"id\":22, \"method\":\"add_mul_simple\", \"params\":[10,-11,-12]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":22, \"result\":{ \"outParams\":[], \"return\":12}}"
 		},
 		{ "{\"jsonrpc\":\"2.0\", \"id\":23, \"method\":\"add_mul_inout\", \"params\":[100,\"111\",123, \"dummy\"]}",
 		  "{\"jsonrpc\":\"2.0\", \"id\":23, \"result\":{ \"outParams\":[\"25953\",25953], \"return\":\"x25953x\"}}"
 		},
+/* does not work, yet. JSON-93 will fix that:
+		{ "{\"jsonrpc\":\"2.0\", \"id\":24, \"method\":\"stringlist_add\", \"params\":[[\"abc\",\"def\"], \"ADD\"]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":24, \"result\":{ \"outParams\":[], \"return\":[\"abc\", \"def\", \"ADD\"]}}"
+		},
+*/
 	};
 
 } // end of anonymous namespace
