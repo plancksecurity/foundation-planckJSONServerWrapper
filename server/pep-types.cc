@@ -278,6 +278,11 @@ Out<PEP_STATUS>::~Out()
 template<>
 char* from_json<char*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const std::string& ss = v.get_str();
 	char* s = new_string(ss.c_str(), ss.size() );
 	return s;
@@ -287,10 +292,15 @@ char* from_json<char*>(const js::Value& v)
 template<>
 message* from_json<message*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Object& o = v.get_obj();
-
+	
 	auto msg = pEp::utility::make_c_ptr(new_message(PEP_dir_incoming), &free_message );
-
+	
 	// fetch values from v and put them into msg
 	msg->dir      = from_json_object<PEP_msg_direction, js::int_type>(o, "dir");
 	msg->id       = from_json_object<char*, js::str_type>(o, "id");
@@ -327,6 +337,11 @@ message* from_json<message*>(const js::Value& v)
 template<>
 pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Object& o = v.get_obj();
 	
 	auto address     = pEp::utility::make_c_ptr(from_json_object<char*, js::str_type>(o, "address")  , &free_string );
@@ -365,7 +380,7 @@ js::Value to_json<message const*>(message const* const& msg)
 {
 	if(msg == nullptr)
 	{
-		return js::Value("NULL-MESSAGE");
+		return js::Value();
 	}
 	
 	js::Object o;
@@ -409,16 +424,20 @@ js::Value to_json<message*>(message* const& msg)
 template<>
 stringlist_t* from_json<stringlist_t*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Array& a = v.get_array();
-
 	auto sl = pEp::utility::make_c_ptr(new_stringlist( nullptr ), &free_stringlist );
-
+	
 	for(const js::Value& v : a )
 	{
 		const std::string& s = v.get_str();
 		stringlist_add(sl.get(), s.c_str() );
 	}
-
+	
 	return sl.release();
 }
 
@@ -432,16 +451,20 @@ const stringlist_t* from_json<const stringlist_t*>(const js::Value& v)
 template<>
 identity_list* from_json<identity_list*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Array& a = v.get_array();
-
 	auto il = pEp::utility::make_c_ptr(new_identity_list( nullptr ), &free_identity_list);
-
+	
 	for(const js::Value& v : a )
 	{
 		pEp_identity* id = from_json<pEp_identity*>(v);
 		identity_list_add(il.get(), id );
 	}
-
+	
 	return il.release();
 }
 
@@ -449,6 +472,11 @@ identity_list* from_json<identity_list*>(const js::Value& v)
 template<>
 _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Array& a = v.get_array();
 	if(a.empty())
 		return nullptr;
@@ -519,6 +547,11 @@ js::Value to_json<_bloblist_t*>(_bloblist_t* const& bl)
 template<>
 stringpair_t* from_json<stringpair_t*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Object& o = v.get_obj();
 	char* key = from_json_object<char*, js::str_type>(o, "key");
 	char* val = from_json_object<char*, js::str_type>(o, "value");
@@ -533,6 +566,11 @@ stringpair_t* from_json<stringpair_t*>(const js::Value& v)
 template<>
 stringpair_list_t* from_json<stringpair_list_t*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Array& a = v.get_array();
 	if(a.empty())
 		return nullptr;
@@ -616,7 +654,7 @@ js::Value to_json<const pEp_identity*>(const pEp_identity* const& id)
 {
 	if(id == nullptr)
 	{
-		return js::Value("NULL-IDENTITY");
+		return js::Value();
 	}
 
 	js::Object o;
