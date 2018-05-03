@@ -11,9 +11,7 @@
 	                          \
 	template<>                \
 	Out< TYPE >::~Out()       \
-	{                         \
-		delete value;         \
-	}                         \
+	{ }                       \
 
 
 SIMPLE_TYPE( bool )
@@ -33,23 +31,15 @@ SIMPLE_TYPE( std::string )
 template<>
 Out<char const*>::~Out()
 {
-	if(value)
-	{
-		pEp_free(const_cast<char*>(*value));
-	}
-	delete value;
+	pEp_free(const_cast<char*>(value));
+
 }
 
 
 template<>
 Out<char*>::~Out()
 {
-	if(value)
-	{
-		pEp_free(*value);
-		*value = nullptr;
-	}
-	delete value;
+	pEp_free(value);
 }
 
 

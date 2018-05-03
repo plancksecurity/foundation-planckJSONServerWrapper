@@ -85,7 +85,8 @@ struct InRaw
 };
 
 
-// helper classes to specify in- and out-parameters
+// helper classes to specify in- and out-parameters whose output is in-place.
+// Use InOutP<T> for in/out parameters where the function might change the object and expects a pointer
 template<class T, bool NeedInput=true>
 struct InOut : public In<T,NeedInput>
 {
@@ -115,9 +116,12 @@ struct Out
 	typedef T* c_type; // the according type in C function parameter
 	enum { is_output = true, need_input = NeedInput }; // if need_input=false it would no longer consume an element in the input parameter array.
 	
-	Out() : value{ new T{} }
+	explicit Out() : value{}
 	{ }
-	
+
+	explicit Out(const T& t) : value{t}
+	{ }
+
 	~Out();
 	
 	Out(const Out<T,NeedInput>& other) = delete;
@@ -133,38 +137,49 @@ struct Out
 	
 	js::Value to_json() const
 	{
-		return ::to_json<T>(*value);
+		return ::to_json<T>(value);
 	}
 	
-	c_type get_value() const { return value; }
+	c_type get_value() const { return &value; }
 	
-	T* value = nullptr;
+	mutable T value;
 	
+	/*
 	friend
 	std::ostream& operator<<(std::ostream& o, const Out<T,NeedInput>& out)
 	{
-		o << (const void*)&out;
+		o << (const void*)out;
 		
-// the if() was added to avoid crashes on memory corruptuon. But clang++ warns, that this check is always true on "well-formed" programs, and he is right. In an ideal world there are no memory corruptions. ;-(
-//		if(&out)
-		{
-			o << ", value=" << (const void*)out.value;
-			if(out.value)
-			{
-				o << ", *value=" << *(out.value);
-			}
-		}
-		
+		o << ", value=" << (const void*)out.value;
 		return o;
 	}
+	*/
+};
+
+
+// helper classes to specify in- and out-parameters whose output might change by the called function.
+// Use InOut<T> for in/out parameters where the function only makes in-place changes.
+template<class T, bool NeedInput=true>
+struct InOutP : public Out<T,NeedInput>
+{
+	typedef Out<T,NeedInput> Base;
+	enum { is_output = true, need_input = NeedInput };
+
+	explicit InOutP(const T& t) : Base(t) {}
 	
+	InOutP<T,NeedInput>& operator=(const InOutP<T,NeedInput>&) = delete;
+	
+	// default implementation:
+	InOutP(const js::Value& v, Context*)
+	: Base( from_json<T>(v) )
+	{ }
 };
 
 
 template<class T, bool NeedInput>
 js::Value to_json(const Out<T,NeedInput>& o)
 {
-	return ::to_json(*o.value);
+	return ::to_json(o.value);
 }
 
 template<class T, bool NeedInput>
@@ -214,6 +229,13 @@ struct Type2String<InOut<T, true>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "InOut"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
+
+template<class T>
+struct Type2String<InOutP<T, true>>
+{
+	static js::Value get() { js::Object ret; ret.emplace_back("direction", "InOut"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
+};
+
 
 template<class... Args> struct Type2Json;
 
