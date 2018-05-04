@@ -142,6 +142,9 @@ const FunctionMap functions = {
 		FP( "shutdown",  new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::shutdown_now ) ),
 	};
 
+
+	bool add_sharks = false;
+
 } // end of anonymous namespace
 
 
@@ -250,6 +253,7 @@ void ev_server::OnGetFunctions(evhttp_request* req, void*)
 		"\n"
 		"var server_version_name = \"" + version.name + "\";\n"
 		"var server_version = \"" + version.major_minor_patch() + "\";\n"
+		"var add_sharks = " + (add_sharks?"true":"false") + ";\n"
 		"var pep_functions = ";
 	
 	js::Array jsonfunctions;
@@ -324,6 +328,12 @@ std::ostream& ev_server::Log()
 void ev_server::setLogfile(std::ostream* new_logfile)
 {
 	log_file = new_logfile ? new_logfile : &nulllogger;
+}
+
+
+void ev_server::addSharks()
+{
+	add_sharks = true;
 }
 
 

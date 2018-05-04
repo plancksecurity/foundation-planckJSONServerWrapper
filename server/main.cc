@@ -16,6 +16,8 @@ namespace po = boost::program_options;
 bool debug_mode = false;
 bool do_sync    = false;
 bool ignore_missing_session = false;
+bool add_sharks = false;
+
 uintptr_t status_handle = 0;
 
 std::string address = "127.0.0.1";
@@ -56,6 +58,7 @@ try
 		("html-directory,H", po::value<boost::filesystem::path>(&ev_server::path_to_html)->default_value(ev_server::path_to_html), "Path to the HTML and JavaScript files")
 		("logfile,l", po::value<std::string>(&logfile)->default_value(logfile),   "Name of the logfile. Can be \"stderr\" for log to stderr or empty for no log.")
 		("ignore-missing-session", po::bool_switch(&ignore_missing_session), "Ignore when no PEP_SESSION can be created.")
+		("add-sharks", po::bool_switch(&add_sharks), "Add sharks to the JSON Adapter.")
 #ifdef _WIN32
 		((STATUS_HANDLE), po::value<uintptr_t>(&status_handle)->default_value(0), "Status file handle, for internal use.")
 #endif	
@@ -92,6 +95,11 @@ try
 	}else{
 		real_logfile = std::make_shared<std::ofstream>( logfile, std::ios::app );
 		my_logfile = real_logfile.get();
+	}
+	
+	if(add_sharks)
+	{
+		ev_server::addSharks();
 	}
 	
 	if( debug_mode == false )

@@ -37,6 +37,10 @@ public:
 	// if new_logfile is NULL, the logfile is reset to nulllogger.
 	static
 	void setLogfile(std::ostream* new_logfile);
+	
+	// add sharks to the JSON Adapter
+	static
+	void addSharks();
 
 protected:
 	// prints "evserver:" to the log and returns it to allow << chaining
