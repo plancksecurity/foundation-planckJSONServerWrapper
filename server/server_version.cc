@@ -64,7 +64,8 @@ static const std::string VersionName =
 //const ServerVersion sv(0,13,0);  // add package_version, rename "version" into "api_version" in ServerVersion, add versions from the Engine, too
 //const ServerVersion sv(0,13,1);  // JSON-91: add MIME_encrypt_message_for_self() and encrypt_message_for_self()
 //const ServerVersion sv(0,14,0);  // JSON-75: incompatible behavior of daemonize() especially in MS Windows
-const ServerVersion sv(0,15,0);  // JSON-92: API CHANGE.
+//const ServerVersion sv(0,15,0);  // JSON-92: API CHANGE.
+const ServerVersion sv(0,15,1);  // JSON-92 again: Change "keylist" in (MIME_)decrypt_message() from Out to InOutP. Is a compatible API change for JSON/JavaScript due to the handling of output parameters. :-)
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
