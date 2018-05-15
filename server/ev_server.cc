@@ -62,7 +62,7 @@ const FunctionMap functions = {
 			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message_for_self ) ),
 			
 		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, In<c_string>, In<size_t>,
-			Out<char*>, Out<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>, Out<c_string>>( &MIME_decrypt_message ) ),
+			Out<char*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>, Out<c_string>>( &MIME_decrypt_message ) ),
 		
 		FP( "startKeySync", new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::startSync) ),
 		FP( "stopKeySync",  new Func<void, In<JsonAdapter*, false>>( &JsonAdapter::stopSync ) ),
@@ -73,7 +73,7 @@ const FunctionMap functions = {
 		FP( "encrypt_message_for_self", new Func<PEP_STATUS, In<PEP_SESSION, false>,
 			In<pEp_identity*>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_for_self ) ),
 		
-		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, InOut<message*>, Out<message*>, Out<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
+		FP( "decrypt_message", new Func<PEP_STATUS, In<PEP_SESSION, false>, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
 		FP( "outgoing_message_rating", new Func<PEP_STATUS, In<PEP_SESSION,false>, In<message*>, Out<PEP_rating>>( &outgoing_message_rating ) ),
 		FP( "identity_rating" , new Func<PEP_STATUS, In<PEP_SESSION,false>, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		
