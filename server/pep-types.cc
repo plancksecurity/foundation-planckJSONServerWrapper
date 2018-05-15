@@ -156,7 +156,7 @@ std::string status_to_string(PEP_STATUS status)
 
 
 template<>
-In<PEP_SESSION, false>::~In()
+In<PEP_SESSION, ParamFlag::NoInput>::~In()
 {
 	// no automatic release!
 }

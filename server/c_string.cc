@@ -1,7 +1,8 @@
 #include "c_string.hh"
 #include <pEp/pEpEngine.h>
 
-Out<c_string, true>::~Out()
+template<>
+Out<c_string, ParamFlag::DefaultFlag>::~Out()
 {
 	pEp_free(value);
 }

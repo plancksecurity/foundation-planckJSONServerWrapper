@@ -12,13 +12,13 @@ struct c_string
 { };
 
 
-template<>
-struct In<c_string, true>
+template<ParamFlag PF>
+struct In<c_string, PF>
 {
-	typedef In<c_string, true> Self;
+	typedef In<c_string, PF> Self;
 	
 	typedef const char* c_type;
-	enum { is_output = false, need_input = true };
+	enum { is_output = false, need_input = !(PF & ParamFlag::NoInput) };
 	
 	~In() = default;
 	
@@ -41,13 +41,13 @@ struct In<c_string, true>
 };
 
 
-template<>
-struct Out<c_string, true>
+template<ParamFlag PF>
+struct Out<c_string, PF>
 {
-	typedef Out<c_string, true> Self;
+	typedef Out<c_string, PF> Self;
 	
 	typedef char** c_type;
-	enum { is_output = true, need_input = true };
+	enum { is_output = true, need_input = !(PF & ParamFlag::NoInput) };
 	
 	Out(const js::Value&, Context*) // ignore dummy value, ignore context
 	{ }
@@ -71,11 +71,11 @@ struct Out<c_string, true>
 
 // forward declare specializations (to avoid selecting of the default implementation),
 // but don't implement them, because not needed, yet.
-template<>
-struct InOut<c_string,true>;
+template<ParamFlag PF>
+struct InOut<c_string, PF>;
 
-template<>
-struct InOutP<c_string,true>;
+template<ParamFlag PF>
+struct InOutP<c_string, PF>;
 
 
 #endif // PEP_JSON_ADAPTER_C_STRING_HH
