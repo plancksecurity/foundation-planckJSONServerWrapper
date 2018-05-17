@@ -48,7 +48,7 @@ char* add_mul_inout(int x, const char* y_str, int* z_result, char** result)
 const FunctionMap test_functions = {
 		FP( "add_mul_simple", new Func<int, In<int>, In<int>, In<int>>( &add_mul_simple )),
 		FP( "add_mul_inout", new Func<char*, In<int>, In<c_string>, InOutP<int>, Out<char*>>( &add_mul_inout )),
-		FP( "stringlist_add", new Func<stringlist_t*, In<stringlist_t*, DontOwn>, In<c_string>>( &stringlist_add )),
+		FP( "stringlist_add", new Func<Out<stringlist_t*, DontOwn>, InOut<stringlist_t*>, In<c_string>>( &stringlist_add )),
 	};
 
 
@@ -79,7 +79,7 @@ const std::vector<TestEntry> testValues =
 		  "{\"jsonrpc\":\"2.0\", \"id\":23, \"result\":{ \"outParams\":[\"25953\",25953], \"return\":\"x25953x\"}}"
 		},
 		{ "{\"jsonrpc\":\"2.0\", \"id\":24, \"method\":\"stringlist_add\", \"params\":[[\"abc\",\"def\"], \"ADD\"]}",
-		  "{\"jsonrpc\":\"2.0\", \"id\":24, \"result\":{ \"outParams\":[], \"return\":[\"abc\", \"def\", \"ADD\"]}}"
+		  "{\"jsonrpc\":\"2.0\", \"id\":24, \"result\":{ \"outParams\":[[\"abc\", \"def\", \"ADD\"]], \"return\":[\"ADD\"]}}"
 		},
 
 	};
@@ -102,18 +102,8 @@ TEST_P( RpcTest, Meh )
 
 	js::Value expected_result;
 	js::read_or_throw(v.result, expected_result);
+	auto r = request;
 	
 	const js::Value actual_result = call( test_functions, request.get_obj(), nullptr, false ); // don't check for security token in this unittest
 	EXPECT_EQ( expected_result, actual_result );
-}
-
-
-TEST( RpcTest, StringListAdd)
-{
-	js::Value v;
-	js::read_or_throw("[\"abc\", \"def\"]", v);
-	
-	stringlist_t* sl = from_json<stringlist_t*>( v );
-	std::cout << "€€: " << to_json(sl) << std::endl;
-	EXPECT_EQ(1,1);
 }
