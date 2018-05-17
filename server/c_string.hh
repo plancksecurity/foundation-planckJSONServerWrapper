@@ -51,7 +51,7 @@ struct Out<c_string, PF>
 	
 	Out(const js::Value&, Context*) // ignore dummy value, ignore context
 	{ }
-
+	
 	~Out();
 	
 	Out(const Self& other) = delete;

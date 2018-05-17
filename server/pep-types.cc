@@ -176,9 +176,14 @@ In<message*>::~In()
 }
 
 template<>
-In<stringlist_t*>::~In()
+In<stringlist_t*, DefaultFlag>::~In()
 {
 	free_stringlist(value);
+}
+
+template<>
+In<stringlist_t*, DontOwn>::~In()
+{
 }
 
 

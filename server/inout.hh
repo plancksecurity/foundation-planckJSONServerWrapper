@@ -15,7 +15,7 @@ enum ParamFlag
 {
 	DefaultFlag = 0,
 	NoInput = 1,
-	SharedResource = 2,
+	DontOwn = 2,
 };
 
 inline constexpr
@@ -218,18 +218,11 @@ struct Type2String
 };
 
 
-template<class T>
-struct Type2String<In<T, DefaultFlag>>
+template<class T, ParamFlag PF>
+struct Type2String<In<T, PF>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
-
-template<class T>
-struct Type2String<In<T, ParamFlag::NoInput>>
-{
-	static js::Value get() { throw "MSVC is b0rken"; }
-};
-
 
 
 template<class T>
@@ -244,14 +237,14 @@ struct Type2String<Out<T, DefaultFlag>>
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "Out"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
 
-template<class T>
-struct Type2String<InOut<T, DefaultFlag>>
+template<class T, ParamFlag PF>
+struct Type2String<InOut<T, PF>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "InOut"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
 
-template<class T>
-struct Type2String<InOutP<T, DefaultFlag>>
+template<class T, ParamFlag PF>
+struct Type2String<InOutP<T, PF>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "InOut"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
