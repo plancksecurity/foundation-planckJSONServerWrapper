@@ -242,9 +242,15 @@ In<sync_handshake_result>::~In()
 
 
 template<>
-Out<stringlist_t*>::~Out()
+Out<stringlist_t*, DefaultFlag>::~Out()
 {
 	free_stringlist(value);
+}
+
+template<>
+Out<stringlist_t*, ParamFlag::DontOwn>::~Out()
+{
+	// don't call free_stringlist()!
 }
 
 template<>
