@@ -14,6 +14,20 @@
 #include <pEp/message_api.h>
 
 
+template<class R>
+struct Return
+{
+	typedef R return_type;
+	typedef Out<R> out_type;
+};
+
+template<class R, ParamFlag PF>
+struct Return< Out<R, PF> >
+{
+	typedef R return_type;
+	typedef Out<R, PF> out_type;
+};
+
 // heloer class for generic calls:
 // R : return type of the called function
 // U : number of the parameter which is being extracted
@@ -28,6 +42,8 @@ template<class R, unsigned U, class... Args>
 class helper<R, U, U, Args...>
 {
 public:
+	typedef typename Return<R>::return_type ReturnType;
+	
 	enum { nr_of_output_params = 0 };
 	enum { nr_of_input_params = 0 };
 
@@ -36,9 +52,9 @@ public:
 		// do nothing. :-)
 	}
 
-	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
+	static js::Value call( const std::function< ReturnType(typename Args::c_type...)>& fn, Context*, js::Array& out_parameters, const js::Array& parameters, const Args&... args)
 	{
-		Out<R> o{ fn(args.get_value()...) };
+		typename Return<R>::out_type o{ fn(args.get_value()...) };
 		return to_json( o );
 	}
 };
@@ -72,6 +88,7 @@ template<class R, unsigned U, unsigned MAX, class... Args>
 class helper
 {
 public:
+	typedef typename Return<R>::return_type ReturnType;
 	typedef std::tuple<Args...> Tuple;
 	typedef typename std::tuple_element<U, Tuple>::type Element; // The type of the U'th parameter
 	typedef helper<R, U+1, MAX, Args...> NextHelper;
@@ -93,7 +110,7 @@ public:
 	
 	// A2... a2 are the alredy pealed-off paremeters
 	template<class... A2>
-	static js::Value call( const std::function<R(typename Args::c_type...)>& fn, Context* ctx, js::Array& out_parameters, const js::Array& parameters, const A2&... a2)
+	static js::Value call( const std::function< ReturnType(typename Args::c_type...)>& fn, Context* ctx, js::Array& out_parameters, const js::Array& parameters, const A2&... a2)
 	{
 		// extract the U'th element of the parameter list
 		const Element element(parameters[U], ctx);
@@ -127,6 +144,8 @@ template<class R, class... Args>
 class Func : public FuncBase
 {
 public:
+	typedef typename Return<R>::return_type ReturnType;
+	
 	virtual ~Func() = default;
 	virtual bool isSeparator() const override
 	{
@@ -135,11 +154,11 @@ public:
 	
 	Func() : fn() {}
 
-	Func( const std::function<R(typename Args::c_type ...)>& _f )
+	Func( const std::function<ReturnType(typename Args::c_type ...)>& _f )
 	: fn(_f)
 	{}
 
-	std::function<R(typename Args::c_type ...)> fn;
+	std::function<ReturnType(typename Args::c_type ...)> fn;
 
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
