@@ -231,8 +231,8 @@ struct Type2String<InRaw<T, DefaultFlag>>
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
 
-template<class T>
-struct Type2String<Out<T, DefaultFlag>>
+template<class T, ParamFlag PF>
+struct Type2String<Out<T, PF>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "Out"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
