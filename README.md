@@ -141,7 +141,7 @@ sudo port install gpgme boost ossp-uuid
 You can use `make run` to start the server.
 
 1. Run ./pep-json-server.  This creates a file that is readable only by the
-   current user (/tmp/pEp-json-token-${USER}) and contains the address and
+   current user (~/.pEp/json-token-${USER}) and contains the address and
    port the JSON adapter is listening on, normally 127.0.0.1:4223 and a
    "security-token" that must be given in each function call to authenticate
    you as the valid user.
@@ -266,9 +266,10 @@ file that has user-only read permissions.
    check for the right ownership and access rights of the token file and its
    directory. (TODO: What shall be done if that check fails?)
 
-1. The server creates a "server token file" containing a "server token" and
-   the IP address and port where the server listens on.  This file can only
-   be read by client programs that run with the same user rights.
+1. The server creates a "server token file" containing a "server token" (a
+   random-generated string of printable ASCII characters) and the IP address
+   and port where the server listens on.  This file can only be read by
+   client programs that run with the same user rights.
 
 2. The client checks the path, reads the "server token" from the file and
    authenticates itself to the server in each JSON RPC call with that "server
@@ -285,7 +286,7 @@ rules and definitions to take into account.
 * The `FunctionMap function` in `ev_server.cc` defines which functions
   are callable via the JSON-RPC interface.  The existing entries show the
   syntax of that map.
-  Non-static member functions can be called, too. Thanks to std::function<>
+  Non-static member functions can be called, too. Thanks to `std::function<>`
   a member function `Foo::func(Params...)` is handled like a free-standing
   function `func(Foo* f, Params...)`.
 
@@ -298,17 +299,75 @@ rules and definitions to take into account.
 * The specializations for "p≡p-specific types" are in `pep-types.cc`.
 
 
+#### Parameter directions (In, Out, InOut)
+
+The p≡p JSON Server Adapter supports Input, Output and two ways of "In/Out"
+parameters.  You have to annotate the direction in the FunctionMap with
+`In<>` for input, `Out<>` for output and InOut<> or InOutP<> for in/out
+parameters.  These wrapper classes have an optional second template
+parameter (parameter type flag) that is explained below.
+
+Return values are always "output" parameters, so they don't have to be
+wrapped with `Out<>`, but this wrapper is necessary when you need
+non-default wrapper semantics, see below.
+
+
+Input parameters of fundamental or simple struct types are
+usually by-value parameters. Complex structs (or structs that are only
+forward-declared in the public API) are usually pointer
+parameters. Both ways are supported. You have to specialize `In<T>` or
+`In<T*>`, depending how your type is used.
+
+Output parameters of fundamental or simple struct types `T` are usually
+declared as a paremeter of type `T*`. The p≡p JSON Server Adapter manages
+the memory allocated by the called C function automatically and calls the
+appropriate de-allocating function after use.
+
+Calling a function with output parameters requires a dummy value (`null` or
+empty string is fine) at the JSON side for each output parameter to keep the
+number of parameters at the JSON side the same with the C side.
+
+For In/Out parameters there exist two calling conventions for
+call-by-pointer types:
+
+1. caller allocates object and fills with input values, callee can only change members.
+The C type of the parameter is usually `struct T*`. Use the wrapper `InOut<>`
+for these parameters.
+
+2. caller allocates object and fills with input values, callee might
+change/reallocate the whole object. The C type of the parameter is
+`struct T**`. Use the wrapper `InOutP<>` in these cases.
+
+`InOutP<>` is also the right wrapper for in/out parameters of fundamental or
+enum types due to the additional indirection in the C function call
+signature.
+
+
+#### Parameter type flags
+
+The wrapper classes might be instantiated with special "parameter type
+flags". If no flag is given the `DefaultFlag` is used with means the
+semantics described already above.
+
+At the moment there exist two parameter type flags which are interpreted as
+bitfield, so they can be combined:
+
+* NoInput : This flags a parameter at the C side that shall not be exposed
+  at the JSON side. So the value cannot be specified by the client, it is
+  provided by the JSON Server Adapter internally (e.g. for PEP_SESSION)
+
+* DontOwn : Used for pointer types who don't "own" the referred ressource,
+  so it is not released automatically by the JSON Server Adapter after the
+  call.
+
+More flags will be added when different semantics will be needed.
+
+
 ## TODOs
 
 The following issues are planned but not yet implemented.
 
-* Windows build:
-    * implement get_token_filename() for MS Windows (security-token.cc line 43)
-    * do the Windows-specific stuff to build the software on Windows
-
-* Add unit tests
-
-* Fix the bugs that are found by the Unit tests, if any.
+* More sensible unit tests
 
 * Generate all the tedious boiler plate code
     * the content of pep-types.cc
