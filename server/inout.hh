@@ -151,6 +151,7 @@ struct Out
 	Out<T,PF>& operator=(const Out<T,PF>& other) = delete;
 	Out<T,PF>& operator=(Out<T,PF>&& victim) = delete;
 	
+	// dummy Value v is ignored for output parameters
 	Out(const js::Value& v, Context*)
 	: Out()
 	{ }
