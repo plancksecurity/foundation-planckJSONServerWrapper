@@ -48,7 +48,7 @@ char* add_mul_inout(int x, const char* y_str, int* z_result, char** result)
 const FunctionMap test_functions = {
 		FP( "add_mul_simple", new Func<int, In<int>, In<int>, In<int>>( &add_mul_simple )),
 		FP( "add_mul_inout", new Func<char*, In<int>, In<c_string>, InOutP<int>, Out<char*>>( &add_mul_inout )),
-		FP( "stringlist_add", new Func<Out<stringlist_t*, DontOwn>, InOut<stringlist_t*>, In<c_string>>( &stringlist_add )),
+		FP( "stringlist_add", new Func<Out<stringlist_t*, ParamFlag::DontOwn>, InOut<stringlist_t*>, In<c_string>>( &stringlist_add )),
 	};
 
 

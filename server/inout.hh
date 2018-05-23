@@ -11,11 +11,13 @@
 #include <iostream>
 
 // is a bitfield that controls the In<> / Out<> parameter types
-enum ParamFlag
+enum class ParamFlag : unsigned
 {
-	DefaultFlag = 0,
+	Default = 0,
 	NoInput = 1,
 	DontOwn = 2,
+	StoreValue = 4,
+	RetrieveValue = 8,
 };
 
 inline constexpr
@@ -28,6 +30,12 @@ inline constexpr
 ParamFlag operator&(ParamFlag a, ParamFlag b)
 {
 	return ParamFlag( unsigned(a) & unsigned(b) );
+}
+
+inline constexpr
+bool operator!(ParamFlag pf)
+{
+	return !unsigned(pf);
 }
 
 
@@ -46,7 +54,7 @@ js::Value to_json(const T& t);
 
 
 // helper classes to specify in- and out-parameters
-template<class T, ParamFlag PF=DefaultFlag>
+template<class T, ParamFlag PF=ParamFlag::Default>
 struct In
 {
 	typedef T c_type; // the according type in C function parameter
@@ -76,7 +84,7 @@ struct In
 
 
 // to call functions that operate directly on the JSON data type
-template<class T, ParamFlag PF=DefaultFlag>
+template<class T, ParamFlag PF=ParamFlag::Default>
 struct InRaw
 {
 	typedef js::Value c_type; // do not unwrap JSON data type
@@ -107,7 +115,7 @@ struct InRaw
 
 // helper classes to specify in- and out-parameters whose output is in-place.
 // Use InOutP<T> for in/out parameters where the function might change the object and expects a pointer
-template<class T, ParamFlag PF=DefaultFlag>
+template<class T, ParamFlag PF=ParamFlag::Default>
 struct InOut : public In<T,PF>
 {
 	typedef In<T,PF> Base;
@@ -130,7 +138,7 @@ struct InOut : public In<T,PF>
 };
 
 
-template<class T, ParamFlag PF = DefaultFlag>
+template<class T, ParamFlag PF = ParamFlag::Default>
 struct Out
 {
 	typedef T* c_type; // the according type in C function parameter
@@ -180,7 +188,7 @@ struct Out
 
 // helper classes to specify in- and out-parameters whose output might change by the called function.
 // Use InOut<T> for in/out parameters where the function only makes in-place changes.
-template<class T, ParamFlag PF=DefaultFlag>
+template<class T, ParamFlag PF=ParamFlag::Default>
 struct InOutP : public Out<T,PF>
 {
 	typedef Out<T,PF> Base;
@@ -227,7 +235,7 @@ struct Type2String<In<T, PF>>
 
 
 template<class T>
-struct Type2String<InRaw<T, DefaultFlag>>
+struct Type2String<InRaw<T, ParamFlag::Default>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };

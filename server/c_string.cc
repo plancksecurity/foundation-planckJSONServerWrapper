@@ -2,7 +2,7 @@
 #include <pEp/pEpEngine.h>
 
 template<>
-Out<c_string, ParamFlag::DefaultFlag>::~Out()
+Out<c_string, ParamFlag::Default>::~Out()
 {
 	pEp_free(value);
 }

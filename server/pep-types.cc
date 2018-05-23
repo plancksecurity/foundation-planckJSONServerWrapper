@@ -176,13 +176,13 @@ In<message*>::~In()
 }
 
 template<>
-In<stringlist_t*, DefaultFlag>::~In()
+In<stringlist_t*, ParamFlag::Default>::~In()
 {
 	free_stringlist(value);
 }
 
 template<>
-In<stringlist_t*, DontOwn>::~In()
+In<stringlist_t*, ParamFlag::DontOwn>::~In()
 {
 }
 
@@ -242,7 +242,7 @@ In<sync_handshake_result>::~In()
 
 
 template<>
-Out<stringlist_t*, DefaultFlag>::~Out()
+Out<stringlist_t*, ParamFlag::Default>::~Out()
 {
 	free_stringlist(value);
 }
