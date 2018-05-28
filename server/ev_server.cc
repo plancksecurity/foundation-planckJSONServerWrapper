@@ -58,13 +58,13 @@ using In_Pep_Session = In<PEP_SESSION, ParamFlag::NoInput>;
 const FunctionMap functions = {
 		// from message_api.h
 		FP( "Message API", new Separator ),
-		FP( "MIME_encrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<size_t>, In<stringlist_t*>,
+		FP( "MIME_encrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, InLength<>, In<stringlist_t*>,
 			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message ) ),
 		FP( "MIME_encrypt_message_for_self", new Func<PEP_STATUS, In_Pep_Session, 
-			In<pEp_identity*>, In<c_string>, In<size_t>, In<stringlist_t*>,
+			In<pEp_identity*>, In<c_string>, InLength<>, In<stringlist_t*>,
 			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message_for_self ) ),
 			
-		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<size_t>,
+		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, InLength<>,
 			Out<char*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>, Out<c_string>>( &MIME_decrypt_message ) ),
 		
 		FP( "startKeySync", new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::startSync) ),
