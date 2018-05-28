@@ -14,10 +14,8 @@
 enum class ParamFlag : unsigned
 {
 	Default = 0,
-	NoInput = 1,
-	DontOwn = 2,
-	StoreValue = 4,
-	RetrieveValue = 8,
+	NoInput = 1,        // has no input parameter in the JSON API. Value comes from Context.
+	DontOwn = 2,        // parameter holds a "shared resource". Don't free() it in destructor.
 };
 
 inline constexpr
@@ -68,7 +66,7 @@ struct In
 	In<T,PF>& operator=(const In<T,PF>&) = delete;
 	
 	// default implementation:
-	In(const js::Value& v, Context*)
+	In(const js::Value& v, Context*, unsigned param_nr)
 	: In( from_json<T>(v) )
 	{ }
 	
@@ -98,7 +96,7 @@ struct InRaw
 	InRaw<T,PF>& operator=(const InRaw<T,PF>&) = delete;
 	
 	// default implementation:
-	InRaw(const js::Value& v, Context*)
+	InRaw(const js::Value& v, Context*, unsigned param_nr)
 	: InRaw(v)
 	{ }
 
@@ -127,7 +125,7 @@ struct InOut : public In<T,PF>
 	InOut<T,PF>& operator=(const InOut<T,PF>&) = delete;
 	
 	// default implementation:
-	InOut(const js::Value& v, Context*)
+	InOut(const js::Value& v, Context*, unsigned param_nr)
 	: Base( from_json<T>(v) )
 	{ }
 	
@@ -160,7 +158,7 @@ struct Out
 	Out<T,PF>& operator=(Out<T,PF>&& victim) = delete;
 	
 	// dummy Value v is ignored for output parameters
-	Out(const js::Value& v, Context*)
+	Out(const js::Value& v, Context*, unsigned param_nr)
 	: Out()
 	{ }
 	
@@ -199,7 +197,7 @@ struct InOutP : public Out<T,PF>
 	InOutP<T,PF>& operator=(const InOutP<T,PF>&) = delete;
 	
 	// default implementation:
-	InOutP(const js::Value& v, Context*)
+	InOutP(const js::Value& v, Context*, unsigned param_nr)
 	: Base( from_json<T>(v) )
 	{ }
 };

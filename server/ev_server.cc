@@ -27,7 +27,7 @@ In<Context*, ParamFlag::Default>::~In()
 }
 
 template<>
-In<Context*, ParamFlag::Default>::In(const js::Value&, Context* ctx)
+In<Context*, ParamFlag::Default>::In(const js::Value&, Context* ctx, unsigned)
 : value( ctx )
 {
 

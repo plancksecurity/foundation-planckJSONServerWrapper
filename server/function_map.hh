@@ -113,7 +113,7 @@ public:
 	static js::Value call( const std::function< ReturnType(typename Args::c_type...)>& fn, Context* ctx, js::Array& out_parameters, const js::Array& parameters, const A2&... a2)
 	{
 		// extract the U'th element of the parameter list
-		const Element element(parameters[U], ctx);
+		const Element element(parameters[U], ctx, U);
 		
 		const js::Value ret = NextHelper::call(fn, ctx, out_parameters, parameters, a2..., element );
 		if(Element::is_output)
@@ -196,7 +196,9 @@ public:
 		if(context)
 		{
 			context->augment(rs);  // used e.g. add some debug infos to the status return value
+			context->clear(); // clear all stored values, if any.
 		}
+		
 		return rs;
 	}
 
