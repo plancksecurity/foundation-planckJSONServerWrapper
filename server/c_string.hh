@@ -81,33 +81,21 @@ struct InOutP<c_string, PF>;
 
 
 // Holds the length of the string in the previous c_string parameter
-template<ParamFlag PF>
-struct InLength
+template<ParamFlag PF = ParamFlag::Default>
+struct InLength : In<size_t, PF>
 {
-	typedef InLength<PF> Self;
-	
-	typedef size_t c_type;
-	enum { is_output = false, need_input = !(PF & ParamFlag::NoInput) };
-	
-	~InLength() = default;
-	
-	InLength(const Self& other) = delete;
-	InLength(Self&& victim) = delete;
-	Self& operator=(const Self&) = delete;
+	typedef In<size_t, PF> Base;
 	
 	InLength(const js::Value& v, Context* ctx, unsigned param_nr)
-	: value( ctx->retrieve(param_nr-1) )
+	: Base( ctx->retrieve(param_nr-1) )
 	{}
-	
-	js::Value to_json() const
-	{
-		return ::to_json<size_t>(value);
-	}
-	
-	c_type get_value() const { return value; }
-	
-	const size_t value;
 };
 
+
+template<ParamFlag PF>
+struct Type2String<InLength<PF>>
+{
+	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<size_t>::get() ); return ret; }
+};
 
 #endif // PEP_JSON_ADAPTER_C_STRING_HH
