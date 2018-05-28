@@ -15,12 +15,13 @@ public:
 	
 	// store and retrieve other parameters into the context.
 	// that allows semantic actions based on other function parameters
-	virtual void store(int position, json_spirit::Object& obj);
-	virtual json_spirit::Object& retrieve(int position);
+	// KISS: at the moment only "size_t" objects are supported.
+	virtual void store(int position, size_t value);
+	virtual size_t retrieve(int position);
 	virtual void clear();
 
 private:
-	std::map<int, std::reference_wrapper<json_spirit::Object>> obj_store;
+	std::map<int, size_t> obj_store;
 };
 
 #endif // JSON_ADAPTER_CONTEXT_HH

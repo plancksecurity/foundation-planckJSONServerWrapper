@@ -1,11 +1,11 @@
 #include "context.hh"
 
-void Context::store(int position, json_spirit::Object& obj)
+void Context::store(int position, size_t value)
 {
-	obj_store.emplace( position, std::ref(obj) );
+	obj_store.emplace( position, value );
 }
 
-json_spirit::Object& Context::retrieve(int position)
+size_t Context::retrieve(int position)
 {
 	return obj_store.at(position);
 }
