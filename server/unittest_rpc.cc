@@ -24,6 +24,17 @@ std::ostream& operator<<(std::ostream& os, const Value& value)
 
 namespace {
 
+class DummyContext : public Context
+{
+public:
+	virtual bool verify_security_token(const std::string& token) const override { return true; }
+	virtual void augment(js::Object&) override { /* do nothing */ }
+};
+
+
+DummyContext dummyContext;
+
+
 int add_mul_simple(int x, int y, int z)
 {
 	return (x+y) * z;
@@ -104,6 +115,6 @@ TEST_P( RpcTest, Meh )
 	js::read_or_throw(v.result, expected_result);
 	auto r = request;
 	
-	const js::Value actual_result = call( test_functions, request.get_obj(), nullptr, false ); // don't check for security token in this unittest
+	const js::Value actual_result = call( test_functions, request.get_obj(), &dummyContext);
 	EXPECT_EQ( expected_result, actual_result );
 }
