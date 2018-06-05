@@ -193,11 +193,8 @@ public:
 		rs.emplace_back("outParams", std::move(out_params));
 		rs.emplace_back("return", std::move(ret));
 		
-		if(context)
-		{
-			context->augment(rs);  // used e.g. add some debug infos to the status return value
-			context->clear(); // clear all stored values, if any.
-		}
+		context->augment(rs);  // used e.g. add some debug infos to the status return value
+		context->clear(); // clear all stored values, if any.
 		
 		return rs;
 	}
