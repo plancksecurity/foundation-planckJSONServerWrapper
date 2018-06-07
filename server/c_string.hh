@@ -12,13 +12,13 @@ struct c_string
 { };
 
 
-template<>
-struct In<c_string, true>
+template<ParamFlag PF>
+struct In<c_string, PF>
 {
-	typedef In<c_string, true> Self;
+	typedef In<c_string, PF> Self;
 	
 	typedef const char* c_type;
-	enum { is_output = false, need_input = true };
+	enum { is_output = false, need_input = !(PF & ParamFlag::NoInput) };
 	
 	~In() = default;
 	
@@ -26,9 +26,11 @@ struct In<c_string, true>
 	In(Self&& victim) = delete;
 	Self& operator=(const Self&) = delete;
 	
-	In(const js::Value& v, Context*)
+	In(const js::Value& v, Context* ctx, unsigned param_nr)
 	: value( from_json<std::string>(v) )
-	{ }
+	{
+		ctx->store(param_nr, value.length());
+	}
 	
 	js::Value to_json() const
 	{
@@ -41,17 +43,17 @@ struct In<c_string, true>
 };
 
 
-template<>
-struct Out<c_string, true>
+template<ParamFlag PF>
+struct Out<c_string, PF>
 {
-	typedef Out<c_string, true> Self;
+	typedef Out<c_string, PF> Self;
 	
 	typedef char** c_type;
-	enum { is_output = true, need_input = true };
+	enum { is_output = true, need_input = !(PF & ParamFlag::NoInput) };
 	
-	Out(const js::Value&, Context*) // ignore dummy value, ignore context
+	Out(const js::Value&, Context*, unsigned) // ignore dummy value, ignore context, ignore param_nr
 	{ }
-
+	
 	~Out();
 	
 	Out(const Self& other) = delete;
@@ -71,11 +73,31 @@ struct Out<c_string, true>
 
 // forward declare specializations (to avoid selecting of the default implementation),
 // but don't implement them, because not needed, yet.
-template<>
-struct InOut<c_string,true>;
+template<ParamFlag PF>
+struct InOut<c_string, PF>;
 
-template<>
-struct InOutP<c_string,true>;
+template<ParamFlag PF>
+struct InOutP<c_string, PF>;
 
+
+// Holds the length of the string in the previous c_string parameter
+template<ParamFlag PF = ParamFlag::Default>
+struct InLength : In<size_t, PF>
+{
+	typedef In<size_t, PF> Base;
+	
+	InLength(const js::Value& v, Context* ctx, unsigned param_nr)
+	: Base( ctx->retrieve(param_nr-1) )
+	{}
+	
+	~InLength() = default;
+};
+
+
+template<ParamFlag PF>
+struct Type2String<InLength<PF>>
+{
+	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<size_t>::get() ); return ret; }
+};
 
 #endif // PEP_JSON_ADAPTER_C_STRING_HH

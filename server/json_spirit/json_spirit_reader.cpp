@@ -48,17 +48,26 @@ namespace json_spirit {
             return std::string( 1, char(u) );
         }else if( u<= 0x7FF )
         {
-            char buf[2] = { char( 0xC0 + (u>>6) ), char( 0x80 + (u & 63) ) };
+            char buf[2] = { char( 0xC0 + (u>>6) ),
+                            char( 0x80 + (u & 63) )
+                          };
             return std::string( buf, buf+2 );
         }else if( u<= 0xFFFF )
         {
-            char buf[3] = { char( 0xE0 + (u>>12) ), char( 0x80 + ((u>>6) & 63) ), char( 0x80 + (u & 63) ) };
+            char buf[3] = { char( 0xE0 + ( u>>12     ) ),
+                            char( 0x80 + ((u>>6) & 63) ),
+                            char( 0x80 + ( u     & 63) )
+                          };
             return std::string( buf, buf+3 );
 
         }else if( u<= 0x10FFFF )
         {
-            char buf[4] = { char( 0xF0 + (u>>18) ), char( 0x80 + ((u>>12) & 63) ), char( 0x80 + ((u>>6) & 63) ), char( 0x80 + (u & 63) ) };
-            return std::string( buf, buf+3 );
+            char buf[4] = { char( 0xF0 + ( u>>18      ) ),
+                            char( 0x80 + ((u>>12) & 63) ),
+                            char( 0x80 + ((u>> 6) & 63) ),
+                            char( 0x80 + ( u      & 63) )
+                          };
+            return std::string( buf, buf+4 );
         }
         
         throw std::runtime_error( "Unicode codepoint " + std::to_string(u) + " is too big!");

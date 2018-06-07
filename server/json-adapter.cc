@@ -317,7 +317,7 @@ JsonAdapter* from_json(const js::Value& /* not used */)
 
 
 template<>
-In<JsonAdapter*, false>::~In()
+In<JsonAdapter*, ParamFlag::NoInput>::~In()
 {
 	// nothing to do here. :-D
 }

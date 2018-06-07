@@ -62,7 +62,7 @@ namespace
 using json_spirit::find_value;
 
 
-js::Object call(const FunctionMap& fm, const js::Object& request, Context* context, bool check_security_token)
+js::Object call(const FunctionMap& fm, const js::Object& request, Context* context)
 {
 	int request_id = -1;
 	try
@@ -74,7 +74,8 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 		}
 		
 		const auto sec_token = find_value(request, "security_token");
-		if(check_security_token && (sec_token.type()!=js::str_type || context->verify_security_token(sec_token.get_str())==false) )
+		const std::string sec_token_s = (sec_token.type()==js::str_type ? sec_token.get_str() : std::string() ); // missing or non-string "security_token" --> empty string.
+		if( context->verify_security_token(sec_token_s)==false )
 		{
 			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: Wrong security token.", request, request_id);
 		}
@@ -112,13 +113,13 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 		
 		const js::Array p = ( params.type()==js::array_type ? params.get_array() : js::Array{} );
 		
-		std::cerr << "=== Now I do the call!\n"
-			"\tmethod_name=\"" << method_name << "\","
-			"\tparams=" << js::write(params) << ". ===\n";
+//		std::cerr << "=== Now I do the call!\n"
+//			"\tmethod_name=\"" << method_name << "\","
+//			"\tparams=" << js::write(params) << ". ===\n";
 		
 		const js::Value result = fn->second->call(p, context);
-		std::cerr << "=== Result of call: " << js::write(result, js::raw_utf8) << ". ===\n";
-		std::cerr << "\tSessions: " << getSessions() << "\n";
+//		std::cerr << "=== Result of call: " << js::write(result, js::raw_utf8) << ". ===\n";
+//		std::cerr << "\tSessions: " << getSessions() << "\n";
 		
 		return make_result(result, request_id);
 	}

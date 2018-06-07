@@ -156,7 +156,7 @@ std::string status_to_string(PEP_STATUS status)
 
 
 template<>
-In<PEP_SESSION, false>::~In()
+In<PEP_SESSION, ParamFlag::NoInput>::~In()
 {
 	// no automatic release!
 }
@@ -176,9 +176,14 @@ In<message*>::~In()
 }
 
 template<>
-In<stringlist_t*>::~In()
+In<stringlist_t*, ParamFlag::Default>::~In()
 {
 	free_stringlist(value);
+}
+
+template<>
+In<stringlist_t*, ParamFlag::DontOwn>::~In()
+{
 }
 
 
@@ -237,9 +242,15 @@ In<sync_handshake_result>::~In()
 
 
 template<>
-Out<stringlist_t*>::~Out()
+Out<stringlist_t*, ParamFlag::Default>::~Out()
 {
 	free_stringlist(value);
+}
+
+template<>
+Out<stringlist_t*, ParamFlag::DontOwn>::~Out()
+{
+	// don't call free_stringlist()!
 }
 
 template<>
