@@ -104,6 +104,7 @@ namespace json_spirit
     {
         typedef typename String_type::value_type Char_type;
         
+        unsigned high_surrogate = 0;
         const Char_type c2( *begin );
 
         switch( c2 )
@@ -133,10 +134,34 @@ namespace json_spirit
                     {
                         s += Char_type(c);
                     }else{
-                        s += encode_utf<String_type>(c);
+                        if(c>=0xD800 && c<=0xDBFF) // high surrogate from UTF-16 pair
+                        {
+                            high_surrogate = c;
+                        }else if(c>=0xDC00 && c<=0xDFFF) // low surrogate from UTF-16 pair
+                        {
+                            if(high_surrogate)
+                            {
+                                // combine the two escaped \u sequences into one Non-BMP character:
+                                const unsigned u32 = (high_surrogate-0xD800) * 1024 + (c-0xDC00) + 0x10000;
+                                s += encode_utf<String_type>(u32);
+                                high_surrogate = 0;
+                            }else{
+                                throw std::runtime_error("Escaped low surrogate without high surrogate before!");
+                            }
+                        }else{
+                            if(high_surrogate)
+                            {
+                                throw std::runtime_error("Escaped high surrogate without following low surrogate!");
+                            }
+                            s += encode_utf<String_type>(c); // normal \u escaped BMP character.
+                        }
                     }
                 }
                 break;
+            }
+            default :
+            {
+                throw std::runtime_error("Unknown char \"" + c2 + "\" after backslash.");
             }
         }
     }
@@ -150,11 +175,9 @@ namespace json_spirit
         if( end - begin < 2 ) return String_type( begin, end );
 
         String_type result;
-        
         result.reserve( end - begin );
 
         const Iter_type end_minus_1( end - 1 );
-
         Iter_type substr_start = begin;
         Iter_type i = begin;
 
@@ -163,17 +186,13 @@ namespace json_spirit
             if( *i == '\\' )
             {
                 result.append( substr_start, i );
-
                 ++i;  // skip the '\'
-
                 append_esc_char_and_incr_iter( result, i, end );
-
                 substr_start = i + 1;
             }
         }
 
         result.append( substr_start, end );
-
         return result;
     }
 
