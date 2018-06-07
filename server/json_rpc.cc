@@ -113,13 +113,13 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 		
 		const js::Array p = ( params.type()==js::array_type ? params.get_array() : js::Array{} );
 		
-		std::cerr << "=== Now I do the call!\n"
-			"\tmethod_name=\"" << method_name << "\","
-			"\tparams=" << js::write(params) << ". ===\n";
+//		std::cerr << "=== Now I do the call!\n"
+//			"\tmethod_name=\"" << method_name << "\","
+//			"\tparams=" << js::write(params) << ". ===\n";
 		
 		const js::Value result = fn->second->call(p, context);
-		std::cerr << "=== Result of call: " << js::write(result, js::raw_utf8) << ". ===\n";
-		std::cerr << "\tSessions: " << getSessions() << "\n";
+//		std::cerr << "=== Result of call: " << js::write(result, js::raw_utf8) << ". ===\n";
+//		std::cerr << "\tSessions: " << getSessions() << "\n";
 		
 		return make_result(result, request_id);
 	}
