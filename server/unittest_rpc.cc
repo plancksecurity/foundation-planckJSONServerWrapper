@@ -130,7 +130,7 @@ const std::vector<TestEntry> testValues =
 		  "{\"jsonrpc\":\"2.0\", \"id\":29, \"result\":{ \"outParams\":[], \"return\":\"74 6f 68 65 78\"}}"
 		},
 		{ "{\"jsonrpc\":\"2.0\", \"id\":30, \"method\":\"tohex_3\", \"params\":[\"Größe\"]}", // some non-ASCII BMP chars
-		  "{\"jsonrpc\":\"2.0\", \"id\":30, \"result\":{ \"outParams\":[], \"return\":\"74 6f 68 65 78\"}}"
+		  "{\"jsonrpc\":\"2.0\", \"id\":30, \"result\":{ \"outParams\":[], \"return\":\"47 72 c3 b6 c3 9f 65\"}}"
 		},
 		{ "{\"jsonrpc\":\"2.0\", \"id\":30, \"method\":\"tohex_3\", \"params\":[\"\\u0000\\uD83D\\uDE47\"]}", // all hell breaks loose: Non-BMP characters
 		  "{\"jsonrpc\":\"2.0\", \"id\":30, \"result\":{ \"outParams\":[], \"return\":\"00 f0 9f 99 87\"}}"
