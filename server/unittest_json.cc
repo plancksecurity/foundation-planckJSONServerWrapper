@@ -47,9 +47,15 @@ const std::vector<TestPair> testValuesInput =
 		{ R"("\n\\\b")"             , "\n\\\b" },  // backslash escapes for ASCII and control chars
 		{ R"("\u001F")"             , "\x1f"   },  // C compiler knows \x##, but JSON does not
 		{ R"("\u007F")"             , "\x7f"   },  // C compiler knows \x##, but JSON does not
+		
 		{ R"("\u00E4\u00F6\u00FC")" , "äöü"    },  // German umlauts from Unicode block "Latin-1 Supplement"
+		{ R"("äöü")"                , "äöü"    },  // German umlauts from Unicode block "Latin-1 Supplement"
+		
 		{ R"("\u041C\u043E\u0441\u043A\u0432\u0430")" , "Москва" },  // some Cyrillic
-		{ R"("\uD83D\uDCA3")" , "\xF0\x9f\x92\xA3"        }, // Unicode Bomb <U+1F4A3>, an example for char outside of BMP
+		{ R"("Москва")"                               , "Москва" },  // some Cyrillic
+		
+		{ R"("\uD83D\uDCA3")"   , "\xF0\x9f\x92\xA3"  }, // Unicode Bomb <U+1F4A3>, an example for char outside of BMP
+		{ "\"\xF0\x9f\x92\xA3\"", "\xF0\x9f\x92\xA3"  }, // Unicode Bomb <U+1F4A3>, an example for char outside of BMP
 		
 		{ R"("\u0000")"         , std::string(nullo, nullo+1)   },  // Yeah, 1 NUL byte
 		{ R"("\u0000\u0000")"   , std::string(nullo, nullo+2)   },  // Yeah, 2 NUL bytes
@@ -134,4 +140,34 @@ TEST( ToJsonTest, IllegalUtf8 )
 	
 	EXPECT_THROW( to_json<std::string>( "\xF4\x90\x80\x80" ), illegal_utf8 ); // bigger than U+10FFFF
 	EXPECT_THROW( to_json<std::string>( "\xED\xA0\x81\xED\xB0\x90" ), illegal_utf8 ); // CESU-8. Correct UTF-8 whoild be F0 90 90 80.
+}
+
+
+TEST( FromJsonTest, IllegalSequences )
+{
+	js::Value v;
+	
+	// too short \u escape sequences
+	EXPECT_ANY_THROW( js::read_or_throw( R"("\")", v) );
+	EXPECT_THROW( js::read_or_throw( R"("\q")", v), std::runtime_error );
+	EXPECT_THROW( js::read_or_throw( R"("\u")", v), std::runtime_error );
+	EXPECT_THROW( js::read_or_throw( R"("\u1")", v), std::runtime_error );
+	EXPECT_THROW( js::read_or_throw( R"("\u12")", v), std::runtime_error );
+	EXPECT_THROW( js::read_or_throw( R"("\u123")", v), std::runtime_error );
+	
+	// high surrogate without following legal low surrogate:
+	EXPECT_THROW( js::read_or_throw( R"("\uD801")", v), std::runtime_error );
+	EXPECT_THROW( js::read_or_throw( R"("\uD801D")", v), std::runtime_error );
+	
+	EXPECT_ANY_THROW( js::read_or_throw( R"("\uD801\")", v) );
+	EXPECT_THROW( js::read_or_throw( R"("\uD801\u")", v), std::runtime_error );
+	EXPECT_THROW( js::read_or_throw( R"("\uD801\uD")", v), std::runtime_error );
+	EXPECT_THROW( js::read_or_throw( R"("\uD801\uDC")", v), std::runtime_error );
+	EXPECT_THROW( js::read_or_throw( R"("\uD801\uDC0")", v), std::runtime_error );
+	EXPECT_THROW( js::read_or_throw( R"("\uD801\u1234")", v), std::runtime_error );
+
+	EXPECT_NO_THROW( js::read_or_throw( R"("\uD801\uDC02")", v) ); // legal UTF-16 sequence
+	
+	EXPECT_THROW( js::read_or_throw( R"("\uD801\uD801")", v), std::runtime_error ); // two high surrogates
+	EXPECT_THROW( js::read_or_throw( R"("\uDC01\uDC01")", v), std::runtime_error ); // low surrogate without high surrogate before
 }

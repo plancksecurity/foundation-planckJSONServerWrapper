@@ -159,6 +159,8 @@ namespace json_spirit
                             s += encode_utf<String_type>(c); // normal \u escaped BMP character.
                         }
                     }
+                }else{
+                    throw std::runtime_error("After \\u I expect at least 4 hex digits.");
                 }
                 break;
             }
@@ -175,7 +177,7 @@ namespace json_spirit
     {
         typedef typename String_type::const_iterator Iter_type;
 
-        if( end - begin < 2 ) return String_type( begin, end );
+//        if( end - begin < 2 ) return String_type( begin, end );
 
         String_type result;
         result.reserve( end - begin );
@@ -190,6 +192,10 @@ namespace json_spirit
             {
                 result.append( substr_start, i );
                 ++i;  // skip the '\'
+                if(i == end)
+                {
+                    throw std::runtime_error("Backslash at the end is not allowed.");
+                }
                 append_esc_char_and_incr_iter( result, i, end );
                 substr_start = i + 1;
             }
