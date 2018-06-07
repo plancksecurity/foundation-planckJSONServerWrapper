@@ -35,6 +35,8 @@ public:
 DummyContext dummyContext;
 
 
+// some example & test functions:
+
 int add_mul_simple(int x, int y, int z)
 {
 	return (x+y) * z;
@@ -56,10 +58,29 @@ char* add_mul_inout(int x, const char* y_str, int* z_result, char** result)
 	return new_string( ("x" + rs + "x").c_str(), 0);
 }
 
+
+char* tohex(const char* input, size_t length)
+{
+	std::string h; h.reserve(length*3);
+	char buffer[8] = { 0 };
+	const char* end = input+length;
+	for(; input<end; ++input)
+	{
+		snprintf(buffer,7, "%02hhx", (unsigned char)*input );
+		if(!h.empty()) h += ' ';
+		h += buffer;
+	}
+	return new_string( h.c_str(), 0 );
+}
+
+
 const FunctionMap test_functions = {
 		FP( "add_mul_simple", new Func<int, In<int>, In<int>, In<int>>( &add_mul_simple )),
-		FP( "add_mul_inout", new Func<char*, In<int>, In<c_string>, InOutP<int>, Out<char*>>( &add_mul_inout )),
+		FP( "add_mul_inout" , new Func<char*, In<int>, In<c_string>, InOutP<int>, Out<char*>>( &add_mul_inout )),
 		FP( "stringlist_add", new Func<Out<stringlist_t*, ParamFlag::DontOwn>, InOut<stringlist_t*>, In<c_string>>( &stringlist_add )),
+		FP( "tohex_1",        new Func<char*, In<c_string>, In<size_t>>( &tohex )), // with explicit length parameter
+		FP( "tohex_2",        new Func<char*, In<c_string>, InLength<>>( &tohex )), // with implicit length parameter, with dummy JSON parameter
+		FP( "tohex_3",        new Func<char*, In<c_string>, InLength<ParamFlag::NoInput>>( &tohex )), // with implicit length parameter, without JSON parameter
 	};
 
 
@@ -91,6 +112,22 @@ const std::vector<TestEntry> testValues =
 		},
 		{ "{\"jsonrpc\":\"2.0\", \"id\":24, \"method\":\"stringlist_add\", \"params\":[[\"abc\",\"def\"], \"ADD\"]}",
 		  "{\"jsonrpc\":\"2.0\", \"id\":24, \"result\":{ \"outParams\":[[\"abc\", \"def\", \"ADD\"]], \"return\":[\"ADD\"]}}"
+		},
+		// tohex:
+		{ "{\"jsonrpc\":\"2.0\", \"id\":25, \"method\":\"tohex_1\", \"params\":[\"tohex\",3]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":25, \"result\":{ \"outParams\":[], \"return\":\"74 6f 68\"}}"
+		},
+		{ "{\"jsonrpc\":\"2.0\", \"id\":26, \"method\":\"tohex_1\", \"params\":[\"tohex\",5]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":26, \"result\":{ \"outParams\":[], \"return\":\"74 6f 68 65 78\"}}"
+		},
+		{ "{\"jsonrpc\":\"2.0\", \"id\":27, \"method\":\"tohex_2\", \"params\":[\"tohex\",0]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":27, \"result\":{ \"outParams\":[], \"return\":\"74 6f 68 65 78\"}}"
+		},
+		{ "{\"jsonrpc\":\"2.0\", \"id\":28, \"method\":\"tohex_2\", \"params\":[\"tohex\",\"dummy_parameter\"]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":28, \"result\":{ \"outParams\":[], \"return\":\"74 6f 68 65 78\"}}"
+		},
+		{ "{\"jsonrpc\":\"2.0\", \"id\":28, \"method\":\"tohex_3\", \"params\":[\"tohex\"]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":28, \"result\":{ \"outParams\":[], \"return\":\"74 6f 68 65 78\"}}"
 		},
 
 	};

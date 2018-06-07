@@ -89,6 +89,8 @@ struct InLength : In<size_t, PF>
 	InLength(const js::Value& v, Context* ctx, unsigned param_nr)
 	: Base( ctx->retrieve(param_nr-1) )
 	{}
+	
+	~InLength() = default;
 };
 
 

@@ -12,3 +12,7 @@ Out<c_string, ParamFlag::DontOwn>::~Out()
 {
 	// don't pEp_free() the value!
 }
+
+template<>
+In<size_t, ParamFlag::NoInput>::~In()
+{}
