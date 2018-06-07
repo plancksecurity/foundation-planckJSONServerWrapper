@@ -363,6 +363,60 @@ bitfield, so they can be combined:
 More flags will be added when different semantics will be needed.
 
 
+### Automatic parameter value generation
+
+For some parameters or parameter combinations the JSON Server Adapter is
+able to generate the values automatically either from the environment or
+from other parameters.
+
+These automatic parameter value generators are supported at the moment:
+
+#### InLength
+
+For functions that have a string parameter of type `const char*` followed by
+a `size_t` that specifies the length of the string, the JSON Adapter can
+calculate the value of that length parameter automatically because in the
+JSON API the lengths of strings are always known.
+
+Moreover, the "length" that has to be given here means the length of the
+string seen by the C API side, after processing of all JSON escaping
+mechanisms, so it might be difficult to calculate that value at client side.
+
+Example:
+```
+// C function declaration:
+char* tohex(const char* input, size_t length);
+
+// API definition:
+// with implicit length parameter, with dummy JSON parameter
+FP( "tohex", new Func<char*, In<c_string>, InLength<>>( &tohex ))
+```
+
+To be compatible with previous API versions the `InLength` parameter still
+needs a dummy placeholder in the JSON interface, but its value is no longer
+relevant:
+
+```
+{"jsonrpc":"2.0", "id":28,
+ "method":"tohex", "params":["some string","dummy_parameter"]
+}
+```
+
+It is possible to specifiy `InLength<ParamFlag::NoInput>` so no
+parameter is exposed to the JSON API anymore:
+
+```
+FP( "tohex", new Func<char*, In<c_string>, InLength<ParamFlag::NoInput>>( &tohex ))
+```
+
+Now the 2nd parameter is omitted:
+```
+{"jsonrpc":"2.0", "id":28,
+ "method":"tohex", "params":["some string"]
+}
+```
+
+
 ## TODOs
 
 The following issues are planned but not yet implemented.
