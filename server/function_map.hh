@@ -119,10 +119,10 @@ public:
 		if(Element::is_output)
 		{
 			js::Value out = element.to_json();
-			std::cerr << "|$ Out #" << U << " : " << js::write(out) << "\n";
+//			std::cerr << "|$ Out #" << U << " : " << js::write(out) << "\n";
 			out_parameters.push_back( std::move(out) );
 		}else{
-			std::cerr << "|$ Param #" << U << " is not for output.\n";
+//			std::cerr << "|$ Param #" << U << " is not for output.\n";
 		}
 		return ret;
 	}
