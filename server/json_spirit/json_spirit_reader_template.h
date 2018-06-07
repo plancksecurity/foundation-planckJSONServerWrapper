@@ -59,7 +59,7 @@ namespace json_spirit
         if( ( c >= '0' ) && ( c <= '9' ) ) return c - '0';
         if( ( c >= 'a' ) && ( c <= 'f' ) ) return c - 'a' + 10;
         if( ( c >= 'A' ) && ( c <= 'F' ) ) return c - 'A' + 10;
-        return 0;
+        throw std::runtime_error(std::string("Char \"") + char(c) + "\" is not a hex digit!");
     }
 
     template< class Char_type, class Iter_type >
@@ -104,7 +104,6 @@ namespace json_spirit
     {
         typedef typename String_type::value_type Char_type;
         
-        unsigned high_surrogate = 0;
         const Char_type c2( *begin );
 
         switch( c2 )
@@ -136,23 +135,27 @@ namespace json_spirit
                     }else{
                         if(c>=0xD800 && c<=0xDBFF) // high surrogate from UTF-16 pair
                         {
-                            high_surrogate = c;
-                        }else if(c>=0xDC00 && c<=0xDFFF) // low surrogate from UTF-16 pair
+                            const unsigned high_surrogate = c;
+                            if(end-begin<7)
+                                throw std::runtime_error("Missing low surrogate at end of string. E0");
+                            
+                            if(*++begin != '\\')
+                                throw std::runtime_error("Missing low surrogate at end of string. E1");
+                            
+                            if(*++begin != 'u')
+                                throw std::runtime_error("Missing low surrogate at end of string. E2");
+                            
+                            const unsigned low_surrogate = unicode_str_to_char< Char_type >( begin );
+                            if( (low_surrogate < 0xDC00) || (low_surrogate > 0xDFFF) )
+                                throw std::runtime_error("Missing low surrogate at end of string. E3");
+                            
+                            // combine the two escaped \u sequences into one Non-BMP character:
+                            const unsigned u32 = (high_surrogate-0xD800) * 1024 + (low_surrogate-0xDC00) + 0x10000;
+                            s += encode_utf<String_type>(u32);
+                        }else if(c>=0xDC00 && c<=0xDFFF)
                         {
-                            if(high_surrogate)
-                            {
-                                // combine the two escaped \u sequences into one Non-BMP character:
-                                const unsigned u32 = (high_surrogate-0xD800) * 1024 + (c-0xDC00) + 0x10000;
-                                s += encode_utf<String_type>(u32);
-                                high_surrogate = 0;
-                            }else{
-                                throw std::runtime_error("Escaped low surrogate without high surrogate before!");
-                            }
+                            throw std::runtime_error("Unexpected low surrogate.");
                         }else{
-                            if(high_surrogate)
-                            {
-                                throw std::runtime_error("Escaped high surrogate without following low surrogate!");
-                            }
                             s += encode_utf<String_type>(c); // normal \u escaped BMP character.
                         }
                     }
@@ -161,7 +164,7 @@ namespace json_spirit
             }
             default :
             {
-                throw std::runtime_error("Unknown char \"" + c2 + "\" after backslash.");
+                throw std::runtime_error(std::string("Unknown char \"") + char(c2) + "\" after backslash.");
             }
         }
     }
