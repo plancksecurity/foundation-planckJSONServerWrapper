@@ -5,6 +5,7 @@ syntax: glob
 *.Po
 *.Plo
 *.pc
+*~
 
 libevent-*-stable/Makefile
 libevent-*-stable/config.h
