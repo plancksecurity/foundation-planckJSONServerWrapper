@@ -369,7 +369,7 @@ void combine(std::u32string& nfc, Iter starter, Iter next_starter)
 	{
 		if(!blocked(starter, c))
 		{
-			auto q = NFC_Compose.find( std::make_pair<unsigned>(*starter,*c) );
+			auto q = NFC_Compose.find( std::make_pair<unsigned, unsigned>(*starter,*c) );
 			if(q!=NFC_Compose.end())
 			{
 				*starter = q->second;
