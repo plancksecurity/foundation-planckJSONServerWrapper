@@ -335,7 +335,7 @@ void assert_utf8(const std::string& s)
 std::u32string fromUtf8_decompose(const std::string& s)
 {
 	std::u32string u32s;
-	u32s.reserve(s.size()*1.25);
+	u32s.reserve( static_cast<std::size_t>(s.size()*1.25) );
 	const char* begin = s.c_str();
 	const char* end   = s.c_str() + s.size();
 	for(; begin<end; ++begin)
