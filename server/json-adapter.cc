@@ -322,6 +322,12 @@ In<JsonAdapter*, ParamFlag::NoInput>::~In()
 	// nothing to do here. :-D
 }
 
+template<>
+struct Type2String<In<JsonAdapter*, ParamFlag::NoInput>>
+{
+	static js::Value get() { throw "Make MSVC happy again. m("; }
+};
+
 
 ServerVersion JsonAdapter::version()
 {
