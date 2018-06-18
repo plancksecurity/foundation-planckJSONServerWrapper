@@ -26,16 +26,28 @@ enum { LogLineMax = LOGGER_MAX_LOG_LINE_LENGTH };
 namespace LoggerS  // namespace containing all data for the Logger singleton. HACK!
 {
 	std::FILE* logfile = 0;
-//	Logger* GL    = 0; // global log object
 	std::recursive_mutex mut;
 	Logger::Severity loglevel;
 	Logger::Target target = Logger::Target(-1);
 	std::string filename;
 	std::string ident;
+	
+	bool initialized = false;
+	
 	bool omit_timestamp = false;
 
 	void openfile();
 	void opensyslog();
+
+	void start(const std::string& program_name)
+	{
+		ident = program_name;
+		// TODO: use $TEMP, $TMP etc.
+		filename = "/tmp/log-" + program_name + ".log";
+		opensyslog();
+		openfile();
+		initialized = true;
+	}
 
 	void log(Logger::Severity s, const std::string& msg);
 
@@ -52,6 +64,11 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 			"<>",  // Debug
 			"! "   // DebugInternal
 		};
+	
+	const char* multiline[] =
+		{
+			"⎡", "⎢", "⎣", "▒"
+		};
 #else
 	const char* Levelname[] =
 		{
@@ -65,10 +82,23 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 			"°",  // Debug
 			"·"   // DebugInternal
 		};
+	
+	const char* multiline[] =
+		{
+			"/ ", "| ", "\\ ", "##"
+		};
 #endif
 
 } // end of namespace LoggerS
 
+
+void Logger::start(const std::string& program_name)
+{
+	if(LoggerS::initialized==false)
+	{
+		LoggerS::start(program_name);
+	}
+}
 
 std::string Logger::gmtime(time_t t)
 {
@@ -129,14 +159,13 @@ Logger::Logger(const std::string& my_prefix, Severity my_loglevel)
 : prefix(my_prefix + ":")
 {
 	setLevel(my_loglevel);
+	start(my_prefix); // if not yet initialized.
 }
 
 
 Logger::Logger(Logger& parent, const std::string& my_prefix, Severity my_loglevel)
-: prefix(parent.getPrefix() + my_prefix + ':')
-, loglevel( my_loglevel == Severity::Inherited ? parent.getLevel() : my_loglevel )
+: Logger( parent.getPrefix() + my_prefix + ':', my_loglevel == Severity::Inherited ? parent.getLevel() : my_loglevel )
 {
-	setLevel(loglevel); // clamp the value
 }
 
 
@@ -226,14 +255,13 @@ void LoggerS::openfile()
 
 
 
-#ifdef LOGGER_ENABLE_SYSLOG
 void LoggerS::opensyslog()
 {
+#ifdef LOGGER_ENABLE_SYSLOG
 	openlog(ident.c_str(), 0, LOG_DAEMON);
-}
-#else
-void LoggerS::opensyslog() {}
 #endif
+}
+
 
 static const std::string thread_alphabet = "0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const unsigned thread_alph_len = thread_alphabet.size(); // shall be a prime number

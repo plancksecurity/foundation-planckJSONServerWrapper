@@ -52,6 +52,9 @@ public:
 		Console=1, Syslog=2, File=4  // may be ORed together
 	};
 
+	// shall be called before first log message.
+	static void start(const std::string& program_name);
+
 	// returns a string in YYYY-MM-DD.hh:mm:ss format of the given time_t t
 	static std::string gmtime(time_t t);
 
