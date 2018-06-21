@@ -96,8 +96,11 @@ try
 	}else{
 		Logger::setDefaultTarget(Logger::Target::File);
 	}
+
 	Logger::start("JsonAdapter", logfile);
 	
+	Logger L("main");
+	L.info("main logger started");
 	if(add_sharks)
 	{
 		ev_server::addSharks();
@@ -140,10 +143,16 @@ try
 		ja.Log() << "Good bye. :-)";
 		JsonAdapter::global_shutdown();
 	}
+	catch(std::exception const& e)
+	{
+		std::cerr << "Inner exception caught in main(): \"" << e.what() << "\"" << std::endl;
+		daemonize_commit(1);
+		exit(8);
+	}
 	catch (...)
 	{
 		daemonize_commit(1);
-		exit(1);
+		exit(9);
 	}
 }
 catch(std::exception const& e)

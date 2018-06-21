@@ -127,9 +127,6 @@ public:
 		Stream(Logger* _L, Logger::Severity _sev);
 		~Stream();
 		
-		Stream(const Stream&) = delete;
-		void operator=(const Stream&) = delete;
-		
 		mutable std::string s;
 		
 	private:
@@ -145,7 +142,7 @@ private:
 };
 
 	// creates a Stream, who collect data in pieces and logs it to the "parent" logger in its destructor with the given severity
-	Logger::Stream&& operator<<(Logger& parent, Logger::Severity sev);
+	Logger::Stream operator<<(Logger& parent, Logger::Severity sev);
 
 	template<class T>
 	const Logger::Stream& operator<<(const Logger::Stream&, const T&);

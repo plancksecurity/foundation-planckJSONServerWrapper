@@ -82,7 +82,7 @@ public:
 	static pEp_identity* retrieveNextIdentity(void* obj);
 	static void* keyserverLookupThreadRoutine(void* arg);
 	
-	Logger::Stream&& Log(Logger::Severity s = Logger::Severity::Debug) const;
+	Logger::Stream Log(Logger::Severity s = Logger::Severity::Debug) const;
 	
 	// will throw logic_error if guard variables contains illegal values, which means: *this is not a valid JsonAdapter object!
 	void check_guard() const;

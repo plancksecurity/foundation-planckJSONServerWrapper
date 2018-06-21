@@ -24,7 +24,7 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 {
 	std::FILE* logfile = 0;
 	std::recursive_mutex mut;
-	Logger::Severity loglevel;
+	Logger::Severity loglevel = Logger::DebugInternal;
 	Logger::Target target = Logger::Target(-1);
 	std::string filename;
 	std::string ident;
@@ -94,8 +94,9 @@ void Logger::start(const std::string& program_name, const std::string& filename)
 	if(LoggerS::initialized==false)
 	{
 		LoggerS::start(program_name, filename);
+		Logger& l = ::getLogger();
+		l.debug("Logger has been started.");
 	}
-	::getLogger().debug("Logger has been started.");
 }
 
 
@@ -382,9 +383,9 @@ template const Logger::Stream& operator<<(const Logger::Stream&, const void*cons
 template const Logger::Stream& operator<<(const Logger::Stream&,       void*const&);
 template const Logger::Stream& operator<<(const Logger::Stream&, const std::thread::id&);
 
-Logger::Stream&& operator<<(Logger& parent, Logger::Severity sev)
+Logger::Stream operator<<(Logger& parent, Logger::Severity sev)
 {
-	return std::move(Logger::Stream(&parent, sev));
+	return Logger::Stream(&parent, sev);
 }
 
 // End of file

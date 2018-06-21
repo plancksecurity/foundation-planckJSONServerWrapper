@@ -778,10 +778,10 @@ void JsonAdapter::unregisterEventListener(const std::string& address, unsigned p
 }
 
 
-Logger::Stream&& JsonAdapter::Log(Logger::Severity sev) const
+Logger::Stream JsonAdapter::Log(Logger::Severity sev) const
 {
 	check_guard();
-	return i->Log << sev;
+	return std::move(i->Log << sev);
 }
 
 
