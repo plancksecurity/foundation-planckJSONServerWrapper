@@ -3,6 +3,7 @@
 #include "prefix-config.hh"
 #include "json-adapter.hh"
 #include "daemonize.hh"
+#include "logger.hh"
 #include "nulllogger.hh"
 
 #include <thread>
@@ -61,7 +62,7 @@ try
 		("add-sharks", po::bool_switch(&add_sharks), "Add sharks to the JSON Adapter.")
 #ifdef _WIN32
 		((STATUS_HANDLE), po::value<uintptr_t>(&status_handle)->default_value(0), "Status file handle, for internal use.")
-#endif	
+#endif
 	;
 	
 	po::variables_map vm;
@@ -88,14 +89,14 @@ try
 	
 	if(logfile.empty())
 	{
-		my_logfile = &nulllogger;
+		Logger::setDefaultTarget(Logger::Target::None);
 	}else if(logfile == "stderr")
 	{
-		my_logfile = &std::cerr;
+		Logger::setDefaultTarget(Logger::Target::Console);
 	}else{
-		real_logfile = std::make_shared<std::ofstream>( logfile, std::ios::app );
-		my_logfile = real_logfile.get();
+		Logger::setDefaultTarget(Logger::Target::File);
 	}
+	Logger::start("JsonAdapter", logfile);
 	
 	if(add_sharks)
 	{
@@ -104,8 +105,8 @@ try
 	
 	if( debug_mode == false )
 		daemonize (!debug_mode, (const uintptr_t) status_handle);
-
-	JsonAdapter ja( my_logfile );
+	
+	JsonAdapter ja;
 	ja.do_sync( do_sync)
 	  .ignore_session_errors( ignore_missing_session)
 	  ;
@@ -136,7 +137,7 @@ try
 			}while(ja.running());
 		}
 		ja.shutdown(nullptr);
-		ja.Log() << "Good bye. :-)" << std::endl;
+		ja.Log() << "Good bye. :-)";
 		JsonAdapter::global_shutdown();
 	}
 	catch (...)

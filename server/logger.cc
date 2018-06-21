@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <mutex>
 #include <thread>
+#include <sstream>
 #include <sys/time.h>
 
 #ifdef LOGGER_ENABLE_SYSLOG
@@ -13,10 +14,6 @@ extern "C" {
 #include <syslog.h>
 }
 #endif // LOGGER_ENABLE_SYSLOG
-
-#ifdef DEBUG_ENABLED
-#include <sstream>
-#endif // DEBUG_ENABLED
 
 using Lock = std::lock_guard<std::recursive_mutex>;
 
@@ -39,11 +36,11 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 	void openfile();
 	void opensyslog();
 
-	void start(const std::string& program_name)
+	void start(const std::string& program_name, const std::string& filename = std::string())
 	{
 		ident = program_name;
 		// TODO: use $TEMP, $TMP etc.
-		filename = "/tmp/log-" + program_name + ".log";
+		LoggerS::filename = filename.empty() ? "/tmp/log-" + program_name + ".log" : filename;
 		opensyslog();
 		openfile();
 		initialized = true;
@@ -92,13 +89,15 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 } // end of namespace LoggerS
 
 
-void Logger::start(const std::string& program_name)
+void Logger::start(const std::string& program_name, const std::string& filename)
 {
 	if(LoggerS::initialized==false)
 	{
-		LoggerS::start(program_name);
+		LoggerS::start(program_name, filename);
 	}
+	::getLogger().debug("Logger has been started.");
 }
+
 
 std::string Logger::gmtime(time_t t)
 {
@@ -143,22 +142,34 @@ const std::string& Logger::getPrefix() const
 }
 
 
-Logger::Target Logger::getTarget()
+Logger::Target Logger::getDefaultTarget()
 {
 	return LoggerS::target;
 }
 
 
-void Logger::setTarget(Target t)
+void Logger::setDefaultTarget(Target t)
 {
 	LoggerS::target = t;
+}
+
+
+Logger::Severity Logger::getDefaultLevel()
+{
+	return LoggerS::loglevel;
+}
+
+
+void Logger::setDefaultLevel(Severity s)
+{
+	LoggerS::loglevel = s;
 }
 
 
 Logger::Logger(const std::string& my_prefix, Severity my_loglevel)
 : prefix(my_prefix + ":")
 {
-	setLevel(my_loglevel);
+	setLevel(my_loglevel == Severity::Inherited ? getDefaultLevel() : my_loglevel);
 	start(my_prefix); // if not yet initialized.
 }
 
@@ -322,53 +333,58 @@ void LoggerS::log(Logger::Severity s, const std::string& logline)
 }
 
 
-#ifdef DEBUG_ENABLED
-Logger::Stream::Stream(Logger* l) : L(l) , parent(0)
+Logger::Stream::Stream(Logger* parent, Severity _sev)
+: L(parent), sev(_sev)
 {}
 
-Logger::Stream::Stream(Stream& S, const std::string& str)
-: L(0) , parent(&S), s(str)
-{}
 
 Logger::Stream::~Stream()
 {
-	if(parent)
-	{
-		parent->s.append(s);
-	}
 	if(L)
 	{
-		L->debugInternal(s);
+		L->log(sev, s);
 	}
 }
 
 
 template<class T>
-Logger::Stream operator<<(Logger::Stream s, const T& t)
+const Logger::Stream& operator<<(const Logger::Stream& stream, const T& t)
 {
 	std::stringstream ss;
 	ss << t;
-	return Logger::Stream(s, ss.str());
+	stream.s.append( ss.str());
+	return stream;
 }
 
 
-Logger::Stream operator<<(Logger::Stream s, const char*const t)
+const Logger::Stream& operator<<(const Logger::Stream& stream, const char*const t)
 {
-	return Logger::Stream(s, t);
+	stream.s.append( t );
+	return stream;
 }
 
-
-template Logger::Stream operator<<(Logger::Stream, const int&);
-template Logger::Stream operator<<(Logger::Stream, const unsigned&);
-template Logger::Stream operator<<(Logger::Stream, const std::string&);
-template Logger::Stream operator<<(Logger::Stream, const double&);
-
-
-Logger::operator Logger::Stream()
+template<>
+const Logger::Stream& operator<<(const Logger::Stream& stream, const bool& b)
 {
-	return Stream(this);
+	stream.s.append( b ? "true" : "false");
+	return stream;
 }
 
-#endif // DEBUG_ENABLED
+template const Logger::Stream& operator<<(const Logger::Stream&, const int&);
+template const Logger::Stream& operator<<(const Logger::Stream&, const long&);
+template const Logger::Stream& operator<<(const Logger::Stream&, const unsigned&);
+template const Logger::Stream& operator<<(const Logger::Stream&, const unsigned long&);
+
+template const Logger::Stream& operator<<(const Logger::Stream&, const std::string&);
+template const Logger::Stream& operator<<(const Logger::Stream&, const double&);
+
+template const Logger::Stream& operator<<(const Logger::Stream&, const void*const&);
+template const Logger::Stream& operator<<(const Logger::Stream&,       void*const&);
+template const Logger::Stream& operator<<(const Logger::Stream&, const std::thread::id&);
+
+Logger::Stream&& operator<<(Logger& parent, Logger::Severity sev)
+{
+	return std::move(Logger::Stream(&parent, sev));
+}
 
 // End of file

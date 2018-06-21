@@ -49,11 +49,12 @@ public:
 
 	enum Target
 	{
+		None = 0,
 		Console=1, Syslog=2, File=4  // may be ORed together
 	};
 
 	// shall be called before first log message.
-	static void start(const std::string& program_name);
+	static void start(const std::string& program_name, const std::string& filename = "");
 
 	// returns a string in YYYY-MM-DD.hh:mm:ss format of the given time_t t
 	static std::string gmtime(time_t t);
@@ -103,58 +104,62 @@ public:
 	void setLevel(Severity s);
 	Severity getLevel() const;
 
-	static void setTarget(Target t);
-	static Target getTarget();
-	
+	static void setDefaultLevel(Severity s);
+	static Severity getDefaultLevel();
+
+	static void setDefaultTarget(Target t);
+	static Target getDefaultTarget();
+
 	const std::string& getPrefix() const;
 
-	explicit Logger(const std::string& my_prefix, Severity my_severity);
+	// if no explicit severity is given it is taken from default's severity
+	explicit Logger(const std::string& my_prefix, Severity my_severity = Severity::Inherited);
 	explicit Logger(Logger& parent, const std::string& my_prefix, Severity my_severity = Severity::Inherited);
 
 	// non-copyable:
 	Logger(const Logger&) = delete;
 	void operator=(const Logger&) = delete;
 
-#ifdef DEBUG_ENABLED
+
 	class Stream
 	{
-		Stream(Logger*);
-		Stream(Stream& parent, const std::string& msg);
-		
-		Logger* L;
-		Stream* parent;
-		std::string s;
 	public:
+		Stream(Logger* _L, Logger::Severity _sev);
 		~Stream();
-		friend class Logger;
-
-		template<class T> 
-		friend Logger::Stream operator<<(Logger::Stream, const T&);
-
-		friend Logger::Stream operator<<(Logger::Stream, const char*const);
+		
+		Stream(const Stream&) = delete;
+		void operator=(const Stream&) = delete;
+		
+		mutable std::string s;
+		
+	private:
+		Logger* L;
+		const Logger::Severity sev;
 	};
-
-	operator Stream();
-#else
-	template<class T>
-	Logger& operator<<(const T&) { return *this; }
-#endif
-
+	
+;
 private:
 	friend Logger& getLogger();
 	const std::string prefix;
 	Severity loglevel;
 };
 
+	// creates a Stream, who collect data in pieces and logs it to the "parent" logger in its destructor with the given severity
+	Logger::Stream&& operator<<(Logger& parent, Logger::Severity sev);
 
-#ifdef DEBUG_ENABLED
 	template<class T>
-	Logger::Stream operator<<(Logger::Stream, const T&);
-	Logger::Stream operator<<(Logger::Stream, const char*const);
-#endif
+	const Logger::Stream& operator<<(const Logger::Stream&, const T&);
+	const Logger::Stream& operator<<(const Logger::Stream&, const char*const);
+
+	inline
+	const Logger::Stream& operator<<(const Logger::Stream& stream, char*const s)
+	{
+		return stream << const_cast<const char*>(s);
+	}
 
 // clean up defines which may collide with other headers...
 #undef PRINTF
 #undef PRINTF3
 
 #endif // LOGGER_HH
+
