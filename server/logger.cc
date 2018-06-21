@@ -40,9 +40,12 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 	{
 		ident = program_name;
 		// TODO: use $TEMP, $TMP etc.
-		LoggerS::filename = filename.empty() ? "/tmp/log-" + program_name + ".log" : filename;
 		opensyslog();
-		openfile();
+		if(target & Logger::Target::File)
+		{
+			LoggerS::filename = filename.empty() ? "/tmp/log-" + program_name + ".log" : filename;
+			openfile();
+		}
 		initialized = true;
 	}
 
