@@ -1,12 +1,14 @@
 #include "logger.hh"
 #include "logger_config.hh"
 
+#include <cassert>
 #include <cstdarg>
 #include <ctime>
 #include <cstdlib>
 #include <mutex>
 #include <thread>
 #include <sstream>
+#include <vector>
 #include <sys/time.h>
 
 #ifdef LOGGER_ENABLE_SYSLOG
@@ -67,7 +69,7 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 	
 	const char* multiline[] =
 		{
-			"⎡", "⎢", "⎣", "▒"
+			"/ ", "| ", "\\ ", "##"
 		};
 #else
 	const char* Levelname[] =
@@ -85,12 +87,49 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 	
 	const char* multiline[] =
 		{
-			"/ ", "| ", "\\ ", "##"
+			"⎡ ", "⎢ ", "⎣ ", "▒"
 		};
+
 #endif
 
 } // end of namespace LoggerS
 
+
+namespace {
+
+	void logSingleLine(FILE* logfile, const std::string& timestamp, const std::string& logline)
+	{
+		std::fputs(timestamp.c_str(), logfile);
+		std::fputs(logline.c_str(), logfile);
+		std::fputc('\n', logfile);
+	}
+
+	void logMultiLine(FILE* logfile, const std::string& prefix, const std::vector<std::string>& lines)
+	{
+		assert( lines.size()>1 );
+		const size_t  last_line = lines.size()-1;
+		
+		std::fputs(prefix.c_str(), logfile);
+		std::fputs(LoggerS::multiline[0], logfile);
+		std::fputs(lines[0].c_str(), logfile);
+		std::fputc('\n', logfile);
+		
+		for(size_t q=1; q<last_line; ++q)
+		{
+			std::fputs(prefix.c_str(), logfile);
+			std::fputs(LoggerS::multiline[1], logfile);
+			std::fputs(lines[q].c_str(), logfile);
+			std::fputc('\n', logfile);
+		}
+		
+		std::fputs(prefix.c_str(), logfile);
+		std::fputs(LoggerS::multiline[2], logfile);
+		std::fputs(lines[last_line].c_str(), logfile);
+		std::fputc('\n', logfile);
+}
+
+	
+} // end of anonymous namespace
 
 void Logger::start(const std::string& program_name, const std::string& filename)
 {
@@ -293,12 +332,27 @@ std::string thread_id()
 	return std::string(buf, buf+7);
 }
 
+
 void LoggerS::log(Logger::Severity s, const std::string& logline)
 {
 	Lock LCK(mut);
 	if(s<Logger::Emergency     ) s = Logger::Emergency;
 	if(s>Logger::DebugInternal ) s = Logger::DebugInternal;
 	
+	// clipt and wrap:
+	bool multiline = false;
+	std::vector<std::string> lines;
+	std::stringstream ss(logline);
+	std::string oneline;
+	while(std::getline(ss, oneline))
+	{
+		lines.push_back( std::move(oneline) );
+	}
+	
+	if(lines.size() > 1)
+		multiline = true;
+	
+	// create header with timestamp
 	if(target & (Logger::File | Logger::Console))
 	{
 		std::string timestamp;
@@ -315,15 +369,21 @@ void LoggerS::log(Logger::Severity s, const std::string& logline)
 		
 		if(target & Logger::Console)
 		{
-			std::fputs(timestamp.c_str(), stderr);
-			std::fputs(logline.c_str(), stderr);
-			std::fputc('\n', stderr);
+			if(multiline)
+			{
+				logMultiLine(stderr, timestamp, lines);
+			}else{
+				logSingleLine(stderr, timestamp, logline);
+			}
 		}
 		if(target & Logger::File)
 		{
-			std::fputs(timestamp.c_str(), logfile);
-			std::fputs(logline.c_str(), logfile);
-			std::fputc('\n', logfile);
+			if(multiline)
+			{
+			
+			}else{
+			
+			}
 			std::fflush(logfile);
 		}
 	}
