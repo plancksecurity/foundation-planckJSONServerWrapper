@@ -1,8 +1,11 @@
 #ifndef LOGGER_CONFIG_HH
 #define LOGGER_CONFIG_HH
 
-// maximum length of a log line. longer log messages will be folded
-#define LOGGER_MAX_LOG_LINE_LENGTH (4096)
+// maximum length of a log message. longer log messages will be clipped
+#define LOGGER_MAX_LOG_MESSAGE_LENGTH (8192)
+
+// maximum length of a log line. longer lines will be wrapped/folded
+#define LOGGER_MAX_LINE_LENGTH (1000)
 
 // enable logging to syslog
 #define LOGGER_ENABLE_SYSLOG (1)

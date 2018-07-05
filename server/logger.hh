@@ -110,6 +110,15 @@ public:
 	static void setDefaultTarget(Target t);
 	static Target getDefaultTarget();
 
+	// set maximum length of a log message. Longer messages will be clipped!
+	static void setMaxMessageLength(unsigned length);
+	
+	// set maximum length of a log _line_. Longer messages will be wrapped into several lines.
+	static void setMaxLineLength(unsigned length);
+
+	static unsigned getMaxMessageLength();
+	static unsigned getMaxLineLength();
+
 	const std::string& getPrefix() const;
 
 	// if no explicit severity is given it is taken from default's severity

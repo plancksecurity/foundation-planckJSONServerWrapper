@@ -20,7 +20,6 @@ extern "C" {
 using Lock = std::lock_guard<std::recursive_mutex>;
 
 
-enum { LogLineMax = LOGGER_MAX_LOG_LINE_LENGTH };
 
 namespace LoggerS  // namespace containing all data for the Logger singleton. HACK!
 {
@@ -33,7 +32,10 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 	
 	bool initialized = false;
 	
+	// config variables
 	bool omit_timestamp = false;
+	unsigned max_message_length = LOGGER_MAX_LOG_MESSAGE_LENGTH;
+	unsigned max_line_length    = LOGGER_MAX_LINE_LENGTH;
 
 	void openfile();
 	void opensyslog();
@@ -209,6 +211,29 @@ void Logger::setDefaultLevel(Severity s)
 }
 
 
+// set maximum length of a log message. Longer messages will be clipped!
+void Logger::setMaxMessageLength(unsigned length)
+{
+	LoggerS::max_message_length = length;
+}
+
+// set maximum length of a log _line_. Longer messages will be wrapped into several lines.
+void Logger::setMaxLineLength(unsigned length)
+{
+	LoggerS::max_line_length = std::min(length, 64u*1024u);
+}
+
+unsigned Logger::getMaxMessageLength()
+{
+	return LoggerS::max_message_length;
+}
+
+unsigned Logger::getMaxLineLength()
+{
+	return LoggerS::max_line_length;
+}
+
+
 Logger::Logger(const std::string& my_prefix, Severity my_loglevel)
 : prefix(my_prefix + ":")
 {
@@ -229,8 +254,8 @@ void Logger::log(Severity s, const char* format, ...)
 	{
 		va_list va;
 		va_start(va, format);
-		char buf[ LogLineMax + 1];
-		std::vsnprintf(buf, LogLineMax, format, va);
+		char buf[ LoggerS::max_line_length + 1];
+		std::vsnprintf(buf, LoggerS::max_line_length, format, va);
 		va_end(va);
 		
 		LoggerS::log(s, prefix + buf);
@@ -242,8 +267,8 @@ void LogP(Logger::Severity s, Logger::Severity my_loglevel, const std::string& p
 {
 	if(s<=my_loglevel && s<=LoggerS::loglevel)
 	{
-		char buf[ LogLineMax + 1];
-		std::vsnprintf(buf, LogLineMax, format, va);
+		char buf[ LoggerS::max_line_length + 1];
+		std::vsnprintf(buf, LoggerS::max_line_length, format, va);
 		LoggerS::log(s, prefix + buf );
 	}
 }
