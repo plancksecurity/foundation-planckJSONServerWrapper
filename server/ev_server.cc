@@ -54,13 +54,13 @@ std::string version_as_a_string()
 #ifdef ENIGMAIL_2_0_COMPAT
 
 // wrapper for Enigmail 2.0 to provide the old Engine's API before JSON-92 / ENGINE-423
-PEP_STATUS MIME_decrypt_message_20(PEP_SESSION* session, const char* src, size_t src_len, char* plaintext,
+PEP_STATUS MIME_decrypt_message_20(PEP_SESSION session, const char* src, size_t src_len, char** plaintext,
 	stringlist_t** keylist, PEP_rating* rating, PEP_decrypt_flags_t* flags)
 {
 	*flags = 0;
 	char* modified_src = nullptr;
-	PEP_STATUS status = MIME_decrypt_message(session, src, src_len, plaintext, keylist, rating, in_flags, modified_src);
-	pep_free(modified_src);
+	PEP_STATUS status = MIME_decrypt_message(session, src, src_len, plaintext, keylist, rating, flags, &modified_src);
+	pEp_free(modified_src);
 	return status;
 }
 
