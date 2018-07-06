@@ -51,6 +51,24 @@ std::string version_as_a_string()
 }
 
 
+#ifdef ENIGMAIL_2_0_COMPAT
+
+// wrapper for Enigmail 2.0 to provide the old Engine's API before JSON-92 / ENGINE-423
+PEP_STATUS MIME_decrypt_message_20(PEP_SESSION* session, const char* src, size_t src_len, char* plaintext,
+	stringlist_t** keylist, PEP_rating* rating, PEP_decrypt_flags_t* flags)
+{
+	*flags = 0;
+	char* modified_src = nullptr;
+	PEP_STATUS status = MIME_decrypt_message(session, src, src_len, plaintext, keylist, rating, in_flags, modified_src);
+	pep_free(modified_src);
+	return status;
+}
+
+// N.B.: We don't wrap decrypt_message() because it is unused in Enigmail 2.0
+
+#endif // ENIGMAIL_2_0_COMPAT
+
+
 using In_Pep_Session = In<PEP_SESSION, ParamFlag::NoInput>;
 
 
@@ -63,9 +81,14 @@ const FunctionMap functions = {
 		FP( "MIME_encrypt_message_for_self", new Func<PEP_STATUS, In_Pep_Session, 
 			In<pEp_identity*>, In<c_string>, InLength<>, In<stringlist_t*>,
 			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message_for_self ) ),
-			
+		
+#ifdef ENIGMAIL_2_0_COMPAT
+		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, InLength<>,
+			Out<char*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>( &MIME_decrypt_message_20 ) ),
+#else
 		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, InLength<>,
 			Out<char*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>, Out<c_string>>( &MIME_decrypt_message ) ),
+#endif
 		
 		FP( "startKeySync", new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::startSync) ),
 		FP( "stopKeySync",  new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::stopSync ) ),
