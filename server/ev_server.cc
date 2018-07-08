@@ -64,8 +64,6 @@ PEP_STATUS MIME_decrypt_message_20(PEP_SESSION session, const char* src, size_t 
 	return status;
 }
 
-// N.B.: We don't wrap decrypt_message() because it is unused in Enigmail 2.0
-
 #endif // ENIGMAIL_2_0_COMPAT
 
 
@@ -98,8 +96,12 @@ const FunctionMap functions = {
 		FP( "encrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
 		FP( "encrypt_message_for_self", new Func<PEP_STATUS, In_Pep_Session,
 			In<pEp_identity*>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_for_self ) ),
-		
+
+#ifdef ENIGMAIL_2_0_COMPAT
+		FP( "decrypt_message", new Func<PEP_STATUS, In_Pep_Session,   In<message*>,  Out<message*>,    Out<stringlist_t*>, Out<PEP_rating>,    Out<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
+#else
 		FP( "decrypt_message", new Func<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
+#endif
 		FP( "outgoing_message_rating", new Func<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating ) ),
 		FP( "identity_rating" , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		
