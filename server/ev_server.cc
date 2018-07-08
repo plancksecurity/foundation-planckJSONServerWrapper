@@ -19,6 +19,8 @@
 #include <boost/filesystem.hpp>
 #include "json_spirit/json_spirit_reader.h"
 
+#include <boost/tokenizer.hpp>
+#include <event2/util.h>
 
 template<>
 In<Context*, ParamFlag::Default>::~In()
@@ -153,14 +155,58 @@ const FunctionMap functions = {
 
 void ev_server::sendReplyString(evhttp_request* req, const char* contentType, const std::string& outputText)
 {
+	struct evkeyvalq* input_headers;
+	struct evkeyvalq* output_headers;
 	auto* outBuf = evhttp_request_get_output_buffer(req);
 	if (!outBuf)
 		return;
-	
+
+	input_headers = evhttp_request_get_input_headers(req);
+	output_headers = evhttp_request_get_output_headers(req);
+
+	struct evkeyval* header;
+	Log() << "HTTP: == Request Headers ==" << std::endl;
+	for (header = input_headers->tqh_first; header; header = header->next.tqe_next) {
+		Log() << "HTTP: " << header->key << ": " << header->value << std::endl;
+	}
+
 	if(contentType)
 	{
-		evhttp_add_header(evhttp_request_get_output_headers(req), "Content-Type", contentType);
+		evhttp_add_header(output_headers, "Content-Type", contentType);
 	}
+
+	const char* cors_origin;
+	cors_origin = evhttp_find_header(input_headers, "Origin");
+	
+	if (cors_origin)
+	{
+		std::vector<std::string> cors_whitelist = {
+			"localhost", "127.0.0.1", "[::1]"
+			/* , "software.pep.foundation" */
+		};
+		const char* cors_env_ = std::getenv("PEPDEVEL_CORS");
+		if (cors_env_) {
+			std::string cors_env(cors_env_);
+			boost::char_separator<char> domain_sep("; ");
+    		boost::tokenizer<boost::char_separator<char>> domains(cors_env, domain_sep);
+    		for (const auto& domain : domains) {
+    			cors_whitelist.push_back(domain);
+    		}
+		}
+		evhttp_uri* cors_origin_uri = evhttp_uri_parse(cors_origin);
+		const std::string cors_uri_host = evhttp_uri_get_host(cors_origin_uri);
+		if (!cors_uri_host.empty() /* && cors_uri_host.length() */)
+			for (auto const& ao: cors_whitelist)
+			{
+				if (ao == cors_uri_host)
+				{
+					evhttp_add_header(output_headers, "Access-Control-Allow-Origin", cors_origin);
+					break;
+				}
+			}
+		evhttp_uri_free(cors_origin_uri);
+	}
+
 	const int ret = evbuffer_add(outBuf, outputText.data(), outputText.size());
 	if(ret==0)
 	{

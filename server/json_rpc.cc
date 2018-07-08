@@ -72,14 +72,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 		{
 			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: no valid member \"jsonrpc\" found.", request, request_id);
 		}
-		
-		const auto sec_token = find_value(request, "security_token");
-		const std::string sec_token_s = (sec_token.type()==js::str_type ? sec_token.get_str() : std::string() ); // missing or non-string "security_token" --> empty string.
-		if( context->verify_security_token(sec_token_s)==false )
-		{
-			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: Wrong security token.", request, request_id);
-		}
-		
+
 		const auto method = find_value(request, "method");
 		if(method.type()!=js::str_type)
 		{
@@ -87,6 +80,14 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 		}
 		
 		const std::string method_name = method.get_str();
+		const auto sec_token = find_value(request, "security_token");
+		const std::string sec_token_s = (sec_token.type()==js::str_type ? sec_token.get_str() : std::string() ); // missing or non-string "security_token" --> empty string.
+		if( context->verify_security_token(sec_token_s)==false )
+		{
+			if ((method_name != "version") && (method_name != "serverVersion"))
+				return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: Wrong security token.", request, request_id);
+		}
+
 		//const auto fn = fm.find(method_name);
 		const auto fn = find_in_vector(fm,method_name);
 		if(fn == fm.end() || fn->second->isSeparator())
