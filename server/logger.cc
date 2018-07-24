@@ -1,6 +1,7 @@
 #include "logger.hh"
 #include "logger_config.hh"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdarg>
 #include <ctime>
@@ -69,10 +70,12 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 			"! "   // DebugInternal
 		};
 	
-	const char* multiline[] =
-		{
-			"/ ", "| ", "\\ ", "##"
-		};
+	const char* const MultilineBracketFirst = "/";
+	const char* const MultilineBracketMid   = "|";
+	const char* const MultilineBracketLast  = "\\";
+	const char* const MultilineWrap         = "|>";
+	const char* const MultilineWrapContinue = "<|";
+
 #else
 	const char* Levelname[] =
 		{
@@ -87,10 +90,11 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 			"·"   // DebugInternal
 		};
 	
-	const char* multiline[] =
-		{
-			"⎡ ", "⎢ ", "⎣ ", "▒"
-		};
+	const char* const MultilineBracketFirst = "⎡ ";
+	const char* const MultilineBracketMid   = "⎢ ";
+	const char* const MultilineBracketLast  = "⎣ ";
+	const char* const MultilineWrap         = "↩";
+	const char* const MultilineWrapContinue = "↪";
 
 #endif
 
@@ -109,27 +113,72 @@ namespace {
 	void logMultiLine(FILE* logfile, const std::string& prefix, const std::vector<std::string>& lines)
 	{
 		assert( lines.size()>1 );
+		
+		// be robust, anyway. So:
+		if(lines.empty())
+		{
+			return;
+		}
+		
+		if(lines.size()==1)
+		{
+			logSingleLine(logfile, prefix, lines.at(0));
+			return;
+		}
+		
 		const size_t  last_line = lines.size()-1;
 		
 		std::fputs(prefix.c_str(), logfile);
-		std::fputs(LoggerS::multiline[0], logfile);
+		std::fputs(LoggerS::MultilineBracketFirst, logfile);
 		std::fputs(lines[0].c_str(), logfile);
 		std::fputc('\n', logfile);
 		
 		for(size_t q=1; q<last_line; ++q)
 		{
 			std::fputs(prefix.c_str(), logfile);
-			std::fputs(LoggerS::multiline[1], logfile);
+			std::fputs(LoggerS::MultilineBracketMid, logfile);
 			std::fputs(lines[q].c_str(), logfile);
 			std::fputc('\n', logfile);
 		}
 		
 		std::fputs(prefix.c_str(), logfile);
-		std::fputs(LoggerS::multiline[2], logfile);
+		std::fputs(LoggerS::MultilineBracketLast, logfile);
 		std::fputs(lines[last_line].c_str(), logfile);
 		std::fputc('\n', logfile);
-}
+	}
 
+	// wrap an overlong line into several lines, incl. adding wrapping markers
+	void wrapLongLine(const std::string& oneline, std::vector<std::string>& lines)
+	{
+		std::string::const_iterator begin = oneline.begin();
+		std::string::const_iterator end   = oneline.begin();
+		std::size_t ofs = 0;
+		
+		bool cont_line = false;
+		do{
+			begin=end;
+			const unsigned delta = std::min( (size_t)Logger::getMaxLineLength(), oneline.size() - ofs );
+			end += delta;
+			ofs += delta;
+			
+			if(end != oneline.end())
+			{
+				while( (uint8_t(*end) >= 0x80) && (end>begin) )
+				{
+					// rewind
+					--end;
+					--ofs;
+				}
+			}
+			
+			lines.push_back(
+					(cont_line ? LoggerS::MultilineWrapContinue : "") +
+					std::string(begin, end) +
+					(end!=oneline.end() ? LoggerS::MultilineWrap : "")
+				);
+			cont_line = true;
+		}while( end != oneline.end() );
+	}
 	
 } // end of anonymous namespace
 
@@ -371,7 +420,12 @@ void LoggerS::log(Logger::Severity s, const std::string& logline)
 	std::string oneline;
 	while(std::getline(ss, oneline))
 	{
-		lines.push_back( std::move(oneline) );
+		if(oneline.size() > max_line_length)
+		{
+			wrapLongLine(oneline, lines);
+		}else{
+			lines.push_back( std::move(oneline) );
+		}
 	}
 	
 	if(lines.size() > 1)
