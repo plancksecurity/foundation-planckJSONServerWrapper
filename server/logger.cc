@@ -98,6 +98,23 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 
 #endif
 
+	struct LogfileCloser
+	{
+		~LogfileCloser()
+		{
+			if(LoggerS::logfile)
+			{
+				LoggerS::log(Logger::Debug, "Shutdown.");
+				fputs("---<shutdown>---\n", LoggerS::logfile);
+				fclose(LoggerS::logfile);
+				LoggerS::logfile = nullptr;
+			}
+		}
+	};
+	
+	// guess what.
+	static LogfileCloser logfile_closer;
+
 } // end of namespace LoggerS
 
 
@@ -459,9 +476,9 @@ void LoggerS::log(Logger::Severity s, const std::string& logline)
 		{
 			if(multiline)
 			{
-			
+				logMultiLine(logfile, timestamp, lines);
 			}else{
-			
+				logSingleLine(logfile, timestamp, logline);
 			}
 			std::fflush(logfile);
 		}
