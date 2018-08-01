@@ -557,111 +557,112 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 	}
 	}
 	
-				Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
-				
-				unsigned port_ofs = 0;
+	Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
+	
+	unsigned port_ofs = 0;
 try_next_port:
-				auto* boundSock = evhttp_bind_socket_with_handle(i->evHttp.get(), i->address.c_str(), i->start_port + port_ofs);
-				if (!boundSock)
-				{
-					++port_ofs;
-					if(i->start_port + port_ofs > i->end_port)
-					{
-						throw std::runtime_error("Failed to bind server socket: "
-							"No free port between " + std::to_string(i->start_port) + " and " + std::to_string(i->end_port)
-							);
-					}
-					goto try_next_port;
-				}
-				
-				if ((i->sock = evhttp_bound_socket_get_fd(boundSock)) == -1)
-					throw std::runtime_error("Failed to get server socket for next instance.");
-				
-				i->port = i->start_port + port_ofs;
-				i->token = create_security_token(i->address, i->port, BaseUrl);
-				
-				Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"";
+	auto* boundSock = evhttp_bind_socket_with_handle(i->evHttp.get(), i->address.c_str(), i->start_port + port_ofs);
+	if (!boundSock)
+	{
+		++port_ofs;
+		if(i->start_port + port_ofs > i->end_port)
+		{
+			throw std::runtime_error("Failed to bind server socket: "
+				"No free port between " + std::to_string(i->start_port) + " and " + std::to_string(i->end_port)
+				);
+		}
+		goto try_next_port;
+	}
+	
+	if ((i->sock = evhttp_bound_socket_get_fd(boundSock)) == -1)
+		throw std::runtime_error("Failed to get server socket for next instance.");
+	
+	i->port = i->start_port + port_ofs;
+	i->token = create_security_token(i->address, i->port, BaseUrl);
+	
+	Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"";
 }
 
 
 void JsonAdapter::threadFunc()
 {
-		try
+	Logger L("JA:tF");
+	try
+	{
+		const auto id = std::this_thread::get_id();
+		L << Logger::Info << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++";
+		const auto q=session_registry.find(id);
+		if(q==session_registry.end())
 		{
-			const auto id = std::this_thread::get_id();
-			Log() << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++";
-			const auto q=session_registry.find(id);
-			if(q==session_registry.end())
+			i->session = nullptr;
+			PEP_STATUS status = call_with_lock(&init, &i->session); // release(session) in ThreadDeleter
+			if(status != PEP_STATUS_OK || i->session==nullptr)
 			{
-				i->session = nullptr;
-				PEP_STATUS status = call_with_lock(&init, &i->session); // release(session) in ThreadDeleter
-				if(status != PEP_STATUS_OK || i->session==nullptr)
+				const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".";
+				L << Logger::Error << error_msg;
+				if( ! i->ignore_session_error)
 				{
-					const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".";
-					Log() << error_msg;
-					if( ! i->ignore_session_error)
-					{
-						throw std::runtime_error(error_msg);
-					}
+					throw std::runtime_error(error_msg);
 				}
-				
-				session_registry.emplace(id, this);
-				Log() << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".";
-				if(i->shall_sync && i->session) // startSync() does not make sense without session.
-				{
-					Log() << "\tstartSync()...";
-					startSync();
-				}
-			}else{
-				Log() << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".";
 			}
 			
-			std::unique_ptr<event_base, decltype(&event_base_free)> eventBase(event_base_new(), &event_base_free);
-			if (!eventBase)
-				throw std::runtime_error("Failed to create new base_event.");
-			
-			std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp(evhttp_new(eventBase.get()), &evhttp_free);
-			if (!evHttp)
-				throw std::runtime_error("Failed to create new evhttp.");
-			
-			evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
-			evhttp_set_cb(evHttp.get(), "/pep_functions.js"      , ev_server::OnGetFunctions  , this);
-			evhttp_set_gencb(evHttp.get(), ev_server::OnOtherRequest, nullptr);
-			
-			if (i->sock == -1) // no port bound, yet
+			session_registry.emplace(id, this);
+			L << Logger::Info << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".";
+			if(i->shall_sync && i->session) // startSync() does not make sense without session.
 			{
-				throw std::runtime_error("You have to call prepare_run() before run()!");
+				L << Logger::Info << "\tstartSync()...";
+				startSync();
 			}
-			else
-			{
-				Log() << "\tnow I call evhttp_accept_socket()...";
-				if (evhttp_accept_socket(evHttp.get(), i->sock) == -1)
-					throw std::runtime_error("Failed to accept() on server socket for new instance.");
-			}
-			
-			unsigned numnum = 1000000;
-			while(i->running)
-			{
-				// once we have libevent 2.1:
-				//event_base_loop(eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
-				
-				// for libevent 2.0:
-				event_base_loop(eventBase.get(), EVLOOP_NONBLOCK);
-				std::this_thread::sleep_for(std::chrono::milliseconds(333));
-				Log() << "\r" << ++numnum << ".   ";
-			}
+		}else{
+			L << Logger::Info << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".";
 		}
-		catch (const std::exception& e)
+		
+		std::unique_ptr<event_base, decltype(&event_base_free)> eventBase(event_base_new(), &event_base_free);
+		if (!eventBase)
+			throw std::runtime_error("Failed to create new base_event.");
+		
+		std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp(evhttp_new(eventBase.get()), &evhttp_free);
+		if (!evHttp)
+			throw std::runtime_error("Failed to create new evhttp.");
+		
+		evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
+		evhttp_set_cb(evHttp.get(), "/pep_functions.js"      , ev_server::OnGetFunctions  , this);
+		evhttp_set_gencb(evHttp.get(), ev_server::OnOtherRequest, nullptr);
+		
+		if (i->sock == -1) // no port bound, yet
 		{
-			Log() << " +++ std::exception in ThreadFunc: " << e.what();
-			initExcept = std::current_exception();
+			throw std::runtime_error("You have to call prepare_run() before run()!");
 		}
-		catch (...)
+		else
 		{
-			Log() << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ ";
-			initExcept = std::current_exception();
+			L << Logger::Info << "\tnow I call evhttp_accept_socket()...";
+			if (evhttp_accept_socket(evHttp.get(), i->sock) == -1)
+				throw std::runtime_error("Failed to accept() on server socket for new instance.");
 		}
-		Log() << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++";
+		
+		//unsigned numnum = 1000000;
+		while(i->running)
+		{
+			// once we have libevent 2.1:
+			//event_base_loop(eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
+			
+			// for libevent 2.0:
+			event_base_loop(eventBase.get(), EVLOOP_NONBLOCK);
+			std::this_thread::sleep_for(std::chrono::milliseconds(333));
+			//Log() << "\r" << ++numnum << ".   ";
+		}
+	}
+	catch (const std::exception& e)
+	{
+		L << Logger::Error << " +++ std::exception in ThreadFunc: " << e.what();
+		initExcept = std::current_exception();
+	}
+	catch (...)
+	{
+		L << Logger::Crit << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ ";
+		initExcept = std::current_exception();
+	}
+	L << Logger::Info << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++";
 }
 
 
@@ -669,13 +670,15 @@ void JsonAdapter::run()
 try
 {
 	check_guard();
-	Log() << "JS::run(): This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".";
-	Log() << to_string( session_registry);
+	Logger L("JA:run");
+	
+	L << Logger::Info << "This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".";
+	L << Logger::Debug << to_string( session_registry);
 	
 	i->running = true;
 	for(int t=0; t<SrvThreadCount; ++t)
 	{
-		Log() << "Start Thread #" << t << "...";
+		L << Logger::Info << "Start Thread #" << t << "...";
 		ThreadPtr thread(new std::thread(staticThreadFunc, this), ThreadDeleter);
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		if (initExcept)
@@ -686,15 +689,15 @@ try
 		}
 		i->threads.push_back(std::move(thread));
 	}
-	Log() << "All " << SrvThreadCount << " thread(s) started:";
+	L << Logger::Debug << "All " << SrvThreadCount << " thread(s) started:";
 	for(const auto& t:i->threads)
 	{
-		Log() << "\tthread_id()=" << t->get_id() << ".";
+		L << Logger::Debug << "\tthread_id()=" << t->get_id() << ".";
 	}
 }
 catch (std::exception const &e)
 {
-	Log() << "Exception caught in JsonAdapter::run(): \"" << e.what() << "\"";
+	Log(Logger::Error) << "Exception in JsonAdapter::run(): \"" << e.what() << "\"";
 	throw;
 }
 
@@ -730,7 +733,7 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 	check_guard();
 	if(s!=i->token)
 	{
-		Log() << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!";
+		Log(Logger:Notice) << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!";
 	}
 	return s == i->token;
 }
