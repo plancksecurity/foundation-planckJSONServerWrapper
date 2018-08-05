@@ -733,7 +733,7 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 	check_guard();
 	if(s!=i->token)
 	{
-		Log(Logger:Notice) << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!";
+		Log(Logger::Notice) << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!";
 	}
 	return s == i->token;
 }
