@@ -3,11 +3,12 @@
 #ifndef EV_SERVER_HH
 #define EV_SERVER_HH
 
-#include "nulllogger.hh"
 #include <string>
 #include <boost/filesystem/path.hpp>
 
 struct evhttp_request;
+
+class Logger;
 
 class ev_server
 {
@@ -34,22 +35,13 @@ public:
 	// so changing it later might be useless.
 	static boost::filesystem::path path_to_html;
 	
-	// if new_logfile is NULL, the logfile is reset to nulllogger.
-	static
-	void setLogfile(std::ostream* new_logfile);
-	
 	// add sharks to the JSON Adapter
 	static
 	void addSharks();
 
 protected:
-	// prints "evserver:" to the log and returns it to allow << chaining
 	static
-	std::ostream& Log();
-	
-private:
-	static
-	std::ostream* log_file;
+	Logger& Log();
 };
 
 #endif
