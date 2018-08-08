@@ -5,6 +5,7 @@
 #include <pEp/sync.h>
 #include "registry.hh"
 #include "context.hh"
+#include "logger.hh"
 #include "server_version.hh"
 
 
@@ -12,7 +13,7 @@ class JsonAdapter : public Context
 {
 public:
 	// creates an instance of the JSON adapter. It tries to bind the first available port in the given range
-	JsonAdapter(std::ostream* logfile);
+	JsonAdapter();
 	
 	// calls shutdown() on the instance if it is still running().
 	virtual ~JsonAdapter();
@@ -81,8 +82,7 @@ public:
 	static pEp_identity* retrieveNextIdentity(void* obj);
 	static void* keyserverLookupThreadRoutine(void* arg);
 	
-	// returns the associated log stream (either std::cerr or nulllogger)
-	std::ostream& Log() const;
+	Logger::Stream Log(Logger::Severity s = Logger::Severity::Debug) const;
 	
 	// will throw logic_error if guard variables contains illegal values, which means: *this is not a valid JsonAdapter object!
 	void check_guard() const;
