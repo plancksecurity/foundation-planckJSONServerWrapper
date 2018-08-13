@@ -1,14 +1,16 @@
 #include "server_version.hh"
 #include "inout.hh"
+#include <fstream>
+#include <sstream>
 
 #include <pEp/pEpEngine.h> // for PEP_VERSION and get_engine_version()
 
 namespace {
 
 #ifdef PACKAGE_VERSION
-	const char* const PackageVersion = PACKAGE_VERSION;
+	char* PackageVersion = PACKAGE_VERSION;
 #else
-	const char* const PackageVersion = nullptr;
+	char* PackageVersion = nullptr;
 #endif
 
 
@@ -78,7 +80,21 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 , patch{p}
 , name {VersionName}
 , package_version{PackageVersion}
-{}
+{
+	if (!PackageVersion) {
+		std::ifstream packver("PackageVersion");
+		if (packver.is_open() && packver.good()) {
+			std::stringstream sstr;
+			sstr << packver.rdbuf();
+			std::string contents = sstr.str();
+			contents.erase(std::remove(contents.begin(), contents.end(), '\n'), contents.end());
+			contents.erase(std::remove(contents.begin(), contents.end(), '\r'), contents.end());
+			PackageVersion = new char[contents.length() + 1];
+			strcpy(PackageVersion, contents.c_str());
+			this->package_version = PackageVersion;
+		}
+	}
+}
 
 const ServerVersion& server_version()
 {
