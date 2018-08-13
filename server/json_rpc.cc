@@ -3,6 +3,16 @@
 #include "json_spirit/json_spirit_writer.h"
 #include "json-adapter.hh"
 #include "security-token.hh"
+#include "logger.hh"
+
+
+Logger& Log()
+{
+	static Logger L("jrpc");
+	return L;
+}
+
+
 
 // Server side:
 
@@ -12,12 +22,16 @@
 		ret.emplace_back( "jsonrpc", "2.0" );
 		ret.emplace_back( "id"     , id );
 		ret.emplace_back( "result" , result );
+		
+		DEBUG_OUT(Log(),  "make_result(): result: " + js::write(result) );
 		return ret;
 	}
 	
 	
 	js::Object make_error(JSON_RPC error_code, const std::string& error_message, const js::Value& data, int id)
 	{
+		Log().error("make_error(): \"" + error_message + "\" data: " + js::write(data) );
+		
 		js::Object err_obj;
 		err_obj.emplace_back( "code", int(error_code) );
 		err_obj.emplace_back( "message", error_message );
@@ -64,6 +78,7 @@ using json_spirit::find_value;
 
 js::Object call(const FunctionMap& fm, const js::Object& request, Context* context)
 {
+	Logger L("jrpc:call");
 	int request_id = -1;
 	try
 	{
@@ -114,13 +129,11 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 		
 		const js::Array p = ( params.type()==js::array_type ? params.get_array() : js::Array{} );
 		
-//		std::cerr << "=== Now I do the call!\n"
-//			"\tmethod_name=\"" << method_name << "\","
-//			"\tparams=" << js::write(params) << ". ===\n";
+		DEBUG_OUT(L, "method_name=\"" + method_name + "\"\n"
+					"params=" + js::write(params) );
 		
 		const js::Value result = fn->second->call(p, context);
-//		std::cerr << "=== Result of call: " << js::write(result, js::raw_utf8) << ". ===\n";
-//		std::cerr << "\tSessions: " << getSessions() << "\n";
+		DEBUG_OUT(L, "result=" + js::write(result, js::raw_utf8) );
 		
 		return make_result(result, request_id);
 	}

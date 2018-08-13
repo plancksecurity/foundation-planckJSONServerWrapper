@@ -9,6 +9,7 @@
 #include "json_rpc.hh"
 #include "pep-utils.hh"
 #include "gpg_environment.hh"
+#include "logger.hh"
 #include "server_version.hh"
 
 #include <pEp/message_api.h>
@@ -215,8 +216,9 @@ void ev_server::sendReplyString(evhttp_request* req, const char* contentType, co
 		evhttp_send_reply(req, 500, "evbuffer_add() failed.", outBuf);
 	}
 	
-	Log() << "\n=== sendReplyString(): ret=" << ret << ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL") 
-		<< ", output=«" << outputText << "»." << std::endl;
+	Log() << Logger::Debug << "sendReplyString(): ret=" << ret
+		<< ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL")
+		<< ", output=«" << outputText << "».";
 }
 
 
@@ -254,7 +256,7 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 	const evhttp_uri* uri = evhttp_request_get_evhttp_uri(req);
 	const char* path = evhttp_uri_get_path(uri);
 	const char* uri_string = evhttp_request_get_uri(req);
-	Log() << "** Request: [" << uri_string << "] " << (path? " Path: [" + std::string(path) + "]" : "null path") << "\n";
+	Log() << Logger::Debug << "** Request: [" << uri_string << "] " << (path? " Path: [" + std::string(path) + "]" : "null path") << "\n";
 	
 	try{
 		if(path)
@@ -262,7 +264,7 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 			const auto q = files.find(path);
 			if(q != files.end()) // found in "files" map
 			{
-			Log() << "\t found file \"" << q->second.fileName << "\", type=" << q->second.mimeType << ".\n";
+			Log() << Logger::Debug << "\t found file \"" << q->second.fileName.string() << "\", type=" << q->second.mimeType << ".\n";
 				sendFile( req, q->second.mimeType, q->second.fileName);
 				return;
 			}
@@ -275,8 +277,9 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 	catch(const std::runtime_error& e)
 	{
 		const std::string error_msg = "Internal error caused by URI \"" + std::string(uri_string) + "\"";
-		// TODO: log e.what() to log file, but don't send it in HTTP error message
-		//       because it might contain sensitive information, e.g. local file paths etc.!
+		// Log e.what() to log file, but DON'T send it in HTTP error message
+		// because it might contain sensitive information, e.g. local file paths etc.!
+		Log() << Logger::Error << "OnOtherRequest: " << error_msg << ".  what:" << e.what();
 		evhttp_send_error(req, HTTP_INTERNAL, error_msg.c_str() );
 	}
 };
@@ -325,6 +328,7 @@ void ev_server::OnGetFunctions(evhttp_request* req, void*)
 
 void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 {
+	Logger L( Log(), "OnApiReq");
 	evbuffer* inbuf = evhttp_request_get_input_buffer(req);
 	const size_t length = evbuffer_get_length(inbuf);
 
@@ -342,24 +346,26 @@ void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 	const std::string data_string(data.data(), data.data() + nr );
 	if(nr>0)
 	{
-		ja->Log() << "\tData: «" << data_string  << "»\n";
+		L << Logger::Debug << "Data: «" << data_string  << "»";
 		bool b = js::read( data_string, p);
 		if(p.type() == js::obj_type)
 		{
 			const js::Object& request = p.get_obj();
 			answer = call( functions, request, ja );
 		}else{
-			answer = make_error( JSON_RPC::PARSE_ERROR, "evbuffer_copyout does not return a JSON string. b=" + std::to_string(b), js::Value{data_string}, 42 );
+			const std::string error_msg = "evbuffer_copyout does not return a JSON string. b=" + std::to_string(b);
+			L << Logger::Error << error_msg;
+			answer = make_error( JSON_RPC::PARSE_ERROR, error_msg, js::Value{data_string}, 42 );
 		}
 	}else{
-		ja->Log() << "\tError: " << nr << ".\n";
+		L << Logger::Error << "Error: " << nr << ".\n";
 		answer = make_error( JSON_RPC::INTERNAL_ERROR, "evbuffer_copyout returns negative value", p, request_id );
 	}
 	
 	}
 	catch(const std::exception& e)
 	{
-		Log() << "\tException: \"" << e.what() << "\"\n";
+		L << Logger::Error << "Exception: \"" << e.what() << "\"";
 		answer = make_error( JSON_RPC::INTERNAL_ERROR, "Got a std::exception: \"" + std::string(e.what()) + "\"", p, request_id );
 	}
 
@@ -367,16 +373,10 @@ void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 };
 
 
-std::ostream& ev_server::Log()
+Logger& ev_server::Log()
 {
-	*log_file << "evserver: ";
-	return *log_file;
-}
-
-
-void ev_server::setLogfile(std::ostream* new_logfile)
-{
-	log_file = new_logfile ? new_logfile : &nulllogger;
+	static Logger L("evs");
+	return L;
 }
 
 
@@ -384,6 +384,3 @@ void ev_server::addSharks()
 {
 	add_sharks = true;
 }
-
-
-std::ostream* ev_server::log_file = &nulllogger;
