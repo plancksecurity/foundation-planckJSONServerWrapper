@@ -12,7 +12,6 @@ test: pep-hotfix
 	@rm -rf gnupg/ ; mkdir gnupg ; cp gpg.conf.broken gnupg/gpg.conf
 	@head gnupg/gpg.conf
 	@echo ==================================================
-	#GNUPGHOME=$(PWD)/gnupg ./pep-hotfix || true
 	@GNUPGHOME=gnupg ./pep-hotfix
 	@echo ==================================================
 	-@diff -Naur gpg.conf.broken gnupg/gpg.conf
