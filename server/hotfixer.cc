@@ -2,6 +2,7 @@
 #include "logger.hh"
 
 #include <boost/process.hpp>
+#include <boost/filesystem.hpp>
 
 
 #ifdef _WIN32
