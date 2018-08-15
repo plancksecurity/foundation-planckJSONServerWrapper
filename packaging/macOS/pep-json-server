@@ -1,0 +1,7 @@
+#!/bin/bash -e
+while read _ D ; do
+    D=${D%\"\)\;} ; D=${D#\"} ; D=${D%/*}
+    PATH="$D:$PATH"
+done < <(/usr/bin/grep -E "^user_pref\(\"extensions.enigmail.agentPath\"" ../../../prefs.js || : )
+export PATH="$PATH:/usr/bin:/usr/local/bin"
+exec "$0"-bin "$@"
