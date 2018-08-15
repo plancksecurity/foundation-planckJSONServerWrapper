@@ -1,0 +1,11 @@
+comment No Comment
+keyid-format 0xlong
+with-fingerprint
+keyserver-options no-honor-keyserver-url auto-key-retrieve
+# Comment preceeding keyid-format
+keyid-format 0xlongignore-time-conflict 
+personal-cipher-preferences AES 
+ignore-time-conflict no-emit-version
+ignore-time-conflict 
+ignore-time-conflict 
+allow-freeform-uid
