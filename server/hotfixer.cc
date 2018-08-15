@@ -48,6 +48,8 @@ namespace pEp
                 fs::path p2 = env_pepsub;
                 pephome = p1 / p2;
             }
+            if(!fs::create_directory(pephome))
+                return fs::path();
             return pephome;
         }
 
