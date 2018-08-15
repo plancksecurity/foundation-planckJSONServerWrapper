@@ -8,7 +8,9 @@
 #define LOGGER_MAX_LINE_LENGTH (1000)
 
 // enable logging to syslog
+#ifndef _WIN32
 #define LOGGER_ENABLE_SYSLOG (1)
+#endif
 
 // use ASCII-only characters to tag log lines
 // #define LOGGER_USE_ASCII_TAGS (1)

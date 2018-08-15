@@ -1,14 +1,21 @@
 #include "server_version.hh"
 #include "inout.hh"
-
+#include <fstream>
+#include <sstream>
+#include "pep-utils.hh"
+#include "pep-utils-json.hh"
 #include <pEp/pEpEngine.h> // for PEP_VERSION and get_engine_version()
+#include <boost/algorithm/string/trim.hpp>
+#include "json_spirit/json_spirit_reader.h"
+
+namespace js = json_spirit;
 
 namespace {
 
 #ifdef PACKAGE_VERSION
-	const char* const PackageVersion = PACKAGE_VERSION;
+	char* PackageVersion = PACKAGE_VERSION;
 #else
-	const char* const PackageVersion = nullptr;
+	char* PackageVersion = nullptr;
 #endif
 
 
@@ -67,7 +74,12 @@ static const std::string VersionName =
 //const ServerVersion sv(0,14,0);  // JSON-75: incompatible behavior of daemonize() especially in MS Windows
 //const ServerVersion sv(0,15,0);  // JSON-92: API CHANGE.
 //const ServerVersion sv(0,15,1);  // JSON-92 again: Change "keylist" in (MIME_)decrypt_message() from Out to InOutP. Is a compatible API change for JSON/JavaScript due to the handling of output parameters. :-)
+
+#ifdef ENIGMAIL_2_0_COMPAT
+const ServerVersion sv(0,14,1); // JSON-97 : make MIME_decrypt_message() API-compatible with pre-JSON-92's changes for Enigmail 2.0
+#else
 const ServerVersion sv(0,15,2);  // JSON-93 InLength<> is a compatible API change, because length parameter is still there but ignored. :-)
+#endif // ENIGMAIL_2_0_COMPAT
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
@@ -78,7 +90,35 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 , patch{p}
 , name {VersionName}
 , package_version{PackageVersion}
-{}
+{
+	if (!PackageVersion)
+		
+		try{
+			PackageVersion = "0.0.0";  /* break the loop */
+
+			const std::string file_content =
+				boost::algorithm::trim_copy(
+					pEp::utility::slurp("PackageVersion")
+				);
+
+			try{
+				js::Value v;
+				js::read_or_throw(file_content, v);
+				const js::Object obj = v.get_obj();
+				PackageVersion = pEp::utility::from_json_object<char*, js::str_type>(obj, "package_version");
+			}
+			catch(std::runtime_error&)
+			{
+				PackageVersion = strdup(file_content.c_str());
+			}
+
+			this->package_version = PackageVersion;
+		}
+		catch(std::runtime_error&)
+		{
+			// slurp() throws when it cannot read the file.
+		}
+}
 
 const ServerVersion& server_version()
 {

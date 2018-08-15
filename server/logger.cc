@@ -10,7 +10,10 @@
 #include <thread>
 #include <sstream>
 #include <vector>
-#include <sys/time.h>
+
+#ifdef _WIN32
+#  include <alloca>
+#endif
 
 #ifdef LOGGER_ENABLE_SYSLOG
 extern "C" {
@@ -213,22 +216,18 @@ void Logger::start(const std::string& program_name, const std::string& filename)
 std::string Logger::gmtime(time_t t)
 {
 	char buf[24]; // long enough to hold YYYYY-MM-DD.hh:mm:ss" (y10k-safe!)
-	std::tm     T;
-	gmtime_r(&t, &T); // TODO: GNU extension also in std:: ?
+
+// Win32 does not have gmtime_r(), but its gmtime() returns ptr to thread-local struct tm. :-)
+#ifdef _WIN32
+	std::tm* T = ::gmtime(&t);
+#else
+	std::tm     myT;
+	gmtime_r(&t, &myT); // TODO: GNU extension, conform to POSIX.1; works on Linux and MacOS.
+	std::tm* T = &myT;
+#endif
+
 	std::snprintf(buf, sizeof(buf)-1, "%04d-%02d-%02d.%02d:%02d:%02d",
-		T.tm_year+1900, T.tm_mon+1, T.tm_mday, T.tm_hour, T.tm_min, T.tm_sec );
-	
-	return buf;
-}
-
-
-std::string Logger::gmtime(timeval t)
-{
-	char buf[31]; // long enough to hold YYYYY-MM-DD.hh:mm:ss.uuuuuu
-	std::tm T;
-	gmtime_r(&t.tv_sec, &T);  // TODO: GNU extension also in std:: ?
-	std::snprintf(buf, sizeof(buf)-1, "%04d-%02d-%02d.%02d:%02d:%02d.%06lu",
-	         T.tm_year+1900, T.tm_mon+1, T.tm_mday, T.tm_hour, T.tm_min, T.tm_sec, (long unsigned)t.tv_usec);
+		T->tm_year+1900, T->tm_mon+1, T->tm_mday, T->tm_hour, T->tm_min, T->tm_sec );
 	
 	return buf;
 }
@@ -320,7 +319,7 @@ void Logger::log(Severity s, const char* format, ...)
 	{
 		va_list va;
 		va_start(va, format);
-		char buf[ LoggerS::max_line_length + 1];
+		char *buf = (char*) alloca (sizeof(char) * ( LoggerS::max_line_length + 1 ));
 		std::vsnprintf(buf, LoggerS::max_line_length, format, va);
 		va_end(va);
 		
@@ -333,7 +332,7 @@ void LogP(Logger::Severity s, Logger::Severity my_loglevel, const std::string& p
 {
 	if(s<=my_loglevel && s<=LoggerS::loglevel)
 	{
-		char buf[ LoggerS::max_line_length + 1];
+		char *buf = (char*) alloca (sizeof(char) * ( LoggerS::max_line_length + 1 ));
 		std::vsnprintf(buf, LoggerS::max_line_length, format, va);
 		LoggerS::log(s, prefix + buf );
 	}
