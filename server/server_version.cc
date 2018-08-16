@@ -92,18 +92,26 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 , package_version{PackageVersion}
 {
 	if (!PackageVersion)
+		
 		try{
+			PackageVersion = "0.0.0";  /* break the loop */
+
 			const std::string file_content =
 				boost::algorithm::trim_copy(
 					pEp::utility::slurp("PackageVersion")
 				);
-				
-			js::Value v;
-			js::read_or_throw(file_content, v);
-			const js::Object obj = v.get_obj();
-			PackageVersion = pEp::utility::from_json_object<char*, js::str_type>(obj, "package_version");
-		
-			PackageVersion = strdup(file_content.c_str());
+
+			try{
+				js::Value v;
+				js::read_or_throw(file_content, v);
+				const js::Object obj = v.get_obj();
+				PackageVersion = pEp::utility::from_json_object<char*, js::str_type>(obj, "package_version");
+			}
+			catch(std::runtime_error&)
+			{
+				PackageVersion = strdup(file_content.c_str());
+			}
+
 			this->package_version = PackageVersion;
 		}
 		catch(std::runtime_error&)
