@@ -10,7 +10,10 @@
 #include <thread>
 #include <sstream>
 #include <vector>
-#include <alloca>
+
+#ifdef _WIN32
+#  include <alloca>
+#endif
 
 #ifdef LOGGER_ENABLE_SYSLOG
 extern "C" {
