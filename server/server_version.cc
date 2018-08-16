@@ -83,13 +83,17 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 , package_version{PackageVersion}
 {
 	if (!PackageVersion)
-	{
+	try{
 		const std::string pkg_version_from_file =
 			boost::algorithm::trim_copy(
 				pEp::utility::slurp("PackageVersion")
 			);
 		PackageVersion = strdup(pkg_version_from_file.c_str());
 		this->package_version = PackageVersion;
+	}
+	catch(std::runtime_error&)
+	{
+		// slurp() throws when it cannot read the file.
 	}
 }
 
