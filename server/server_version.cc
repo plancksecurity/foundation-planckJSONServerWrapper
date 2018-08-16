@@ -3,8 +3,12 @@
 #include <fstream>
 #include <sstream>
 #include "pep-utils.hh"
+#include "pep-utils-json.hh"
 #include <pEp/pEpEngine.h> // for PEP_VERSION and get_engine_version()
 #include <boost/algorithm/string/trim.hpp>
+#include "json_spirit/json_spirit_reader.h"
+
+namespace js = json_spirit;
 
 namespace {
 
@@ -84,11 +88,19 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 {
 	if (!PackageVersion)
 	try{
-		const std::string pkg_version_from_file =
+		const std::string file_content =
 			boost::algorithm::trim_copy(
 				pEp::utility::slurp("PackageVersion")
 			);
-		PackageVersion = strdup(pkg_version_from_file.c_str());
+			
+/* to parse JSON:
+			js::Value v;
+			js::read_or_throw(file_content, v);
+			const js::Object obj = v.get_obj();
+			PackageVersion = pEp::utility::from_json_object<char*, js::str_type>(obj, "package_version");
+*/
+		
+		PackageVersion = strdup(file_content.c_str());
 		this->package_version = PackageVersion;
 	}
 	catch(std::runtime_error&)
