@@ -1,41 +1,21 @@
 #include "pep-types.hh"
 #include "pep-utils.hh"
-#include "pep-adapter.hh"
-#include "json_spirit/json_spirit_utils.h"
+#include "pep-utils-json.hh"
 
 #include <pEp/pEp_string.h>
 #include <iostream> // Just to print debug stuff to std::cerr
 #include "base64.hh"
 
+
+using pEp::utility::from_json_object;
+using pEp::utility::to_json_object;
+
 namespace
 {
-	// fetch a member from the given object, if set. (return a sensible NULL/default value if not)
-	template<class T, js::Value_type VALUE_TYPE>
-	T from_json_object(const js::Object& obj, const std::string& key)
-	{
-		const auto v = find_value(obj, key);
-		if(v.type() == js::null_type) return T{};
-		if(v.type() == VALUE_TYPE) return from_json<T>(v);
-		
-		throw std::runtime_error("JSON object has a member for key \"" + key + "\""
-			" with incompatible type " + js::value_type_to_string( v.type())
-			+ " instead of expected type " + js::value_type_to_string(VALUE_TYPE)
-			);
-	}
-	
 	std::string base64_from_json_object(const js::Object& obj, const std::string& key)
 	{
 		const std::string b64String = from_json_object<std::string, js::str_type> (obj, key);
 		return base64_decode(b64String);
-	}
-
-	template<class T>
-	void to_json_object(js::Object& obj, const std::string& key, const T& value)
-	{
-		if(value!=T{})
-		{
-			obj.emplace_back( key, js::Value( to_json<T>(value) ));
-		}
 	}
 
 	void to_base64_json_object(js::Object& obj, const std::string& key, char *value, size_t size)
