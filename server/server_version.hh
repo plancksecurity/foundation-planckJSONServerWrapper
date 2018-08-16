@@ -17,7 +17,7 @@ struct ServerVersion
 	// The version name is of the form "(##) name" where ## is a monotonic increasing number.
 	std::string name;
 	
-	const char* const package_version; // must be set via -D, e.g. -D'PACKAGE_VERSION="deb9-0.1"'
+	const char* package_version; // must be set via -D, e.g. -D'PACKAGE_VERSION="deb9-0.1"'
 
 	// returns "major.minor.patch"
 	std::string major_minor_patch() const;

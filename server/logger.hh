@@ -4,8 +4,6 @@
 #include <cstdio>
 #include <string>
 #include <cerrno>
-#include <sys/time.h>
-
 
 #ifdef DEBUG_ENABLED
 #define DEBUG_OUT( LL , ... )  LL.debug( __VA_ARGS__ )
@@ -58,9 +56,6 @@ public:
 
 	// returns a string in YYYY-MM-DD.hh:mm:ss format of the given time_t t
 	static std::string gmtime(time_t t);
-
-	// returns a string in YYYY-MM-DD.hh:mm:ss.uuuuuu format (u=microseconds) of the given timval
-	static std::string gmtime(timeval t);
 
 	void emergency(const char* format, ...) PRINTF;
 	void emergency(const std::string& line);
