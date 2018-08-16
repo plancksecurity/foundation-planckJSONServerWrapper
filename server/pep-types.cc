@@ -1,5 +1,6 @@
 #include "pep-types.hh"
 #include "pep-utils.hh"
+#include "pep-adapter.hh"
 #include "json_spirit/json_spirit_utils.h"
 
 #include <pEp/pEp_string.h>
@@ -827,3 +828,6 @@ js::Value Type2String<PEP_STATUS>::get()  { return "PEP_STATUS"; }
 
 template<>
 js::Value Type2String<Language>::get()  { return "Language"; }
+
+template<>
+js::Value Type2String<JsonAdapter *>::get() { return "JsonAdapter"; }

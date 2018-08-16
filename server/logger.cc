@@ -10,7 +10,7 @@
 #include <thread>
 #include <sstream>
 #include <vector>
-#include <sys/time.h>
+#include <alloca>
 
 #ifdef LOGGER_ENABLE_SYSLOG
 extern "C" {
@@ -216,7 +216,7 @@ std::string Logger::gmtime(time_t t)
 
 // Win32 does not have gmtime_r(), but its gmtime() returns ptr to thread-local struct tm. :-)
 #ifdef _WIN32
-	std::tm* T = gmtime(&t);
+	std::tm* T = ::gmtime(&t);
 #else
 	std::tm     myT;
 	gmtime_r(&t, &myT); // TODO: GNU extension, conform to POSIX.1; works on Linux and MacOS.
@@ -316,7 +316,7 @@ void Logger::log(Severity s, const char* format, ...)
 	{
 		va_list va;
 		va_start(va, format);
-		char buf[ LoggerS::max_line_length + 1];
+		char *buf = (char*) alloca (sizeof(char) * ( LoggerS::max_line_length + 1 ));
 		std::vsnprintf(buf, LoggerS::max_line_length, format, va);
 		va_end(va);
 		
@@ -329,7 +329,7 @@ void LogP(Logger::Severity s, Logger::Severity my_loglevel, const std::string& p
 {
 	if(s<=my_loglevel && s<=LoggerS::loglevel)
 	{
-		char buf[ LoggerS::max_line_length + 1];
+		char *buf = (char*) alloca (sizeof(char) * ( LoggerS::max_line_length + 1 ));
 		std::vsnprintf(buf, LoggerS::max_line_length, format, va);
 		LoggerS::log(s, prefix + buf );
 	}
