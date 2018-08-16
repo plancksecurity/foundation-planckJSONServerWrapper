@@ -2,8 +2,9 @@
 #include "inout.hh"
 #include <fstream>
 #include <sstream>
-
+#include "pep-utils.hh"
 #include <pEp/pEpEngine.h> // for PEP_VERSION and get_engine_version()
+#include <boost/algorithm/string/trim.hpp>
 
 namespace {
 
@@ -81,18 +82,14 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 , name {VersionName}
 , package_version{PackageVersion}
 {
-	if (!PackageVersion) {
-		std::ifstream packver("PackageVersion");
-		if (packver.is_open() && packver.good()) {
-			std::stringstream sstr;
-			sstr << packver.rdbuf();
-			std::string contents = sstr.str();
-			contents.erase(std::remove(contents.begin(), contents.end(), '\n'), contents.end());
-			contents.erase(std::remove(contents.begin(), contents.end(), '\r'), contents.end());
-			PackageVersion = new char[contents.length() + 1];
-			strcpy(PackageVersion, contents.c_str());
-			this->package_version = PackageVersion;
-		}
+	if (!PackageVersion)
+	{
+		const std::string pkg_version_from_file =
+			boost::algorithm::trim_copy(
+				pEp::utility::slurp("PackageVersion")
+			);
+		PackageVersion = strdup(pkg_version_from_file.c_str());
+		this->package_version = PackageVersion;
 	}
 }
 
