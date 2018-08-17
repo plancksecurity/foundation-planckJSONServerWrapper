@@ -12,6 +12,10 @@
 #include <vector>
 #include <sys/time.h>
 
+#ifdef _WIN32
+#include <malloc.h>  // for _alloca()
+#endif
+
 #ifdef LOGGER_ENABLE_SYSLOG
 extern "C" {
 #include <syslog.h>
@@ -36,7 +40,7 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 	// config variables
 	bool omit_timestamp = false;
 	unsigned max_message_length = LOGGER_MAX_LOG_MESSAGE_LENGTH;
-	unsigned max_line_length    = LOGGER_MAX_LINE_LENGTH;
+	unsigned max_line_length    = std::min(64u*1024u, LOGGER_MAX_LINE_LENGTH);
 
 	void openfile();
 	void opensyslog();
@@ -316,7 +320,12 @@ void Logger::log(Severity s, const char* format, ...)
 	{
 		va_list va;
 		va_start(va, format);
+		
+#ifdef _WIN32
+		char* buf = _alloca(LoggerS::max_line_length + 1);
+#else
 		char buf[ LoggerS::max_line_length + 1];
+#endif
 		std::vsnprintf(buf, LoggerS::max_line_length, format, va);
 		va_end(va);
 		
@@ -329,7 +338,11 @@ void LogP(Logger::Severity s, Logger::Severity my_loglevel, const std::string& p
 {
 	if(s<=my_loglevel && s<=LoggerS::loglevel)
 	{
+#ifdef _WIN32
+		char* buf = _alloca(LoggerS::max_line_length + 1);
+#else
 		char buf[ LoggerS::max_line_length + 1];
+#endif
 		std::vsnprintf(buf, LoggerS::max_line_length, format, va);
 		LoggerS::log(s, prefix + buf );
 	}
