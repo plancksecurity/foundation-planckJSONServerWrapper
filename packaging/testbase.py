@@ -8,7 +8,6 @@ from tempfile import mkdtemp
 import shutil
 import time
 import json
-import urllib2
 import io
 import requests
 import pprint
