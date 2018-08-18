@@ -13,6 +13,7 @@
 
 #ifdef _WIN32
 #  include <malloc.h>
+#  include <alloca.h>
 #endif
 
 #ifdef LOGGER_ENABLE_SYSLOG
@@ -321,7 +322,7 @@ void Logger::log(Severity s, const char* format, ...)
 		va_start(va, format);
 
 #ifdef _WIN32
-		char* buf = _alloca(LoggerS::max_line_length + 1);
+		char* buf = (char *) _alloca (sizeof(char) * (LoggerS::max_line_length + 1));
 #else
 		char buf[ LoggerS::max_line_length + 1];
 #endif
@@ -338,7 +339,7 @@ void LogP(Logger::Severity s, Logger::Severity my_loglevel, const std::string& p
 	if(s<=my_loglevel && s<=LoggerS::loglevel)
 	{
 #ifdef _WIN32
-		char* buf = _alloca(LoggerS::max_line_length + 1);
+		char* buf = (char *) _alloca (sizeof(char) * (LoggerS::max_line_length + 1));
 #else
 		char buf[ LoggerS::max_line_length + 1];
 #endif
