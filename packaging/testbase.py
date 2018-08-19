@@ -2,8 +2,9 @@
 
 import sys
 import os
+import platform
 import subprocess
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 from tempfile import mkdtemp
 import shutil
 import time
@@ -82,13 +83,16 @@ class test_server(object):
     m = None
 
     def __init__(self, server_bin, env=None):
+        PEPDIR = "pEp" if platform.system() == "Windows" else ".pEp"
+        GPGDIR = "gnupg" if platform.system() == "Windows" else ".gnupg"
         self.server_bin = server_bin
         self.m = m = mkdtemp(prefix="testjson")
         self.env = env if env else {}
+        self._tail = {}
         class dj(object):    
             home = os.path.join(m, "home")
-            gnupg = os.path.join(m, "home", ".gnupg")
-            pep = os.path.join(m, "home", ".pEp")
+            gnupg = os.path.join(m, "home", GPGDIR)
+            pep = os.path.join(m, "home", PEPDIR)
             lappdat = os.path.join(m, "home", "Data", "Local")
             temp = os.path.join(m, "tmp")
         self.dj = dj
@@ -103,7 +107,32 @@ class test_server(object):
 
         shutil.copyfile(os.path.expanduser("~/.pEp_management.db"),
                         jj(dj.home, ".pEp_management.db"))
+        for f in "pubring.kbx pubring.gpg tofu.db secring.gpg trustdb.gpg".split():
+            s = jj(os.environ.get("APPDATA", os.environ.get("HOME", ".")), GPGDIR, f)
+            d = jj(dj.gnupg, f)
+            if os.path.exists(s):
+                # print("{0} -> {1}".format(s, f))
+                shutil.copy(s, d)
+        for f in "../.pEp_management.db management.db".split():
+            s = jj(os.environ.get("APPDATA", os.environ.get("HOME", ".")), PEPDIR, f)
+            d = jj(dj.pep, f)
+            if os.path.exists(s):
+                # print("{0} -> {1}".format(s, f))
+                shutil.copy(s, d)
 
+
+    def tail(self, f):
+        # Follows a file and returns everthing added since last write
+        # f = open('somefile.log')
+        # p = 0
+        # while True:
+        #     f.seek(p)
+        #     latest_data = f.read()
+        #     p = f.tell()
+        #     if latest_data:
+        #         print latest_data
+        #         print str(p).center(10).center(80, '=')
+        pass
 
     def __enter__(self):
         server_bin = self.server_bin
@@ -127,9 +156,10 @@ class test_server(object):
 
         self.process = Popen([server_bin,
                 # "-l", "stderr",
+                "-l", jj(dj.home, "json.log"),
                 "-d", "1"], executable=server_bin,
                             shell=False, cwd=server_sharedir, env=env,
-                            stdin=PIPE)
+                            stdin=PIPE) #, stdout=PIPE, stderr=PIPE)
         
         # Do what we would not have to do if we could run the server in daemon mode.
         # Server guarantees that token file is written only after server is ready (SHOULD!)
@@ -149,8 +179,8 @@ class test_server(object):
 
     def __exit__(self, a, b, c):
         p = self.process
-        p.stdin.write("q")
-        p.stdin.write("\n")
+        p.stdin.write("q".encode('utf-8'))
+        p.stdin.write("\n".encode('utf-8'))
         # process.stdin.close()
         ret = p.wait()
 
