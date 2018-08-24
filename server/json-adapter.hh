@@ -32,6 +32,9 @@ public:
 	JsonAdapter& do_sync(bool _do_sync);
 	JsonAdapter& ignore_session_errors(bool _ig);
 	
+	// if called with "false" the JSON Adpapter would no longer deliver HTML and JavaScript files, only handle JSON-RPC requests
+	JsonAdapter& deliver_html(bool _deliver_html);
+	
 	// look for a free port to listen on
 	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port);
 	
