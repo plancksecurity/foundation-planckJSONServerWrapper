@@ -13,9 +13,9 @@ namespace js = json_spirit;
 namespace {
 
 #ifdef PACKAGE_VERSION
-	char* PackageVersion = PACKAGE_VERSION;
+	const char* PackageVersion = PACKAGE_VERSION;
 #else
-	char* PackageVersion = nullptr;
+	const char* PackageVersion = nullptr;
 #endif
 
 
