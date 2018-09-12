@@ -5,7 +5,7 @@
 
 #include "function_map.hh"
 #include <pEp/message_api.h>
-#include <pEp/sync.h>
+#include <pEp/sync_api.h>
 
 // in pEpEngine.h positive values are hex, negative are decimal. :-o
 std::string status_to_string(PEP_STATUS status);

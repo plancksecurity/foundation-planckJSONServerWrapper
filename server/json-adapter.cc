@@ -25,6 +25,8 @@
 #include "logger.hh"
 #include "server_version.hh"
 
+#include <pEp/keymanagement.h>
+
 #include <boost/filesystem.hpp>
 #include "json_spirit/json_spirit_writer.h"
 #include "json_spirit/json_spirit_reader.h"
@@ -128,7 +130,7 @@ struct JsonAdapter::Internal
 	PEP_SESSION session = nullptr;
 	
 	// Sync
-	locked_queue< sync_msg_t*, &free_sync_msg>  sync_queue;
+	locked_queue< Sync_event*, &free_Sync_event>  sync_queue;
 	PEP_SESSION sync_session = nullptr;
 	ThreadPtr   sync_thread{nullptr, ThreadDeleter};
 	
@@ -170,6 +172,7 @@ struct JsonAdapter::Internal
 		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
 	}
 	
+	static
 	PEP_STATUS makeAndDeliverRequest(const char* function_name, const js::Array& params)
 	{
 		PEP_STATUS status = PEP_STATUS_OK;
@@ -204,9 +207,9 @@ struct JsonAdapter::Internal
 		return makeAndDeliverRequest(msg_name, param_array);
 	}
 	
-	int injectSyncMsg(void* msg)
+	int injectSyncMsg(Sync_event* msg)
 	{
-		sync_queue.push_back( static_cast<sync_msg_t*>(msg) );
+		sync_queue.push_back(msg);
 		return 0;
 	}
 	
@@ -216,12 +219,12 @@ struct JsonAdapter::Internal
 		return 0;
 	}
 	
-	void* retrieveNextSyncMsg(time_t* timeout)
+	Sync_event* retrieveNextSyncMsg(time_t timeout)
 	{
-        sync_msg_t* msg = nullptr;
+        Sync_event* msg = nullptr;
         if(timeout && *timeout) {
             std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now()
-                + std::chrono::seconds(*timeout);
+                + std::chrono::seconds(timeout);
 
             const bool success = sync_queue.try_pop_front(msg, end_time);
             if(!success)
@@ -229,7 +232,7 @@ struct JsonAdapter::Internal
                 // this is timeout occurrence
                 return nullptr;
             }
-
+/*
             // we got a message while waiting for timeout -> compute remaining time
             std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
             if (now < end_time) 
@@ -240,7 +243,7 @@ struct JsonAdapter::Internal
             {
                 *timeout = 0;
             }
-
+*/
         }else{
             msg = sync_queue.pop_front();
         }
@@ -352,14 +355,14 @@ PEP_STATUS JsonAdapter::notifyHandshake(void* obj, pEp_identity* self, pEp_ident
 
 
 // BEWARE: msg is 1st parameter, obj is second!!!
-int JsonAdapter::injectSyncMsg(void* msg, void* obj)
+int JsonAdapter::injectSyncMsg(Sync_event* msg, void* obj)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	return ja->i->injectSyncMsg(msg);
 }
 
 
-void* JsonAdapter::retrieveNextSyncMsg(void* obj, time_t* timeout)
+Sync_event* JsonAdapter::retrieveNextSyncMsg(void* obj, time_t timeout)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	return ja->i->retrieveNextSyncMsg(timeout);
@@ -391,9 +394,9 @@ void JsonAdapter::startSync()
 	
 	status = register_sync_callbacks(i->sync_session,
 	                                 (void*) this,
-	                                 JsonAdapter::messageToSend,
+	//                                 JsonAdapter::messageToSend,
 	                                 JsonAdapter::notifyHandshake,
-	                                 JsonAdapter::injectSyncMsg,
+	//                                 JsonAdapter::injectSyncMsg,
 	                                 JsonAdapter::retrieveNextSyncMsg);
 	if (status != PEP_STATUS_OK)
 		throw std::runtime_error("Cannot register sync callbacks! status: " + status_to_string(status));
@@ -485,7 +488,12 @@ pEp_identity* JsonAdapter::retrieveNextIdentity(void* obj)
 
 void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
 {
-	PEP_STATUS status = do_keymanagement(&JsonAdapter::retrieveNextIdentity, arg); // does the whole work
+	PEP_STATUS status = do_keymanagement(
+		keyserver_lookup_session,
+		&JsonAdapter::retrieveNextIdentity,
+		&JsonAdapter::messageToSend,
+		arg); // does the whole work
+	
 	keyserver_lookup_queue.clear();
 	return (void*) status;
 }

@@ -112,7 +112,7 @@ const FunctionMap functions = {
 		FP( "get_languagelist", new Func<PEP_STATUS, In_Pep_Session, Out<char*>>( &get_languagelist) ),
 //		FP( "get_phrase"      , new Func<PEP_STATUS, In_Pep_Session, In<Language>, In<int>, Out<char*>> ( &get_phrase) ),
 //		FP( "get_engine_version", new Func<const char*> ( &get_engine_version) ),
-		FP( "is_pep_user"     , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<bool>>( &is_pep_user) ),
+		FP( "is_pEp_user"     , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<bool>>( &is_pEp_user) ),
 		FP( "config_passive_mode", new Func<void, In_Pep_Session, In<bool>>( &config_passive_mode) ),
 		FP( "config_unencrypted_subject", new Func<void, In_Pep_Session, In<bool>>( &config_unencrypted_subject) ),
 		

@@ -2,7 +2,7 @@
 #define JSON_ADAPTER_HH
 
 #include <pEp/message.h>
-#include <pEp/sync.h>
+#include <pEp/sync_api.h>
 #include "registry.hh"
 #include "context.hh"
 #include "logger.hh"
@@ -69,7 +69,7 @@ public:
 
 	// BEWARE: msg is 1st parameter, obj is second!!!
 	static int injectSyncMsg(void* msg, void* obj);
-	static void* retrieveNextSyncMsg(void* obj, time_t* timeout);
+	static Sync_event* retrieveNextSyncMsg(void* obj, time_t timeout);
 	static void* syncThreadRoutine(void* arg);
 	
 	void startSync();
