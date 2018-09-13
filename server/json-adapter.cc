@@ -394,10 +394,10 @@ void JsonAdapter::startSync()
 	{
 		throw std::runtime_error("Cannot create sync session! status: " + status_to_string(status));
 	}
-	
+	*/
 	i->sync_queue.clear();
 	
-	status = register_sync_callbacks(i->sync_session,
+	const PEP_STATUS status = register_sync_callbacks(i->session,
 	                                 (void*) this,
 	//                                 JsonAdapter::messageToSend,
 	                                 JsonAdapter::notifyHandshake,
@@ -406,10 +406,10 @@ void JsonAdapter::startSync()
 	if (status != PEP_STATUS_OK)
 		throw std::runtime_error("Cannot register sync callbacks! status: " + status_to_string(status));
 	
-	status = attach_sync_session(i->session, i->sync_session);
-	if(status != PEP_STATUS_OK)
-		throw std::runtime_error("Cannot attach to sync session! status: " + status_to_string(status));
-	*/
+//	status = attach_sync_session(i->session, i->sync_session);
+//	if(status != PEP_STATUS_OK)
+//		throw std::runtime_error("Cannot attach to sync session! status: " + status_to_string(status));
+	
 	i->sync_thread.reset( new std::thread( JsonAdapter::syncThreadRoutine, (void*)this ) );
 }
 
