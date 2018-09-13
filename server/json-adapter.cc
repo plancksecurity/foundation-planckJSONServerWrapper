@@ -92,6 +92,9 @@ R call_with_lock( R(*fn)(Args...), Args... args)
 }
 
 
+// *sigh* necessary because messageToSend() has no obj pointer anymore. :-(
+JsonAdapter* ja_singleton = 0;
+
 } // end of anonymous namespace
 
 
@@ -173,7 +176,6 @@ struct JsonAdapter::Internal
 		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
 	}
 	
-	static
 	PEP_STATUS makeAndDeliverRequest(const char* function_name, const js::Array& params)
 	{
 		PEP_STATUS status = PEP_STATUS_OK;
@@ -222,17 +224,18 @@ struct JsonAdapter::Internal
 	
 	Sync_event* retrieveNextSyncMsg(time_t timeout)
 	{
-        Sync_event* msg = nullptr;
-        if(timeout && *timeout) {
-            std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now()
-                + std::chrono::seconds(timeout);
-
-            const bool success = sync_queue.try_pop_front(msg, end_time);
-            if(!success)
-            {
-                // this is timeout occurrence
-                return nullptr;
-            }
+		Sync_event* msg = nullptr;
+		if(timeout)
+		{
+			std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now()
+			   + std::chrono::seconds(timeout);
+			
+			const bool success = sync_queue.try_pop_front(msg, end_time);
+			if(!success)
+			{
+				// this is timeout occurrence
+				return nullptr;
+			}
 /*
             // we got a message while waiting for timeout -> compute remaining time
             std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
@@ -245,10 +248,10 @@ struct JsonAdapter::Internal
                 *timeout = 0;
             }
 */
-        }else{
-            msg = sync_queue.pop_front();
-        }
-        return msg;
+		}else{
+			msg = sync_queue.pop_front();
+		}
+		return msg;
 	}
 	
 	pEp_identity* retrieveNextIdentity()
@@ -341,10 +344,10 @@ ServerVersion JsonAdapter::version()
 
 
 
-PEP_STATUS JsonAdapter::messageToSend(void* obj, message* msg)
+PEP_STATUS JsonAdapter::messageToSend(message* msg)
 {
-	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja->i->makeAndDeliverRequest2("messageToSend", In<message*>(msg) );
+//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja_singleton->i->makeAndDeliverRequest2("messageToSend", In<message*>(msg) );
 }
 
 
@@ -380,12 +383,13 @@ void* JsonAdapter::syncThreadRoutine(void* arg)
 void JsonAdapter::startSync()
 {
 	check_guard();
+	/*
 	if(i->sync_session)
 	{
 		throw std::runtime_error("sync session already started!");
 	}
 	
-	PEP_STATUS status = call_with_lock(&init, &i->sync_session);
+	PEP_STATUS status = call_with_lock(&init, &i->sync_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
 	if(status != PEP_STATUS_OK || i->sync_session==nullptr)
 	{
 		throw std::runtime_error("Cannot create sync session! status: " + status_to_string(status));
@@ -405,7 +409,7 @@ void JsonAdapter::startSync()
 	status = attach_sync_session(i->session, i->sync_session);
 	if(status != PEP_STATUS_OK)
 		throw std::runtime_error("Cannot attach to sync session! status: " + status_to_string(status));
-	
+	*/
 	i->sync_thread.reset( new std::thread( JsonAdapter::syncThreadRoutine, (void*)this ) );
 }
 
@@ -439,7 +443,7 @@ void JsonAdapter::startKeyserverLookup()
 	if(keyserver_lookup_session)
 		throw std::runtime_error("KeyserverLookup already started.");
 
-	PEP_STATUS status = call_with_lock(&init, &keyserver_lookup_session);
+	PEP_STATUS status = call_with_lock(&init, &keyserver_lookup_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
 	if(status != PEP_STATUS_OK || keyserver_lookup_session==nullptr)
 	{
 		throw std::runtime_error("Cannot create keyserver lookup session! status: " + status_to_string(status));
@@ -505,6 +509,11 @@ JsonAdapter::JsonAdapter()
 , i(new Internal{})
 , guard_1(Guard_1)
 {
+	if(!ja_singleton)
+	{
+		ja_singleton = this;
+	}
+	
 	i->eventBase.reset(event_base_new());
 	if (!i->eventBase)
 		throw std::runtime_error("Failed to create new base_event.");
@@ -562,7 +571,7 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 	{
 	// create a dummy session just to see whether the Engine is functional.
 	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
-	PEP_STATUS status = call_with_lock(&init, &first_session);
+	PEP_STATUS status = call_with_lock(&init, &first_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
 	if(status != PEP_STATUS_OK || first_session==nullptr)
 	{
 		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + status_to_string(status) + ".";
@@ -612,7 +621,7 @@ void JsonAdapter::threadFunc()
 		if(q==session_registry.end())
 		{
 			i->session = nullptr;
-			PEP_STATUS status = call_with_lock(&init, &i->session); // release(session) in ThreadDeleter
+			PEP_STATUS status = call_with_lock(&init, &i->session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg); // release(session) in ThreadDeleter
 			if(status != PEP_STATUS_OK || i->session==nullptr)
 			{
 				const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".";
