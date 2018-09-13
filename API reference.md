@@ -12,6 +12,7 @@ Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a 
 | startKeyserverLookup | Void |  |
 | stopKeyserverLookup | Void |  |
 | encrypt_message | PEP_STATUS | Message, StringList, Message⇑, PEP_enc_format, Integer |
+| encrypt_message_and_add_priv_key | PEP_STATUS | Message, Message⇑, String, , PEP_enc_format, Integer |
 | encrypt_message_for_self | PEP_STATUS | Identity, Message, StringList, Message⇑, PEP_enc_format, Integer |
 | decrypt_message | PEP_STATUS | Message⇕, Message⇑, StringList⇑, PEP_rating⇑, Integer⇕ |
 | outgoing_message_rating | PEP_STATUS | Message, PEP_rating⇑ |
