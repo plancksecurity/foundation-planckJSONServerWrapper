@@ -98,14 +98,13 @@ std::string status_to_string(PEP_STATUS status)
 		case PEP_SYNC_NO_NOTIFY_CALLBACK          : status_string = "PEP_SYNC_NO_NOTIFY_CALLBACK"; break;
 		case PEP_SYNC_ILLEGAL_MESSAGE             : status_string = "PEP_SYNC_ILLEGAL_MESSAGE"; break;
 		case PEP_SYNC_NO_INJECT_CALLBACK          : status_string = "PEP_SYNC_NO_INJECT_CALLBACK"; break;
+		case PEP_SYNC_NO_CHANNEL                  : status_string = "PEP_SYNC_NO_CHANNEL"; break;
+		case PEP_SYNC_CANNOT_ENCRYPT              : status_string = "PEP_SYNC_CANNOT_ENCRYPT"; break;
 		
-		case PEP_SEQUENCE_VIOLATED                : status_string = "PEP_SEQUENCE_VIOLATED"; break;
 		case PEP_CANNOT_INCREASE_SEQUENCE         : status_string = "PEP_CANNOT_INCREASE_SEQUENCE"; break;
-		case PEP_CANNOT_SET_SEQUENCE_VALUE        : status_string = "PEP_CANNOT_SET_SEQUENCE_VALUE"; break;
-		case PEP_OWN_SEQUENCE                     : status_string = "PEP_OWN_SEQUENCE"; break;
 		
-		case PEP_SYNC_STATEMACHINE_ERROR          : status_string = "PEP_SYNC_STATEMACHINE_ERROR"; break;
-		case PEP_SYNC_NO_TRUST                    : status_string = "PEP_SYNC_NO_TRUST"; break;
+		case PEP_STATEMACHINE_ERROR               : status_string = "PEP_STATEMACHINE_ERROR"; break;
+		case PEP_NO_TRUST                         : status_string = "PEP_NO_TRUST"; break;
 		case PEP_STATEMACHINE_INVALID_STATE       : status_string = "PEP_STATEMACHINE_INVALID_STATE"; break;
 		case PEP_STATEMACHINE_INVALID_EVENT       : status_string = "PEP_STATEMACHINE_INVALID_EVENT"; break;
 		case PEP_STATEMACHINE_INVALID_CONDITION   : status_string = "PEP_STATEMACHINE_INVALID_CONDITION"; break;
