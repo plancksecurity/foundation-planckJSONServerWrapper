@@ -261,7 +261,18 @@ struct JsonAdapter::Internal
 	
 	void* syncThreadRoutine(void* arg)
 	{
-		PEP_STATUS status = do_sync_protocol(sync_session, arg); // does the whole work
+		PEP_STATUS status = call_with_lock(&init, &sync_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
+		if (status != PEP_STATUS_OK)
+			throw std::runtime_error("Cannot init sync_session! status: " + status_to_string(status));
+		
+		status = register_sync_callbacks(sync_session,
+		                                 (void*) this,
+		                                 JsonAdapter::notifyHandshake,
+		                                 JsonAdapter::retrieveNextSyncMsg);
+		if (status != PEP_STATUS_OK)
+			throw std::runtime_error("Cannot register sync callbacks! status: " + status_to_string(status));
+		
+		status = do_sync_protocol(sync_session, arg); // does the whole work
 		sync_queue.clear(); // remove remaining messages
 		return (void*) status;
 	}
@@ -383,28 +394,8 @@ void* JsonAdapter::syncThreadRoutine(void* arg)
 void JsonAdapter::startSync()
 {
 	check_guard();
-	/*
-	if(i->sync_session)
-	{
-		throw std::runtime_error("sync session already started!");
-	}
-	
-	PEP_STATUS status = call_with_lock(&init, &i->sync_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
-	if(status != PEP_STATUS_OK || i->sync_session==nullptr)
-	{
-		throw std::runtime_error("Cannot create sync session! status: " + status_to_string(status));
-	}
-	*/
 	i->sync_queue.clear();
 	
-	const PEP_STATUS status = register_sync_callbacks(i->session,
-	                                 (void*) this,
-	//                                 JsonAdapter::messageToSend,
-	                                 JsonAdapter::notifyHandshake,
-	//                                 JsonAdapter::injectSyncMsg,
-	                                 JsonAdapter::retrieveNextSyncMsg);
-	if (status != PEP_STATUS_OK)
-		throw std::runtime_error("Cannot register sync callbacks! status: " + status_to_string(status));
 	
 //	status = attach_sync_session(i->session, i->sync_session);
 //	if(status != PEP_STATUS_OK)
