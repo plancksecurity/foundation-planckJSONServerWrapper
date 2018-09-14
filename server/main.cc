@@ -179,6 +179,6 @@ catch (...)
 {
 	std::cerr << "Unknown Exception caught in main()." << std::endl;
 	daemonize_commit(20);
-	return(20);
+	exit(20);
 }
 
