@@ -88,13 +88,15 @@ const FunctionMap functions = {
 		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, InLength<>,
 			Out<char*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>, Out<c_string>>( &MIME_decrypt_message ) ),
 #endif
-		
+
 		FP( "startKeySync", new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::startSync) ),
 		FP( "stopKeySync",  new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::stopSync ) ),
 		FP( "startKeyserverLookup", new Func<void>( &JsonAdapter::startKeyserverLookup) ),
 		FP( "stopKeyserverLookup",  new Func<void>( &JsonAdapter::stopKeyserverLookup ) ),
 		
 		FP( "encrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
+		FP( "encrypt_message_and_add_priv_key", new Func<PEP_STATUS, In_Pep_Session,
+			In<message*>, Out<message*>, In<c_string>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_and_add_priv_key) ),
 		FP( "encrypt_message_for_self", new Func<PEP_STATUS, In_Pep_Session,
 			In<pEp_identity*>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_for_self ) ),
 
@@ -125,6 +127,9 @@ const FunctionMap functions = {
 		FP( "set_identity_flags"     , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &set_identity_flags) ),
 		FP( "unset_identity_flags"   , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &unset_identity_flags) ),
 		
+		FP( "MIME message handling", new Separator),
+		FP( "mime_decode_message", new Func<PEP_STATUS, In<c_string>, In<std::size_t>, Out<message*>>( &mime_decode_message) ),
+
 		FP( "Low level Key Management API", new Separator),
 		FP( "generate_keypair", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &generate_keypair) ),
 		FP( "delete_keypair", new Func<PEP_STATUS, In_Pep_Session, In<c_string>> ( &delete_keypair) ),
