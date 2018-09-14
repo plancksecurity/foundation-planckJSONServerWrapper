@@ -124,6 +124,7 @@ struct JsonAdapter::Internal
 	bool        running = false;
 	bool        silent  = false;
 	bool        ignore_session_error = false;
+	bool        deliver_html = true;
 	ThreadPool  threads;
 	PEP_SESSION session = nullptr;
 	
@@ -525,6 +526,7 @@ JsonAdapter& JsonAdapter::do_sync(bool _do_sync)
 	return *this;
 }
 
+
 JsonAdapter& JsonAdapter::ignore_session_errors(bool _ig)
 {
 	check_guard();
@@ -532,6 +534,13 @@ JsonAdapter& JsonAdapter::ignore_session_errors(bool _ig)
 	return *this;
 }
 
+
+JsonAdapter& JsonAdapter::deliver_html(bool dh)
+{
+	check_guard();
+	i->deliver_html = dh;
+	return *this;
+}
 
 
 void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port)
@@ -626,8 +635,12 @@ void JsonAdapter::threadFunc()
 			throw std::runtime_error("Failed to create new evhttp.");
 		
 		evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
-		evhttp_set_cb(evHttp.get(), "/pep_functions.js"      , ev_server::OnGetFunctions  , this);
-		evhttp_set_gencb(evHttp.get(), ev_server::OnOtherRequest, nullptr);
+		
+		if(i->deliver_html)
+		{
+			evhttp_set_cb(evHttp.get(), "/pep_functions.js"      , ev_server::OnGetFunctions  , this);
+			evhttp_set_gencb(evHttp.get(), ev_server::OnOtherRequest, nullptr);
+		}
 		
 		if (i->sock == -1) // no port bound, yet
 		{
@@ -640,16 +653,15 @@ void JsonAdapter::threadFunc()
 				throw std::runtime_error("Failed to accept() on server socket for new instance.");
 		}
 		
-		//unsigned numnum = 1000000;
 		while(i->running)
 		{
-			// once we have libevent 2.1:
-			//event_base_loop(eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
-			
+#ifdef EVLOOP_NO_EXIT_ON_EMPTY
+			// for libevent 2.1:
+			event_base_loop(eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
+#else
 			// for libevent 2.0:
-			event_base_loop(eventBase.get(), EVLOOP_NONBLOCK);
-			std::this_thread::sleep_for(std::chrono::milliseconds(333));
-			//Log() << "\r" << ++numnum << ".   ";
+			event_base_loop(eventBase.get(), 0);
+#endif
 		}
 	}
 	catch (const std::exception& e)

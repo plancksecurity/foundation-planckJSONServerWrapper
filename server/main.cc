@@ -19,6 +19,7 @@ bool debug_mode = false;
 bool do_sync    = false;
 bool ignore_missing_session = false;
 bool add_sharks = false;
+bool no_html    = false;
 
 uintptr_t status_handle = 0;
 
@@ -61,6 +62,7 @@ try
 		("logfile,l", po::value<std::string>(&logfile)->default_value(logfile),   "Name of the logfile. Can be \"stderr\" for log to stderr or empty for no log.")
 		("ignore-missing-session", po::bool_switch(&ignore_missing_session), "Ignore when no PEP_SESSION can be created.")
 		("add-sharks", po::bool_switch(&add_sharks), "Add sharks to the JSON Adapter.")
+		("no-html"   , po::bool_switch(&no_html   ), "Don't deliver HTML and JavaScript files, only accept JSON-RPC calls.")
 #ifdef _WIN32
 		((STATUS_HANDLE), po::value<uintptr_t>(&status_handle)->default_value(0), "Status file handle, for internal use.")
 #endif
@@ -125,6 +127,7 @@ try
 	JsonAdapter ja;
 	ja.do_sync( do_sync)
 	  .ignore_session_errors( ignore_missing_session)
+	  .deliver_html( !no_html )
 	  ;
 	/*
 	 * FIXME: why are exceptions risen after the instantiation of JsonAdapter
