@@ -653,16 +653,15 @@ void JsonAdapter::threadFunc()
 				throw std::runtime_error("Failed to accept() on server socket for new instance.");
 		}
 		
-		//unsigned numnum = 1000000;
 		while(i->running)
 		{
-			// once we have libevent 2.1:
-			//event_base_loop(eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
-			
+#ifdef EVLOOP_NO_EXIT_ON_EMPTY
+			// for libevent 2.1:
+			event_base_loop(eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
+#else
 			// for libevent 2.0:
-			event_base_loop(eventBase.get(), EVLOOP_NONBLOCK);
-			std::this_thread::sleep_for(std::chrono::milliseconds(333));
-			//Log() << "\r" << ++numnum << ".   ";
+			event_base_loop(eventBase.get(), 0);
+#endif
 		}
 	}
 	catch (const std::exception& e)
