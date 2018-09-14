@@ -5,7 +5,7 @@ Nota bene: This list was created manually from the "authorative API description"
 
 #### Message API ####
 
-##### MIME_encrypt_message( String mimetext, Integer size, StringList extra, String⇑ mime_ciphertext, PEP_enc_format env_format, Integer flags)
+##### MIME_encrypt_message( String mimetext, Integer size, StringList extra, String⇑ mime_ciphertext, PEP_enc_format env_format, Integer flags) #####
 
 encrypt a MIME message, with MIME output
 
@@ -143,6 +143,32 @@ encrypt message in memory
                                       and key is attached to it
 ```
 
+##### encrypt_message_and_add_priv_key( Message src, Message⇑ dst, String to_fingerprint, PEP_enc_format enc_format, Integer flags)
+encrypt message in memory, adding an encrypted private key (encrypted separately and sent within the inner message)
+```
+  parameters:
+      session (in)        session handle
+      src (in)            message to encrypt
+      dst (out)           pointer to new encrypted message or NULL if no
+                          encryption could take place
+      to_fpr              fingerprint of the recipient key to which the private key
+                          should be encrypted
+      enc_format (in)     encrypted format
+      flags (in)          flags to set special encryption features
+
+  return value:
+      PEP_STATUS_OK                   on success
+      PEP_KEY_HAS_AMBIG_NAME          at least one of the receipient keys has
+                                      an ambiguous name
+      PEP_UNENCRYPTED                 on demand or no recipients with usable
+                                      key, is left unencrypted, and key is
+                                      attached to it
+
+  caveat:
+      the ownershop of src remains with the caller
+      the ownership of dst goes to the caller
+```
+
 ##### encrypt_message_for_self(Identity target_id, Message src, Message⇑ dst, PEP_enc_format enc_format, Integer flags)
 encrypt message in memory for user's identity only,
 ignoring recipients and other identities from
@@ -266,6 +292,10 @@ re-evaluate already decrypted message rating
 
 ##### get_gpg_path(String⇑)
 get path of gpg binary.
+
+#### MIME message handling ####
+
+##### mime_decode_message(String mime_message, Integer message_lenght, Message msg)
 
 #### pEp Engine Core API ####
 

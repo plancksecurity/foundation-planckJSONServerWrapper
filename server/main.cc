@@ -163,24 +163,25 @@ try
 	{
 		std::cerr << "Inner exception caught in main(): \"" << e.what() << "\"" << std::endl;
 		daemonize_commit(1);
-		exit(8);
+		exit(1);
 	}
 	catch (...)
 	{
+		std::cerr << "Unknown inner exception caught in main()." << std::endl;
 		daemonize_commit(1);
-		exit(9);
+		exit(1);
 	}
 }
 catch(std::exception const& e)
 {
 	std::cerr << "Exception caught in main(): \"" << e.what() << "\"" << std::endl;
 	daemonize_commit(1);
-	return 1;
+	exit(1);
 }
 catch (...)
 {
 	std::cerr << "Unknown Exception caught in main()." << std::endl;
 	daemonize_commit(20);
-	return 20;
+	exit(20);
 }
 
