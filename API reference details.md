@@ -5,7 +5,7 @@ Nota bene: This list was created manually from the "authorative API description"
 
 #### Message API ####
 
-##### MIME_encrypt_message( String mimetext, Integer size, StringList extra, String⇑ mime_ciphertext, PEP_enc_format env_format, Integer flags)
+##### MIME_encrypt_message( String mimetext, Integer size, StringList extra, String⇑ mime_ciphertext, PEP_enc_format env_format, Integer flags) #####
 
 encrypt a MIME message, with MIME output
 
@@ -292,6 +292,10 @@ re-evaluate already decrypted message rating
 
 ##### get_gpg_path(String⇑)
 get path of gpg binary.
+
+#### MIME message handling ####
+
+##### mime_decode_message(String mime_message, Integer message_lenght, Message msg)
 
 #### pEp Engine Core API ####
 

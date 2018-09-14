@@ -18,6 +18,8 @@ Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a 
 | outgoing_message_rating | PEP_STATUS | Message, PEP_rating⇑ |
 | identity_rating | PEP_STATUS | Identity, PEP_rating⇑ |
 
+#### MIME message handling ####
+| mime_decode_message | PEP_STATUS | String, Integer, Message⇑ |
 
 #### pEp Engine Core API ####
 | Function name | Return Type | Parameters |
