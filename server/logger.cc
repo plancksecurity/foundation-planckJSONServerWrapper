@@ -13,7 +13,6 @@
 
 #ifdef _WIN32
 #  include <malloc.h>
-#  include <alloca.h>
 #endif
 
 #ifdef LOGGER_ENABLE_SYSLOG
