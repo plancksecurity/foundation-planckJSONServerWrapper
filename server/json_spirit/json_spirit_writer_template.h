@@ -12,6 +12,7 @@
 
 #include "json_spirit_value.h"
 #include "json_spirit_writer_options.h"
+#include "../nfc.hh"
 
 #include <cassert>
 #include <sstream>
@@ -62,11 +63,11 @@ namespace json_spirit
             case '\n': s += to_str< String_type >( "\\n"  ); return true;
             case '\r': s += to_str< String_type >( "\\r"  ); return true;
             case '\t': s += to_str< String_type >( "\\t"  ); return true;
-            case '\177': s += to_str< String_type >( "\\u007f"  ); return true;
+            case '\177': s += to_str< String_type >( "\\u007F"  ); return true;
         }
 
         // _always_ convert all remaining ASCII control characters into \uXXXX form:
-        if( unsigned(c) < 32 )
+        if( uint8_t(c) < 32 )
         {
             s += non_printable_to_string<String_type>( c );
             return true;
@@ -78,14 +79,13 @@ namespace json_spirit
     template< class String_type >
     String_type add_esc_chars( const String_type& s, bool raw_utf8, bool esc_nonascii )
     {
-        typedef typename String_type::const_iterator Iter_type;
         typedef typename String_type::value_type     Char_type;
 
         String_type result;
 
-        const Iter_type end( s.end() );
+        const char* end = s.data() + s.size();
 
-        for( Iter_type i = s.begin(); i != end; ++i )
+        for( const char* i = s.data(); i != end; ++i )
         {
             const Char_type c( *i );
 
@@ -94,11 +94,11 @@ namespace json_spirit
 
             if( raw_utf8 )
             {
-                result += c;
+                result += c; // hoping that s is properly UTF-8-encoded, so nothing is necessary here.
             }
             else
             {
-                const wint_t unsigned_c( ( c >= 0 ) ? c : 256 + c );
+                const uint32_t unsigned_c = parseUtf8( i, end );
 
                 if( !esc_nonascii && iswprint( unsigned_c ) )
                 {

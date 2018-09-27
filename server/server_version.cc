@@ -1,14 +1,21 @@
 #include "server_version.hh"
 #include "inout.hh"
-
+#include <fstream>
+#include <sstream>
+#include "pep-utils.hh"
+#include "pep-utils-json.hh"
 #include <pEp/pEpEngine.h> // for PEP_VERSION and get_engine_version()
+#include <boost/algorithm/string/trim.hpp>
+#include "json_spirit/json_spirit_reader.h"
+
+namespace js = json_spirit;
 
 namespace {
 
 #ifdef PACKAGE_VERSION
-	const char* const PackageVersion = PACKAGE_VERSION;
+	const char* PackageVersion = PACKAGE_VERSION;
 #else
-	const char* const PackageVersion = nullptr;
+	const char* PackageVersion = nullptr;
 #endif
 
 
@@ -52,7 +59,10 @@ static const std::string VersionName =
 //	"(33) Hilchenbach";      // JSON-71: Setup C++11 Multi-threading in libevent properly to avoid deadlocks in MT server code"
 //	"(34) Erndtebrück";      // remove apiVersion(), change version() to return a semver-compatible version number in a JSON object.
 //	"(35) Bad Berleburg";    // fix the fork() problem on MacOS. daemonize() now got a function parameter. \o/
-	"(36) Hatzfeld";         // JSON-81: add package_version, rename "version" into "api_version" in ServerVersion, add versions from the Engine, too
+//	"(36) Hatzfeld";         // JSON-81: add package_version, rename "version" into "api_version" in ServerVersion, add versions from the Engine, too
+//	"(37) Battenberg";       // JSON-75: change debonize() behavior, especially on MS Windows
+//	"(38) Frankenberg";      // JSON-92: API CHANGE: decrypt_message() has InOut src message, MIME_decrypt_message() returns changed src msg, too.
+	"(39) Gemünden";         // JSON-93: support for InLengt<> to calculate string lengths automatically.
 
 //const ServerVersion sv{0, 10, 0, version_name};  // first version defined.
 //const ServerVersion sv{0, 11, 0, version_name};  // add set_own_key()
@@ -60,7 +70,16 @@ static const std::string VersionName =
 //const ServerVersion sv{0, 12, 1, version_name};  // add assert_utf8() for every string to/from the Engine (except blobdata)
 //const ServerVersion sv{0, 12, 2, version_name};  // fix the fork() problem on MacOS. daemonize() now got a function parameter.
 //const ServerVersion sv(0,13,0);  // add package_version, rename "version" into "api_version" in ServerVersion, add versions from the Engine, too
-const ServerVersion sv(0,13,1);  // JSON-91: add MIME_encrypt_message_for_self() and encrypt_message_for_self()
+//const ServerVersion sv(0,13,1);  // JSON-91: add MIME_encrypt_message_for_self() and encrypt_message_for_self()
+//const ServerVersion sv(0,14,0);  // JSON-75: incompatible behavior of daemonize() especially in MS Windows
+//const ServerVersion sv(0,15,0);  // JSON-92: API CHANGE.
+//const ServerVersion sv(0,15,1);  // JSON-92 again: Change "keylist" in (MIME_)decrypt_message() from Out to InOutP. Is a compatible API change for JSON/JavaScript due to the handling of output parameters. :-)
+
+#ifdef ENIGMAIL_2_0_COMPAT
+const ServerVersion sv(0,14,1); // JSON-97 : make MIME_decrypt_message() API-compatible with pre-JSON-92's changes for Enigmail 2.0
+#else
+const ServerVersion sv(0,15,2);  // JSON-93 InLength<> is a compatible API change, because length parameter is still there but ignored. :-)
+#endif // ENIGMAIL_2_0_COMPAT
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
@@ -71,7 +90,35 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 , patch{p}
 , name {VersionName}
 , package_version{PackageVersion}
-{}
+{
+	if (!PackageVersion)
+		
+		try{
+			PackageVersion = "0.0.0";  /* break the loop */
+
+			const std::string file_content =
+				boost::algorithm::trim_copy(
+					pEp::utility::slurp("PackageVersion")
+				);
+
+			try{
+				js::Value v;
+				js::read_or_throw(file_content, v);
+				const js::Object obj = v.get_obj();
+				PackageVersion = pEp::utility::from_json_object<char*, js::str_type>(obj, "package_version");
+			}
+			catch(std::runtime_error&)
+			{
+				PackageVersion = strdup(file_content.c_str());
+			}
+
+			this->package_version = PackageVersion;
+		}
+		catch(std::runtime_error&)
+		{
+			// slurp() throws when it cannot read the file.
+		}
+}
 
 const ServerVersion& server_version()
 {
@@ -115,6 +162,12 @@ js::Value to_json<ServerVersion>(const ServerVersion& sv)
 	
 	return o;
 }
+
+template<>
+Out<ServerVersion>::~Out()
+{
+}
+
 
 template<>
 js::Value Type2String<ServerVersion>::get()  { return "ServerVersion"; }

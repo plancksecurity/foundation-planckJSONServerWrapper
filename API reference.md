@@ -1,17 +1,19 @@
-### Function reference for the p≡p JSON Server Adapter. Version “(34) Erndtebrück”, API version 0.12.0 ###
+### Function reference for the p≡p JSON Server Adapter. Version “(38) Frankenberg”, API version 0.15.0 ###
 Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a  **⇕**  after the parameter type.
 
 #### Message API ####
 | Function name | Return Type | Parameters |
 |---------------|-------------|------------|
 | MIME_encrypt_message | PEP_STATUS | String, Integer, StringList, String⇑, PEP_enc_format, Integer |
-| MIME_decrypt_message | PEP_STATUS | String, Integer, String⇑, StringList⇑, PEP_rating⇑, Integer⇑ |
+| MIME_encrypt_message_for_self | PEP_STATUS | Identity, String, Integer, StringList, String⇑, PEP_enc_format, Integer |
+| MIME_decrypt_message | PEP_STATUS | String, Integer, String⇑, StringList⇑, PEP_rating⇑, Integer⇕, String⇑ |
 | startKeySync | Void |  |
 | stopKeySync | Void |  |
 | startKeyserverLookup | Void |  |
 | stopKeyserverLookup | Void |  |
 | encrypt_message | PEP_STATUS | Message, StringList, Message⇑, PEP_enc_format, Integer |
-| decrypt_message | PEP_STATUS | Message, Message⇑, StringList⇑, PEP_rating⇑, Integer⇑ |
+| encrypt_message_for_self | PEP_STATUS | Identity, Message, StringList, Message⇑, PEP_enc_format, Integer |
+| decrypt_message | PEP_STATUS | Message⇕, Message⇑, StringList⇑, PEP_rating⇑, Integer⇕ |
 | outgoing_message_rating | PEP_STATUS | Message, PEP_rating⇑ |
 | identity_rating | PEP_STATUS | Identity, PEP_rating⇑ |
 

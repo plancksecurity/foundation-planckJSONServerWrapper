@@ -5,6 +5,7 @@ syntax: glob
 *.Po
 *.Plo
 *.pc
+*~
 
 libevent-*-stable/Makefile
 libevent-*-stable/config.h
@@ -45,6 +46,7 @@ libevent-*-stable/build/
 
 server/pep-json-server
 server/servertest
+server/unittests
 server/*.a
 server/prefix-config.cc
 server/local.conf

@@ -498,7 +498,30 @@ function init_pep_functions()
 		optionList += '<option' + (f.separator? ' disabled> —— ':'>') + f.name + "</option>\n";
 	}
 	document.getElementById("fn_name").innerHTML = optionList;
-	document.getElementById("spn_version").innerHTML = "version: " + server_version + " “" + server_version_name + "”"
+	document.getElementById("spn_version").innerHTML = "version: " + server_version + " “" + server_version_name + "”";
+	
+	if(add_sharks)
+	{
+		var h1 = document.getElementsByTagName("h1")[0];
+		var shark = document.createElement("img");
+		shark.src = "data:image/png;base64," +
+		"iVBORw0KGgoAAAANSUhEUgAAAMQAAABYAQMAAACQzMoQAAAABlBMVEUAAAAAAAClZ7nPAA" +
+		"AAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElN" +
+		"RQfiBQQJFzochG6lAAAB0UlEQVRIx62WPW7cMBCFH8NCnXUBI8oxXBjRVXyELV1FzClyHQ" +
+		"IpfA3eIAQCrFUIfCkokjNaMYAXZrWLbzX75s0PBbTzBb0z9InrkdF3SeiSeAdZu2T7OJnS" +
+		"HYSfS9wdxPeJJclb+2b+JklyuyXlxC5hnxweWhpJ5+SNPGRWHvhFDKpZbCURUIUfC3kD8H" +
+		"wqLQJ4OPsbukMnmwI2ADCCDCQTSQYAMF4LSM2ZoAVcSa43ZNnJHuZFC7g2x4J24Pqnuhy0" +
+		"A+/VSqFtyqQU2rpjCQKweD3nzRlDL32zwplxk14PNRhg6BCBKAQUZ2ZvPfBjzzKpxTBiV7" +
+		"KXs+Rg4yuAeRX1LE799XU4s4DaFlkiXQ1XHbnkX4cSrYkIOcW1eFObOTeBIUt3uMNyJF0W" +
+		"0II9FpNDFtBqdSmdsWYBzV1fHEtQyWBqLv9UydQ5sHmUmrK6go3ocwCw27HOvoTwJ4MbjR" +
+		"5rMeyHgZ80WU/m84YM/yWh9NsiF5XlNvnciytmTeLYDNAkjCK0Iv6r+JIkcY9iKBXBk5iW" +
+		"JFXjmxhxSZLeS4JsvcthPGy5HhnYuyytIJPapkYSfYNIonfz0r7OhzsAPTK1j9+7bxav3Z" +
+		"eMS5e84IPnH+BiDVEeA5CdAAAAAElFTkSuQmCC";
+		shark.alt = "Shark. CC_BY Rachel Haley (AU).";
+		shark.width = 98;
+		shark.height = 44;
+		h1.insertBefore(shark, h1.childNodes[0]);
+	}
 }
 
 

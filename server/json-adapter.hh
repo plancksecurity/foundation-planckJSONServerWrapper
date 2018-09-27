@@ -5,6 +5,7 @@
 #include <pEp/sync.h>
 #include "registry.hh"
 #include "context.hh"
+#include "logger.hh"
 #include "server_version.hh"
 
 
@@ -12,7 +13,7 @@ class JsonAdapter : public Context
 {
 public:
 	// creates an instance of the JSON adapter. It tries to bind the first available port in the given range
-	JsonAdapter(std::ostream* logfile);
+	JsonAdapter();
 	
 	// calls shutdown() on the instance if it is still running().
 	virtual ~JsonAdapter();
@@ -30,6 +31,9 @@ public:
 	// only if do_sync== true the keysync thread is stared and the keysync callbacks are registered.
 	JsonAdapter& do_sync(bool _do_sync);
 	JsonAdapter& ignore_session_errors(bool _ig);
+	
+	// if called with "false" the JSON Adpapter would no longer deliver HTML and JavaScript files, only handle JSON-RPC requests
+	JsonAdapter& deliver_html(bool _deliver_html);
 	
 	// look for a free port to listen on
 	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port);
@@ -81,8 +85,7 @@ public:
 	static pEp_identity* retrieveNextIdentity(void* obj);
 	static void* keyserverLookupThreadRoutine(void* arg);
 	
-	// returns the associated log stream (either std::cerr or nulllogger)
-	std::ostream& Log() const;
+	Logger::Stream Log(Logger::Severity s = Logger::Severity::Debug) const;
 	
 	// will throw logic_error if guard variables contains illegal values, which means: *this is not a valid JsonAdapter object!
 	void check_guard() const;

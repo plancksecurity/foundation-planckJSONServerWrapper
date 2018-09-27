@@ -10,11 +10,37 @@
 // Just for debugging:
 #include <iostream>
 
+// is a bitfield that controls the In<> / Out<> parameter types
+enum class ParamFlag : unsigned
+{
+	Default = 0,
+	NoInput = 1,        // has no input parameter in the JSON API. Value comes from Context.
+	DontOwn = 2,        // parameter holds a "shared resource". Don't free() it in destructor.
+};
+
+inline constexpr
+ParamFlag operator|(ParamFlag a, ParamFlag b)
+{
+	return ParamFlag( unsigned(a) | unsigned(b) );
+}
+
+inline constexpr
+ParamFlag operator&(ParamFlag a, ParamFlag b)
+{
+	return ParamFlag( unsigned(a) & unsigned(b) );
+}
+
+inline constexpr
+bool operator!(ParamFlag pf)
+{
+	return !unsigned(pf);
+}
+
 
 namespace js = json_spirit;
 
-template<class T, bool NeedInput> struct In;
-template<class T, bool NeedInput> struct Out;
+template<class T, ParamFlag PF> struct In;
+template<class T, ParamFlag PF> struct Out;
 
 // "params" and "position" might be used to fetch additional parameters from the array.
 template<class T>
@@ -26,21 +52,21 @@ js::Value to_json(const T& t);
 
 
 // helper classes to specify in- and out-parameters
-template<class T, bool NeedInput=true>
+template<class T, ParamFlag PF=ParamFlag::Default>
 struct In
 {
 	typedef T c_type; // the according type in C function parameter
-	enum { is_output = false, need_input = NeedInput };
+	enum { is_output = false, need_input = !(PF & ParamFlag::NoInput) };
 	
 	explicit In(const T& t) : value(t) {}
 	~In();
 	
-	In(const In<T,NeedInput>& other) = delete;
-	In(In<T,NeedInput>&& victim) = delete;
-	In<T,NeedInput>& operator=(const In<T,NeedInput>&) = delete;
+	In(const In<T,PF>& other) = delete;
+	In(In<T,PF>&& victim) = delete;
+	In<T,PF>& operator=(const In<T,PF>&) = delete;
 	
 	// default implementation:
-	In(const js::Value& v, Context*)
+	In(const js::Value& v, Context*, unsigned param_nr)
 	: In( from_json<T>(v) )
 	{ }
 	
@@ -56,21 +82,21 @@ struct In
 
 
 // to call functions that operate directly on the JSON data type
-template<class T, bool NeedInput=true>
+template<class T, ParamFlag PF=ParamFlag::Default>
 struct InRaw
 {
 	typedef js::Value c_type; // do not unwrap JSON data type
-	enum { is_output = false, need_input = NeedInput };
+	enum { is_output = false, need_input = !(PF & ParamFlag::NoInput) };
 	
 	explicit InRaw(const js::Value& t) : value(t) {}
 	~InRaw() = default;
 	
-	InRaw(const InRaw<T,NeedInput>& other) = delete;
-	InRaw(InRaw<T,NeedInput>&& victim) = delete;
-	InRaw<T,NeedInput>& operator=(const InRaw<T,NeedInput>&) = delete;
+	InRaw(const InRaw<T,PF>& other) = delete;
+	InRaw(InRaw<T,PF>&& victim) = delete;
+	InRaw<T,PF>& operator=(const InRaw<T,PF>&) = delete;
 	
 	// default implementation:
-	InRaw(const js::Value& v, Context*)
+	InRaw(const js::Value& v, Context*, unsigned param_nr)
 	: InRaw(v)
 	{ }
 
@@ -85,20 +111,21 @@ struct InRaw
 };
 
 
-// helper classes to specify in- and out-parameters
-template<class T, bool NeedInput=true>
-struct InOut : public In<T,NeedInput>
+// helper classes to specify in- and out-parameters whose output is in-place.
+// Use InOutP<T> for in/out parameters where the function might change the object and expects a pointer
+template<class T, ParamFlag PF=ParamFlag::Default>
+struct InOut : public In<T,PF>
 {
-	typedef In<T,NeedInput> Base;
-	enum { is_output = true, need_input = NeedInput };
+	typedef In<T,PF> Base;
+	enum { is_output = true, need_input = !(PF & ParamFlag::NoInput) };
 
 	explicit InOut(const T& t) : Base(t) {}
 	~InOut() = default;
 	
-	InOut<T,NeedInput>& operator=(const InOut<T,NeedInput>&) = delete;
+	InOut<T,PF>& operator=(const InOut<T,PF>&) = delete;
 	
 	// default implementation:
-	InOut(const js::Value& v, Context*)
+	InOut(const js::Value& v, Context*, unsigned param_nr)
 	: Base( from_json<T>(v) )
 	{ }
 	
@@ -109,66 +136,81 @@ struct InOut : public In<T,NeedInput>
 };
 
 
-template<class T, bool NeedInput = true>
+template<class T, ParamFlag PF = ParamFlag::Default>
 struct Out
 {
 	typedef T* c_type; // the according type in C function parameter
-	enum { is_output = true, need_input = NeedInput }; // if need_input=false it would no longer consume an element in the input parameter array.
+	enum { is_output = true, need_input = !(PF & ParamFlag::NoInput) }; // if need_input=false it would no longer consume an element in the input parameter array.
 	
-	Out() : value{ new T{} }
+	explicit Out() : value{}
 	{ }
-	
+
+	explicit Out(const T& t) : value{t}
+	{ }
+
 	~Out();
 	
-	Out(const Out<T,NeedInput>& other) = delete;
-	Out(Out<T,NeedInput>&& victim) = delete;
+	Out(const Out<T,PF>& other) = delete;
+	Out(Out<T,PF>&& victim) = delete;
 	
 	// just to be sure they are not implicitly defined:
-	Out<T,NeedInput>& operator=(const Out<T,NeedInput>& other) = delete;
-	Out<T,NeedInput>& operator=(Out<T,NeedInput>&& victim) = delete;
+	Out<T,PF>& operator=(const Out<T,PF>& other) = delete;
+	Out<T,PF>& operator=(Out<T,PF>&& victim) = delete;
 	
-	Out(const js::Value& v, Context*)
+	// dummy Value v is ignored for output parameters
+	Out(const js::Value& v, Context*, unsigned param_nr)
 	: Out()
 	{ }
 	
 	js::Value to_json() const
 	{
-		return ::to_json<T>(*value);
+		return ::to_json<T>(value);
 	}
 	
-	c_type get_value() const { return value; }
+	c_type get_value() const { return &value; }
 	
-	T* value = nullptr;
+	mutable T value;
 	
+	/*
 	friend
-	std::ostream& operator<<(std::ostream& o, const Out<T,NeedInput>& out)
+	std::ostream& operator<<(std::ostream& o, const Out<T,PF>& out)
 	{
-		o << (const void*)&out;
+		o << (const void*)out;
 		
-// the if() was added to avoid crashes on memory corruptuon. But clang++ warns, that this check is always true on "well-formed" programs, and he is right. In an ideal world there are no memory corruptions. ;-(
-//		if(&out)
-		{
-			o << ", value=" << (const void*)out.value;
-			if(out.value)
-			{
-				o << ", *value=" << *(out.value);
-			}
-		}
-		
+		o << ", value=" << (const void*)out.value;
 		return o;
 	}
-	
+	*/
 };
 
 
-template<class T, bool NeedInput>
-js::Value to_json(const Out<T,NeedInput>& o)
+// helper classes to specify in- and out-parameters whose output might change by the called function.
+// Use InOut<T> for in/out parameters where the function only makes in-place changes.
+template<class T, ParamFlag PF=ParamFlag::Default>
+struct InOutP : public Out<T,PF>
 {
-	return ::to_json(*o.value);
+	typedef Out<T,PF> Base;
+	enum { is_output = true, need_input = !(PF & ParamFlag::NoInput) };
+
+	explicit InOutP(const T& t) : Base(t) {}
+	
+	InOutP<T,PF>& operator=(const InOutP<T,PF>&) = delete;
+	
+	// default implementation:
+	InOutP(const js::Value& v, Context*, unsigned param_nr)
+	: Base( from_json<T>(v) )
+	{ }
+};
+
+
+template<class T, ParamFlag PF>
+js::Value to_json(const Out<T,PF>& o)
+{
+	return ::to_json(o.value);
 }
 
-template<class T, bool NeedInput>
-js::Value to_json(const InOut<T,NeedInput>& o)
+template<class T, ParamFlag PF>
+js::Value to_json(const InOut<T,PF>& o)
 {
 	return ::to_json(o.value);
 }
@@ -183,37 +225,37 @@ struct Type2String
 };
 
 
-template<class T>
-struct Type2String<In<T, true>>
+template<class T, ParamFlag PF>
+struct Type2String<In<T, PF>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
 
-template<class T>
-struct Type2String<In<T, false>>
-{
-	static js::Value get() { throw "MSVC is b0rken"; }
-};
-
-
 
 template<class T>
-struct Type2String<InRaw<T, true>>
+struct Type2String<InRaw<T, ParamFlag::Default>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
 
-template<class T>
-struct Type2String<Out<T, true>>
+template<class T, ParamFlag PF>
+struct Type2String<Out<T, PF>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "Out"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
 
-template<class T>
-struct Type2String<InOut<T, true>>
+template<class T, ParamFlag PF>
+struct Type2String<InOut<T, PF>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "InOut"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
 };
+
+template<class T, ParamFlag PF>
+struct Type2String<InOutP<T, PF>>
+{
+	static js::Value get() { js::Object ret; ret.emplace_back("direction", "InOut"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
+};
+
 
 template<class... Args> struct Type2Json;
 

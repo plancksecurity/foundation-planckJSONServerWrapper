@@ -3,7 +3,9 @@
 #include "prefix-config.hh"
 #include "json-adapter.hh"
 #include "daemonize.hh"
+#include "logger.hh"
 #include "nulllogger.hh"
+#include "hotfixer.hh"
 
 #include <thread>
 #include <fstream>
@@ -16,6 +18,10 @@ namespace po = boost::program_options;
 bool debug_mode = false;
 bool do_sync    = false;
 bool ignore_missing_session = false;
+bool add_sharks = false;
+bool no_html    = false;
+
+uintptr_t status_handle = 0;
 
 std::string address = "127.0.0.1";
 std::string logfile = "";
@@ -55,6 +61,11 @@ try
 		("html-directory,H", po::value<boost::filesystem::path>(&ev_server::path_to_html)->default_value(ev_server::path_to_html), "Path to the HTML and JavaScript files")
 		("logfile,l", po::value<std::string>(&logfile)->default_value(logfile),   "Name of the logfile. Can be \"stderr\" for log to stderr or empty for no log.")
 		("ignore-missing-session", po::bool_switch(&ignore_missing_session), "Ignore when no PEP_SESSION can be created.")
+		("add-sharks", po::bool_switch(&add_sharks), "Add sharks to the JSON Adapter.")
+		("no-html"   , po::bool_switch(&no_html   ), "Don't deliver HTML and JavaScript files, only accept JSON-RPC calls.")
+#ifdef _WIN32
+		((STATUS_HANDLE), po::value<uintptr_t>(&status_handle)->default_value(0), "Status file handle, for internal use.")
+#endif
 	;
 	
 	po::variables_map vm;
@@ -81,52 +92,95 @@ try
 	
 	if(logfile.empty())
 	{
-		my_logfile = &nulllogger;
+		Logger::setDefaultTarget(Logger::Target::None);
 	}else if(logfile == "stderr")
 	{
-		my_logfile = &std::cerr;
+		Logger::setDefaultTarget(Logger::Target::Console);
 	}else{
-		real_logfile = std::make_shared<std::ofstream>( logfile, std::ios::app );
-		my_logfile = real_logfile.get();
+		Logger::setDefaultTarget(Logger::Target::File);
+	}
+
+	Logger::start("JsonAdapter", logfile);
+	
+	Logger L("main");
+	L.info("main logger started");
+
+	int hotfix_ret = 0;
+#ifdef _WIN32
+	if ((STATUS_HANDLE == 0) && pEp::utility::hotfix_call_required())
+#else
+	if (pEp::utility::hotfix_call_required())
+#endif
+	{
+		if ((hotfix_ret = pEp::utility::hotfix_call_execute()) != 0)
+			return hotfix_ret;
+	}
+
+	if(add_sharks)
+	{
+		ev_server::addSharks();
 	}
 	
-	JsonAdapter ja( my_logfile );
+	if( debug_mode == false )
+		daemonize (!debug_mode, (const uintptr_t) status_handle);
+	
+	JsonAdapter ja;
 	ja.do_sync( do_sync)
 	  .ignore_session_errors( ignore_missing_session)
+	  .deliver_html( !no_html )
 	  ;
-	  
-	auto prepare_run = [&](){ ja.prepare_run(address, start_port, end_port); };
+	/*
+	 * FIXME: why are exceptions risen after the instantiation of JsonAdapter
+	 *        not catched in the outer try/catch?
+	 */
 
-	if( debug_mode )
+	try
 	{
-		prepare_run();
-		ja.run();
-		// run until "Q" from stdin
-		int input = 0;
-		do{
-			std::cout << "Press <Q> <Enter> to quit." << std::endl;
-			input = std::cin.get();
-			std::cout << "Oh, I got a '" << input << "'. \n";
-		}while(std::cin && input != 'q' && input != 'Q');
-	}else{
-		daemonize(prepare_run);
-		ja.run();
-		do{
-			std::this_thread::sleep_for(std::chrono::seconds(3));
-		}while(ja.running());
+		ja.prepare_run(address, start_port, end_port);
+
+		if( debug_mode )
+		{
+			ja.run();
+			// run until "Q" from stdin
+			int input = 0;
+			do{
+				std::cout << "Press <Q> <Enter> to quit." << std::endl;
+				input = std::cin.get();
+				std::cout << "Oh, I got a '" << input << "'. \n";
+			}while(std::cin && input != 'q' && input != 'Q');
+		}else{
+			ja.run();
+			daemonize_commit(0);
+			do{
+				std::this_thread::sleep_for(std::chrono::seconds(3));
+			}while(ja.running());
+		}
+		ja.shutdown(nullptr);
+		ja.Log() << "Good bye. :-)";
+		JsonAdapter::global_shutdown();
 	}
-	ja.shutdown(nullptr);
-	ja.Log() << "Good bye. :-)" << std::endl;
-	JsonAdapter::global_shutdown();
+	catch(std::exception const& e)
+	{
+		std::cerr << "Inner exception caught in main(): \"" << e.what() << "\"" << std::endl;
+		daemonize_commit(1);
+		exit(8);
+	}
+	catch (...)
+	{
+		daemonize_commit(1);
+		exit(9);
+	}
 }
 catch(std::exception const& e)
 {
 	std::cerr << "Exception caught in main(): \"" << e.what() << "\"" << std::endl;
+	daemonize_commit(1);
 	return 1;
 }
 catch (...)
 {
 	std::cerr << "Unknown Exception caught in main()." << std::endl;
+	daemonize_commit(20);
 	return 20;
 }
 

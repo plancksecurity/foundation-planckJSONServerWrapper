@@ -1,40 +1,22 @@
 #include "pep-types.hh"
 #include "pep-utils.hh"
-#include "json_spirit/json_spirit_utils.h"
+#include "pep-utils-json.hh"
+#include "json-adapter.hh"
 
 #include <pEp/pEp_string.h>
 #include <iostream> // Just to print debug stuff to std::cerr
 #include "base64.hh"
 
+
+using pEp::utility::from_json_object;
+using pEp::utility::to_json_object;
+
 namespace
 {
-	// fetch a member from the given object, if set. (return a sensible NULL/default value if not)
-	template<class T, js::Value_type VALUE_TYPE>
-	T from_json_object(const js::Object& obj, const std::string& key)
-	{
-		const auto v = find_value(obj, key);
-		if(v.type() == js::null_type) return T{};
-		if(v.type() == VALUE_TYPE) return from_json<T>(v);
-		
-		throw std::runtime_error("JSON object has a member for key \"" + key + "\""
-			" with incompatible type " + js::value_type_to_string( v.type())
-			+ " instead of expected type " + js::value_type_to_string(VALUE_TYPE)
-			);
-	}
-	
 	std::string base64_from_json_object(const js::Object& obj, const std::string& key)
 	{
 		const std::string b64String = from_json_object<std::string, js::str_type> (obj, key);
 		return base64_decode(b64String);
-	}
-
-	template<class T>
-	void to_json_object(js::Object& obj, const std::string& key, const T& value)
-	{
-		if(value!=T{})
-		{
-			obj.emplace_back( key, js::Value( to_json<T>(value) ));
-		}
 	}
 
 	void to_base64_json_object(js::Object& obj, const std::string& key, char *value, size_t size)
@@ -97,6 +79,7 @@ std::string status_to_string(PEP_STATUS status)
 		case PEP_DECRYPT_SIGNATURE_DOES_NOT_MATCH : status_string = "PEP_DECRYPT_SIGNATURE_DOES_NOT_MATCH"; break;
 		case PEP_VERIFY_NO_KEY                    : status_string = "PEP_VERIFY_NO_KEY"; break;
 		case PEP_VERIFIED_AND_TRUSTED             : status_string = "PEP_VERIFIED_AND_TRUSTED"; break;
+		case PEP_CANNOT_REENCRYPT                 : status_string = "PEP_CANNOT_REENCRYPT"; break;
 		case PEP_CANNOT_DECRYPT_UNKNOWN           : status_string = "PEP_CANNOT_DECRYPT_UNKNOWN"; break;
 		
 		case PEP_TRUSTWORD_NOT_FOUND              : status_string = "PEP_TRUSTWORD_NOT_FOUND"; break;
@@ -155,7 +138,7 @@ std::string status_to_string(PEP_STATUS status)
 
 
 template<>
-In<PEP_SESSION, false>::~In()
+In<PEP_SESSION, ParamFlag::NoInput>::~In()
 {
 	// no automatic release!
 }
@@ -175,9 +158,14 @@ In<message*>::~In()
 }
 
 template<>
-In<stringlist_t*>::~In()
+In<stringlist_t*, ParamFlag::Default>::~In()
 {
 	free_stringlist(value);
+}
+
+template<>
+In<stringlist_t*, ParamFlag::DontOwn>::~In()
+{
 }
 
 
@@ -196,21 +184,13 @@ In<const pEp_identity*>::~In()
 template<>
 Out<pEp_identity*>::~Out()
 {
-	if(value)
-	{
-		free_identity(*value);
-	}
-	delete value;
+	free_identity(value);
 }
 
 template<>
 Out<identity_list*>::~Out()
 {
-	if(value)
-	{
-		free_identity_list(*value);
-	}
-	delete value;
+	free_identity_list(value);
 }
 
 
@@ -244,45 +224,46 @@ In<sync_handshake_result>::~In()
 
 
 template<>
-Out<stringlist_t*>::~Out()
+Out<stringlist_t*, ParamFlag::Default>::~Out()
 {
-	if(value) free_stringlist(*value);
-	delete value;
+	free_stringlist(value);
+}
+
+template<>
+Out<stringlist_t*, ParamFlag::DontOwn>::~Out()
+{
+	// don't call free_stringlist()!
 }
 
 template<>
 Out<stringpair_list_t*>::~Out()
 {
-	if(value) free_stringpair_list(*value);
-	delete value;
+	free_stringpair_list(value);
 }
 
 
 template<>
 Out<_message*>::~Out()
 {
-///////////////////////////////////////////////////////////////////////////////
-//  FIXME: due to memory corruption(?) the free_message() call crashes! :-(  //
-//  Without it we leak memory but at least it works for now... :-/           //
-///////////////////////////////////////////////////////////////////////////////
-	std::cerr << "$|  ~Out<message*>: this=" << *this << ".\n";
-
-	if(value) free_message(*value);
-	delete value;
+	free_message(value);
 }
 
 
 template<>
 Out<PEP_rating>::~Out()
 {
-	delete value;
 }
 
 
 template<>
 Out<PEP_comm_type>::~Out()
 {
-	delete value;
+}
+
+
+template<>
+Out<PEP_STATUS>::~Out()
+{
 }
 
 
@@ -290,6 +271,11 @@ Out<PEP_comm_type>::~Out()
 template<>
 char* from_json<char*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const std::string& ss = v.get_str();
 	char* s = new_string(ss.c_str(), ss.size() );
 	return s;
@@ -299,10 +285,15 @@ char* from_json<char*>(const js::Value& v)
 template<>
 message* from_json<message*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Object& o = v.get_obj();
-
+	
 	auto msg = pEp::utility::make_c_ptr(new_message(PEP_dir_incoming), &free_message );
-
+	
 	// fetch values from v and put them into msg
 	msg->dir      = from_json_object<PEP_msg_direction, js::int_type>(o, "dir");
 	msg->id       = from_json_object<char*, js::str_type>(o, "id");
@@ -339,6 +330,11 @@ message* from_json<message*>(const js::Value& v)
 template<>
 pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Object& o = v.get_obj();
 	
 	auto address     = pEp::utility::make_c_ptr(from_json_object<char*, js::str_type>(o, "address")  , &free_string );
@@ -377,7 +373,7 @@ js::Value to_json<message const*>(message const* const& msg)
 {
 	if(msg == nullptr)
 	{
-		return js::Value("NULL-MESSAGE");
+		return js::Value();
 	}
 	
 	js::Object o;
@@ -421,16 +417,20 @@ js::Value to_json<message*>(message* const& msg)
 template<>
 stringlist_t* from_json<stringlist_t*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Array& a = v.get_array();
-
 	auto sl = pEp::utility::make_c_ptr(new_stringlist( nullptr ), &free_stringlist );
-
+	
 	for(const js::Value& v : a )
 	{
 		const std::string& s = v.get_str();
 		stringlist_add(sl.get(), s.c_str() );
 	}
-
+	
 	return sl.release();
 }
 
@@ -444,16 +444,20 @@ const stringlist_t* from_json<const stringlist_t*>(const js::Value& v)
 template<>
 identity_list* from_json<identity_list*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Array& a = v.get_array();
-
 	auto il = pEp::utility::make_c_ptr(new_identity_list( nullptr ), &free_identity_list);
-
+	
 	for(const js::Value& v : a )
 	{
 		pEp_identity* id = from_json<pEp_identity*>(v);
 		identity_list_add(il.get(), id );
 	}
-
+	
 	return il.release();
 }
 
@@ -461,6 +465,11 @@ identity_list* from_json<identity_list*>(const js::Value& v)
 template<>
 _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Array& a = v.get_array();
 	if(a.empty())
 		return nullptr;
@@ -531,6 +540,11 @@ js::Value to_json<_bloblist_t*>(_bloblist_t* const& bl)
 template<>
 stringpair_t* from_json<stringpair_t*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Object& o = v.get_obj();
 	char* key = from_json_object<char*, js::str_type>(o, "key");
 	char* val = from_json_object<char*, js::str_type>(o, "value");
@@ -545,6 +559,11 @@ stringpair_t* from_json<stringpair_t*>(const js::Value& v)
 template<>
 stringpair_list_t* from_json<stringpair_list_t*>(const js::Value& v)
 {
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
 	const js::Array& a = v.get_array();
 	if(a.empty())
 		return nullptr;
@@ -628,7 +647,7 @@ js::Value to_json<const pEp_identity*>(const pEp_identity* const& id)
 {
 	if(id == nullptr)
 	{
-		return js::Value("NULL-IDENTITY");
+		return js::Value();
 	}
 
 	js::Object o;
@@ -790,3 +809,6 @@ js::Value Type2String<PEP_STATUS>::get()  { return "PEP_STATUS"; }
 
 template<>
 js::Value Type2String<Language>::get()  { return "Language"; }
+
+template<>
+js::Value Type2String<JsonAdapter *>::get() { return "JsonAdapter"; }

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <stdexcept>
+#include <iosfwd>
 
 enum class IsNFC
 {
@@ -11,17 +12,30 @@ enum class IsNFC
 	Yes=2    // contains no invalid or partially valid character
 };
 
+std::ostream& operator<<(std::ostream& o, IsNFC is_nfc);
+
 
 class illegal_utf8 : public std::runtime_error
 {
 public:
-	illegal_utf8(const std::string& s, unsigned position, const char* reason);
+	illegal_utf8(const std::string& s, unsigned position, const std::string& reason);
 protected:
 	explicit illegal_utf8(const std::string& message);
 };
 
+
+// scans the char sequences and parses UTF-8 sequences. Detect UTF-8 errors and throws exceptions.
+uint32_t parseUtf8(const char*& c, const char* end);
+
+
 // throws illegal_utf8 exception if s is not valid UTF-8
 void assert_utf8(const std::string& s);
+
+// creates an NFD u32string from UTF-8 input string s
+std::u32string fromUtf8_decompose(const std::string& s);
+
+// convert NFD to NFC
+std::u32string createNFC(std::u32string nfd_string);
 
 // return No or Maybe, if at least one character with NFC_Quickcheck class is "No" or "Maybe"
 // might throw illegal_utf8 exception

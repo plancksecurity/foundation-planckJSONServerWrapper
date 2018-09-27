@@ -1,0 +1,16 @@
+# File re-created by pEp
+# See backup in 'gnupg/gpg.conf.0.pep.bkp'
+
+comment No Comment
+keyid-format 0xlong
+with-fingerprint
+keyserver-options no-honor-keyserver-url auto-key-retrieve
+# Comment preceeding keyid-format
+keyid-format 0xlong
+ignore-time-conflict 
+personal-cipher-preferences AES 
+no-emit-version
+allow-freeform-uid
+cert-digest-algo SHA256
+no-comments 
+personal-digest-preferences SHA256 SHA512 SHA384 SHA224

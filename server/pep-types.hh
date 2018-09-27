@@ -26,7 +26,7 @@ struct In<Language>
 	void operator=(const In<Language>&) = delete;
 	
 	// default implementation:
-	In<Language>(const js::Value& v, Context*)
+	In<Language>(const js::Value& v, Context*, unsigned)
 	{
 		const std::string vs = v.get_str();
 		if(vs.size() != 2)

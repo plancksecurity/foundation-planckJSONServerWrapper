@@ -59,7 +59,7 @@ namespace json_spirit
         if( ( c >= '0' ) && ( c <= '9' ) ) return c - '0';
         if( ( c >= 'a' ) && ( c <= 'f' ) ) return c - 'a' + 10;
         if( ( c >= 'A' ) && ( c <= 'F' ) ) return c - 'A' + 10;
-        return 0;
+        throw std::runtime_error(std::string("Char \"") + char(c) + "\" is not a hex digit!");
     }
 
     template< class Char_type, class Iter_type >
@@ -84,6 +84,18 @@ namespace json_spirit
                ( hex_to_num( c3 ) <<  4 ) + 
                hex_to_num( c4 );
     }
+
+
+    template<class Char_type>
+    unsigned max_unencoded();
+
+    template<class String_type>
+    String_type encode_utf(unsigned c);
+    
+    
+    template<> inline
+    unsigned max_unencoded<char>() { return 127; }
+
 
     template< class String_type >
     void append_esc_char_and_incr_iter( String_type& s, 
@@ -116,9 +128,45 @@ namespace json_spirit
             {
                 if( end - begin >= 5 )  //  expecting "uHHHH..."
                 {
-                    s += unicode_str_to_char< Char_type >( begin );
+                    const unsigned c = unicode_str_to_char< Char_type >( begin );
+                    if( c<= max_unencoded<Char_type>() )
+                    {
+                        s += Char_type(c);
+                    }else{
+                        if(c>=0xD800 && c<=0xDBFF) // high surrogate from UTF-16 pair
+                        {
+                            const unsigned high_surrogate = c;
+                            if(end-begin<7)
+                                throw std::runtime_error("Missing low surrogate at end of string. E0");
+                            
+                            if(*++begin != '\\')
+                                throw std::runtime_error("Missing low surrogate at end of string. E1");
+                            
+                            if(*++begin != 'u')
+                                throw std::runtime_error("Missing low surrogate at end of string. E2");
+                            
+                            const unsigned low_surrogate = unicode_str_to_char< Char_type >( begin );
+                            if( (low_surrogate < 0xDC00) || (low_surrogate > 0xDFFF) )
+                                throw std::runtime_error("Missing low surrogate at end of string. E3");
+                            
+                            // combine the two escaped \u sequences into one Non-BMP character:
+                            const unsigned u32 = (high_surrogate-0xD800) * 1024 + (low_surrogate-0xDC00) + 0x10000;
+                            s += encode_utf<String_type>(u32);
+                        }else if(c>=0xDC00 && c<=0xDFFF)
+                        {
+                            throw std::runtime_error("Unexpected low surrogate.");
+                        }else{
+                            s += encode_utf<String_type>(c); // normal \u escaped BMP character.
+                        }
+                    }
+                }else{
+                    throw std::runtime_error("After \\u I expect at least 4 hex digits.");
                 }
                 break;
+            }
+            default :
+            {
+                throw std::runtime_error(std::string("Unknown char \"") + char(c2) + "\" after backslash.");
             }
         }
     }
@@ -129,14 +177,12 @@ namespace json_spirit
     {
         typedef typename String_type::const_iterator Iter_type;
 
-        if( end - begin < 2 ) return String_type( begin, end );
+//        if( end - begin < 2 ) return String_type( begin, end );
 
         String_type result;
-        
         result.reserve( end - begin );
 
         const Iter_type end_minus_1( end - 1 );
-
         Iter_type substr_start = begin;
         Iter_type i = begin;
 
@@ -145,17 +191,17 @@ namespace json_spirit
             if( *i == '\\' )
             {
                 result.append( substr_start, i );
-
                 ++i;  // skip the '\'
-
+                if(i == end)
+                {
+                    throw std::runtime_error("Backslash at the end is not allowed.");
+                }
                 append_esc_char_and_incr_iter( result, i, end );
-
                 substr_start = i + 1;
             }
         }
 
         result.append( substr_start, end );
-
         return result;
     }
 

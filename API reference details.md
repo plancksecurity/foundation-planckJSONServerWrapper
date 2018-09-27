@@ -1,4 +1,4 @@
-### Detailed Function reference for the p≡p JSON Server Adapter. Version “(30) Krombach” ###
+### Detailed Function reference for the p≡p JSON Server Adapter. Version “(38) Frankenberg”, API version 0.15.0 ###
 Output parameters are denoted by a  **⇑** , InOut parameters are denoted by a  **⇕**  after the parameter type.
 
 Nota bene: This list was created manually from the "authorative API description" and might be outdated.
@@ -31,7 +31,36 @@ encrypt a MIME message, with MIME output
 will remain in the ownership of the caller
 
 
-##### MIME_decrypt_message(String mimetext, Integer size, String⇑ mime_plaintext, StringList⇑ keylist, PEP_rating⇑ rating, Integer⇑ flags)
+##### MIME_encrypt_message_for_self( Identity target_id, String mimetext, Integer size, StringList extra, String⇑ mime_ciphertext, PEP_enc_format enc_format, Integer flags) #####
+encrypt MIME message for user's identity only,  ignoring recipients and other identities from
+the message, with MIME output
+
+```
+  parameters:
+      target_id (in)          self identity this message should be encrypted for
+      mimetext (in)           MIME encoded text to encrypt
+      size (in)               size of input mime text
+      extra (in)              extra keys for encryption
+      mime_ciphertext (out)   encrypted, encoded message
+      enc_format (in)         encrypted format
+      flags (in)              flags to set special encryption features
+
+  return value:
+      PEP_STATUS_OK           if everything worked
+      PEP_BUFFER_TOO_SMALL    if encoded message size is too big to handle
+      PEP_CANNOT_CREATE_TEMP_FILE
+                              if there are issues with temp files; in
+                              this case errno will contain the underlying
+                              error
+      PEP_OUT_OF_MEMORY       if not enough memory could be allocated
+
+  caveat:
+      the encrypted, encoded mime text will go to the ownership of the caller; mimetext
+      will remain in the ownership of the caller
+```
+
+
+##### MIME_decrypt_message(String mimetext, Integer size, String⇑ mime_plaintext, StringList⇑ keylist, PEP_rating⇑ rating, Integer⇕ flags, String⇑ modified_src)
 
 decrypt a MIME message, with MIME output
 ```
@@ -41,7 +70,8 @@ decrypt a MIME message, with MIME output
       mime_plaintext (out)    decrypted, encoded message
       keylist (out)           stringlist with keyids
       rating (out)            rating for the message
-      flags (out)             flags to signal special decryption features
+      flags (inout)           flags to signal special decryption features
+      modified_src (out)      modified source string, if decrypt had reason to change it
 
   return value:
       decrypt status          if everything worked with MIME encode/decode, 
@@ -53,6 +83,28 @@ decrypt a MIME message, with MIME output
                               this case errno will contain the underlying
                               error
       PEP_OUT_OF_MEMORY       if not enough memory could be allocated
+
+  flag values:
+      in:
+          PEP_decrypt_flag_untrusted_server
+              used to signal that decrypt function should engage in behaviour
+              specified for when the server storing the source is untrusted.
+      out:
+          PEP_decrypt_flag_own_private_key
+              private key was imported for one of our addresses (NOT trusted
+              or set to be used - handshake/trust is required for that)
+          PEP_decrypt_flag_src_modified
+              indicates that the modified_src field should contain a modified
+              version of the source, at the moment always as a result of the
+              input flags. 
+          PEP_decrypt_flag_consume
+              used by sync 
+          PEP_decrypt_flag_ignore
+              used by sync 
+ 
+  caveat:
+      the decrypted, encoded mime text will go to the ownership of the caller; mimetext
+      will remain in the ownership of the caller
 ```
 
 
@@ -116,24 +168,53 @@ the message.
 only if the target_id refers to self!)
 
 
-##### decrypt_message(Message src, Message⇑ dst, StringList⇑ keylist, PEP_rating⇑ rating, Integer⇑ flags)
+##### decrypt_message(Message⇕ src, Message⇑ dst, StringList⇑ keylist, PEP_rating⇑ rating, Integer⇕ flags)
 decrypt message in memory
 ```
   parameters:
-      src (in)            message to decrypt
+      src (inout)         message to decrypt
       dst (out)           pointer to new decrypted message or NULL on failure
       keylist (out)       stringlist with keyids
       rating (out)        rating for the message
-      flags (out)         flags to signal special decryption features
+      flags (inout)       flags to signal special decryption features
 
   return value:
       error status 
       or PEP_DECRYPTED if message decrypted but not verified
+      or PEP_CANNOT_REENCRYPT if message was decrypted (and possibly
+         verified) but a reencryption operation is expected by the caller
+         and failed
       or PEP_STATUS_OK on success
 
+  flag values:
+      in:
+          PEP_decrypt_flag_untrusted_server
+              used to signal that decrypt function should engage in behaviour
+              specified for when the server storing the source is untrusted
+      out:
+          PEP_decrypt_flag_own_private_key
+              private key was imported for one of our addresses (NOT trusted
+              or set to be used - handshake/trust is required for that)
+          PEP_decrypt_flag_src_modified
+              indicates that the src object has been modified. At the moment,
+              this is always as a direct result of the behaviour driven
+              by the input flags. This flag is the ONLY value that should be
+              relied upon to see if such changes have taken place.
+          PEP_decrypt_flag_consume
+              used by sync 
+          PEP_decrypt_flag_ignore
+              used by sync 
+
+
  caveat:
+      the ownership of src remains with the caller - however, the contents 
+          might be modified (strings freed and allocated anew or set to NULL,
+          etc) intentionally; when this happens, PEP_decrypt_flag_src_modified
+          is set.
+      the ownership of dst goes to the caller
+      the ownership of keylist goes to the caller
       if src is unencrypted this function returns PEP_UNENCRYPTED and sets
-      dst to NULL
+         dst to NULL
 ```
 
 ##### outgoing_message_rating(Message msg, PEP_rating⇑ rating)

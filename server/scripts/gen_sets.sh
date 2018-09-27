@@ -75,5 +75,25 @@ echo -en '\n\t};\n\n'
 
 )
 
+echo 'const std::map<unsigned, unsigned char> NFC_CombiningClass = {'
+
+cat /usr/share/unicode/UnicodeData.txt | cut -d';' -f 1,4 | grep -v -E ';0$' | sed 's/\([0-9A-F]*\);\([0-9]*\)/	{0x\1, \2},/g'
+
+echo -en '};\n\n'
+
+
+echo 'const std::map<unsigned, std::pair<int,int>> NFC_Decompose = {'
+
+# cut codepoint and Decomposition_Mapping, remove compat mappings (containing <…>), add -1 for one-element mappings:
+cat /usr/share/unicode/UnicodeData.txt | cut -d';' -f 1,6 | grep -v '<' | \
+ sed -e 's/\([0-9A-F]*\);\([0-9A-F ]*\)/\1 @\2@/g' | grep -v @@ | \
+ sed -e 's/@\([0-9A-F]*\) \([0-9A-F]*\)@/0x\1 0x\2/' | \
+ sed -e 's/@\([0-9A-F]*\)@/0x\1 -1/' | \
+ sed -e 's/\([0-9A-F]*\) \([0-9A-Fx]*\) \([0-9A-Fx-]*\)/{0x\1, {\2, \3}},/g'
+
+echo -en '};\n\n'
+
+echo 'std::map< std::pair<unsigned, unsigned>, unsigned> generate_nfc_compose();'
+echo -en 'const std::map< std::pair<unsigned, unsigned>, unsigned> NFC_Compose = generate_nfc_compose();\n\n'
 
 # end of file
