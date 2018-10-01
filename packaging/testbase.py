@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import sys
 import os
 import platform
@@ -82,43 +85,50 @@ class test_server(object):
 
     m = None
 
-    def __init__(self, server_bin, env=None):
-        PEPDIR = "pEp" if platform.system() == "Windows" else ".pEp"
-        GPGDIR = "gnupg" if platform.system() == "Windows" else ".gnupg"
+    def __init__(self, server_bin, env=None, dj=None):
         self.server_bin = server_bin
-        self.m = m = mkdtemp(prefix="testjson")
         self.env = env if env else {}
-        self._tail = {}
-        class dj(object):    
-            home = os.path.join(m, "home")
-            gnupg = os.path.join(m, "home", GPGDIR)
-            pep = os.path.join(m, "home", PEPDIR)
-            lappdat = os.path.join(m, "home", "Data", "Local")
-            temp = os.path.join(m, "tmp")
-        self.dj = dj
+        self.m = None
+        if dj is not None:
+            self.dj = dj
+        else:
+            PEPDIR = "pEp" if platform.system() == "Windows" else ".pEp"
+            GPGDIR = "gnupg" if platform.system() == "Windows" else ".gnupg" 
+            self.m = m = mkdtemp(prefix="testjson")
 
-        for d in dj.__dict__:
-            if d.startswith('_'):
-                continue
-            try:
-                os.makedirs(getattr(dj, d))
-            except OSError:
-                pass
+            self._tail = {}
+            class dj(object):    
+                home = os.path.join(m, "home")
+                gnupg = os.path.join(m, "home", GPGDIR)
+                pep = os.path.join(m, "home", PEPDIR)
+                lappdat = os.path.join(m, "home", "Data", "Local")
+                temp = os.path.join(m, "tmp")
+            self.dj = dj
 
-        shutil.copyfile(os.path.expanduser("~/.pEp_management.db"),
-                        jj(dj.home, ".pEp_management.db"))
-        for f in "pubring.kbx pubring.gpg tofu.db secring.gpg trustdb.gpg".split():
-            s = jj(os.environ.get("APPDATA", os.environ.get("HOME", ".")), GPGDIR, f)
-            d = jj(dj.gnupg, f)
-            if os.path.exists(s):
-                # print("{0} -> {1}".format(s, f))
-                shutil.copy(s, d)
-        for f in "../.pEp_management.db management.db".split():
-            s = jj(os.environ.get("APPDATA", os.environ.get("HOME", ".")), PEPDIR, f)
-            d = jj(dj.pep, f)
-            if os.path.exists(s):
-                # print("{0} -> {1}".format(s, f))
-                shutil.copy(s, d)
+            for d in dj.__dict__:
+                if d.startswith('_'):
+                    continue
+                try:
+                    os.makedirs(getattr(dj, d))
+                except OSError:
+                    pass
+
+            shutil.copyfile(os.path.expanduser("~/.pEp_management.db"),
+                            jj(dj.home, ".pEp_management.db"))
+            for f in "pubring.kbx pubring.gpg tofu.db secring.gpg trustdb.gpg private-keys-v1.d".split():
+                s = jj(os.environ.get("APPDATA", os.environ.get("HOME", ".")), GPGDIR, f)
+                d = jj(dj.gnupg, f)
+                if os.path.exists(s):
+                    if os.path.isdir(s):
+                        shutil.copytree(s, d)
+                    else:
+                        shutil.copy(s, d)
+
+            for f in "../.pEp_management.db management.db".split():
+                s = jj(os.environ.get("APPDATA", os.environ.get("HOME", ".")), PEPDIR, f)
+                d = jj(dj.pep, f)
+                if os.path.exists(s):
+                    shutil.copy(s, d)
 
 
     def tail(self, f):
@@ -136,7 +146,7 @@ class test_server(object):
 
     def __enter__(self):
         server_bin = self.server_bin
-        m = self.m
+        #m = self.m
         dj = self.dj
 
         server_sharedir = os.path.abspath(
@@ -154,7 +164,10 @@ class test_server(object):
         env.update(self.env)
         self.env = env
 
-        self.process = Popen([server_bin,
+        if not self.m:
+            self.process = None
+        else:
+            self.process = Popen([server_bin,
                 # "-l", "stderr",
                 "-l", jj(dj.home, "json.log"),
                 "-d", "1"], executable=server_bin,
@@ -178,14 +191,18 @@ class test_server(object):
 
 
     def __exit__(self, a, b, c):
-        p = self.process
-        p.stdin.write("q".encode('utf-8'))
-        p.stdin.write("\n".encode('utf-8'))
-        # process.stdin.close()
-        ret = p.wait()
+        ret = 0
+        if self.process:
+            p = self.process
+            p.stdin.write("q".encode('utf-8'))
+            p.stdin.write("\n".encode('utf-8'))
+            # process.stdin.close()
+            ret = p.wait()
 
+        assert self.m is None
         if self.m is not None:
-            shutil.rmtree(self.m)
+            #shutil.rmtree(self.m)
+            print('BOOM!')
         if a is not None:
             return False
         if ret != 0:
