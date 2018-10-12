@@ -2,6 +2,7 @@
 #include "inout.hh"
 #include <fstream>
 #include <sstream>
+#include "logger.hh"
 #include "pep-utils.hh"
 #include "pep-utils-json.hh"
 #include <pEp/pEpEngine.h> // for PEP_VERSION and get_engine_version()
@@ -64,6 +65,12 @@ static const std::string VersionName =
 //	"(38) Frankenberg";      // JSON-92: API CHANGE: decrypt_message() has InOut src message, MIME_decrypt_message() returns changed src msg, too.
 	"(39) Gemünden";         // JSON-93: support for InLengt<> to calculate string lengths automatically.
 
+} // end of anonymous namespace
+////////////////////////////////////////////////////////////////////////////
+
+const ServerVersion& server_version()
+{
+
 //const ServerVersion sv{0, 10, 0, version_name};  // first version defined.
 //const ServerVersion sv{0, 11, 0, version_name};  // add set_own_key()
 //const ServerVersion sv{0, 12, 0, version_name};  // rename mis-spelled undo_last_mitrust() into undo_last_mistrust()
@@ -76,13 +83,15 @@ static const std::string VersionName =
 //const ServerVersion sv(0,15,1);  // JSON-92 again: Change "keylist" in (MIME_)decrypt_message() from Out to InOutP. Is a compatible API change for JSON/JavaScript due to the handling of output parameters. :-)
 
 #ifdef ENIGMAIL_2_0_COMPAT
-const ServerVersion sv(0,14,1); // JSON-97 : make MIME_decrypt_message() API-compatible with pre-JSON-92's changes for Enigmail 2.0
+//const ServerVersion sv(0,14,1);  // JSON-97 : make MIME_decrypt_message() API-compatible with pre-JSON-92's changes for Enigmail 2.0
+static const ServerVersion sv(0,14,3);  // JSON-110: add encrypt_message_and_add_priv_key()
 #else
-const ServerVersion sv(0,15,2);  // JSON-93 InLength<> is a compatible API change, because length parameter is still there but ignored. :-)
+//const ServerVersion sv(0,15,2);  // JSON-93 InLength<> is a compatible API change, because length parameter is still there but ignored. :-)
+static const ServerVersion sv(0,15,3);  // JSON-110: add encrypt_message_and_add_priv_key()
 #endif // ENIGMAIL_2_0_COMPAT
 
-} // end of anonymous namespace
-////////////////////////////////////////////////////////////////////////////
+	return sv;
+}
 
 ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 : major{maj}
@@ -91,6 +100,7 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 , name {VersionName}
 , package_version{PackageVersion}
 {
+	Logger L("ServerVersion");
 	if (!PackageVersion)
 		
 		try{
@@ -107,23 +117,25 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 				const js::Object obj = v.get_obj();
 				PackageVersion = pEp::utility::from_json_object<char*, js::str_type>(obj, "package_version");
 			}
-			catch(std::runtime_error&)
+			catch(std::runtime_error& e)
 			{
+				L.warning(std::string("Cannot parse file \"PackageVersion\" as JSON object: ") + e.what() );
 				PackageVersion = strdup(file_content.c_str());
 			}
 
 			this->package_version = PackageVersion;
 		}
-		catch(std::runtime_error&)
+		catch(std::runtime_error& e)
 		{
 			// slurp() throws when it cannot read the file.
+			L.info(std::string("Cannot read file \"PackageVersion\": ") + e.what() );
 		}
+	
+	L.debug("ServerVersion set as %u.%u.%u name=\"%s\" package_version=\"%s\".",
+		major, minor, patch, name.c_str(), package_version
+		);
 }
 
-const ServerVersion& server_version()
-{
-	return sv;
-}
 
 
 std::string ServerVersion::major_minor_patch() const

@@ -11,6 +11,7 @@
 #endif
 
 #include <string>
+#include <stdexcept>
 
 namespace json_spirit
 {
@@ -18,36 +19,21 @@ namespace json_spirit
     // Note the "read_or_throw" functions are around 3 times slower than the standard functions "read" 
     // functions that return a bool.
     //
-    struct Error_position
+    struct Error_position : public std::runtime_error
     {
-        Error_position();
         Error_position( unsigned int line, unsigned int column, const std::string& reason );
-        bool operator==( const Error_position& lhs ) const;
         unsigned int line_;
         unsigned int column_;
         std::string reason_;
     };
 
-    inline Error_position::Error_position()
-    :   line_( 0 )
-    ,   column_( 0 )
-    {
-    }
-
     inline Error_position::Error_position( unsigned int line, unsigned int column, const std::string& reason )
-    :   line_( line )
+    :   std::runtime_error("JsonSpirit Error: \"" + reason + "\""
+        " at line " + std::to_string(line) + ", column " + std::to_string(column) + ".")
+    ,   line_( line )
     ,   column_( column )
     ,   reason_( reason )
     {
-    }
-
-    inline bool Error_position::operator==( const Error_position& lhs ) const
-    {
-        if( this == &lhs ) return true;
-
-        return ( reason_ == lhs.reason_ ) &&
-               ( line_   == lhs.line_ ) &&
-               ( column_ == lhs.column_ ); 
     }
 }
 
