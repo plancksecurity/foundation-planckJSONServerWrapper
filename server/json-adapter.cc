@@ -362,10 +362,10 @@ PEP_STATUS JsonAdapter::messageToSend(message* msg)
 }
 
 
-PEP_STATUS JsonAdapter::notifyHandshake(void* obj, pEp_identity* self, pEp_identity* partner, sync_handshake_signal sig)
+PEP_STATUS JsonAdapter::notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal sig)
 {
-	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja->i->makeAndDeliverRequest2("notifyHandshake", In<pEp_identity*>(self), In<pEp_identity*>(partner), In<sync_handshake_signal>(sig) );
+//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja_singleton->i->makeAndDeliverRequest2("notifyHandshake", In<pEp_identity*>(self), In<pEp_identity*>(partner), In<sync_handshake_signal>(sig) );
 }
 
 
@@ -487,7 +487,6 @@ void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
 	PEP_STATUS status = do_keymanagement(
 		keyserver_lookup_session,
 		&JsonAdapter::retrieveNextIdentity,
-		&JsonAdapter::messageToSend,
 		arg); // does the whole work
 	
 	keyserver_lookup_queue.clear();

@@ -68,7 +68,7 @@ public:
 	ServerVersion version();
 
 	static PEP_STATUS messageToSend(message* msg);
-	static PEP_STATUS notifyHandshake(void* obj, pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal);
+	static PEP_STATUS notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal);
 
 	// BEWARE: msg is 1st parameter, obj is second!!!
 	static int injectSyncMsg(Sync_event* msg, void* obj);
