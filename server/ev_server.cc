@@ -140,7 +140,6 @@ const FunctionMap functions = {
 		FP( "own_key_is_listed", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, Out<bool>> ( &own_key_is_listed) ),
 		FP( "own_identities_retrieve", new Func<PEP_STATUS, In_Pep_Session, Out<identity_list*>>( &own_identities_retrieve ) ),
 		FP( "set_own_key", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<c_string>>( &set_own_key ) ),
-		FP( "undo_last_mistrust", new Func<PEP_STATUS, In_Pep_Session>( &undo_last_mistrust ) ),
 		
 		FP( "myself"        , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &myself) ),
 		FP( "update_identity", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &update_identity) ),
