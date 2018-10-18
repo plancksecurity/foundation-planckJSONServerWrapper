@@ -485,7 +485,6 @@ pEp_identity* JsonAdapter::retrieveNextIdentity(void* obj)
 void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
 {
 	PEP_STATUS status = do_keymanagement(
-		keyserver_lookup_session,
 		&JsonAdapter::retrieveNextIdentity,
 		arg); // does the whole work
 	
