@@ -26,6 +26,7 @@
 #include "server_version.hh"
 
 #include <pEp/keymanagement.h>
+#include <status_to_string.hh>  // from libpEpAdapter.
 
 #include <boost/filesystem.hpp>
 #include "json_spirit/json_spirit_writer.h"
@@ -263,14 +264,14 @@ struct JsonAdapter::Internal
 	{
 		PEP_STATUS status = call_with_lock(&init, &sync_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
 		if (status != PEP_STATUS_OK)
-			throw std::runtime_error("Cannot init sync_session! status: " + status_to_string(status));
+			throw std::runtime_error("Cannot init sync_session! status: " + ::pEp::status_to_string(status));
 		
 		status = register_sync_callbacks(sync_session,
 		                                 (void*) this,
 		                                 JsonAdapter::notifyHandshake,
 		                                 JsonAdapter::retrieveNextSyncMsg);
 		if (status != PEP_STATUS_OK)
-			throw std::runtime_error("Cannot register sync callbacks! status: " + status_to_string(status));
+			throw std::runtime_error("Cannot register sync callbacks! status: " + ::pEp::status_to_string(status));
 		
 		status = do_sync_protocol(sync_session, arg); // does the whole work
 		sync_queue.clear(); // remove remaining messages
@@ -437,7 +438,7 @@ void JsonAdapter::startKeyserverLookup()
 	PEP_STATUS status = call_with_lock(&init, &keyserver_lookup_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
 	if(status != PEP_STATUS_OK || keyserver_lookup_session==nullptr)
 	{
-		throw std::runtime_error("Cannot create keyserver lookup session! status: " + status_to_string(status));
+		throw std::runtime_error("Cannot create keyserver lookup session! status: " + ::pEp::status_to_string(status));
 	}
 	
 	keyserver_lookup_queue.clear();
@@ -446,7 +447,7 @@ void JsonAdapter::startKeyserverLookup()
 			&keyserver_lookup_session // nullptr is not accepted, so any dummy ptr is used here
 			);
 	if (status != PEP_STATUS_OK)
-		throw std::runtime_error("Cannot register keyserver lookup callbacks! status: " + status_to_string(status));
+		throw std::runtime_error("Cannot register keyserver lookup callbacks! status: " + ::pEp::status_to_string(status));
 	
 	keyserver_lookup_thread.reset( new std::thread( JsonAdapter::keyserverLookupThreadRoutine, &keyserver_lookup_session /* just a dummy */ ) );
 }
@@ -563,7 +564,7 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 	PEP_STATUS status = call_with_lock(&init, &first_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
 	if(status != PEP_STATUS_OK || first_session==nullptr)
 	{
-		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + status_to_string(status) + ".";
+		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
 		std::cerr << error_msg << std::endl; // Log to stderr intentionally, so Enigmail can grab that error message easily.
 		if( ! i->ignore_session_error)
 		{
@@ -613,7 +614,7 @@ void JsonAdapter::threadFunc()
 			PEP_STATUS status = call_with_lock(&init, &i->session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg); // release(session) in ThreadDeleter
 			if(status != PEP_STATUS_OK || i->session==nullptr)
 			{
-				const std::string error_msg = "Cannot create session! PEP_STATUS: " + status_to_string(status) + ".";
+				const std::string error_msg = "Cannot create session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
 				L << Logger::Error << error_msg;
 				if( ! i->ignore_session_error)
 				{

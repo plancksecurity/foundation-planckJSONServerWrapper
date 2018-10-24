@@ -7,8 +7,6 @@
 #include <pEp/message_api.h>
 #include <pEp/sync_api.h>
 
-// in pEpEngine.h positive values are hex, negative are decimal. :-o
-std::string status_to_string(PEP_STATUS status);
 
 // just a tag type:
 struct Language{};
@@ -48,7 +46,6 @@ struct In<Language>
 	
 	char array_value[3];
 };
-
 
 
 #endif // PEP_TYPES_HH
