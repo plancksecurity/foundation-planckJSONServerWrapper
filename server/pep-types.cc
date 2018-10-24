@@ -51,6 +51,7 @@ std::string status_to_string(PEP_STATUS status)
 		case PEP_INIT_SQLITE3_WITHOUT_MUTEX       : status_string = "PEP_INIT_SQLITE3_WITHOUT_MUTEX"; break;
 		case PEP_INIT_CANNOT_OPEN_DB              : status_string = "PEP_INIT_CANNOT_OPEN_DB"; break;
 		case PEP_INIT_CANNOT_OPEN_SYSTEM_DB       : status_string = "PEP_INIT_CANNOT_OPEN_SYSTEM_DB"; break;
+		case PEP_UNKNOWN_DB_ERROR                 : status_string = "PEP_UNKNOWN_DB_ERROR"; break;
 		
 		case PEP_KEY_NOT_FOUND                    : status_string = "PEP_KEY_NOT_FOUND"; break;
 		case PEP_KEY_HAS_AMBIG_NAME               : status_string = "PEP_KEY_HAS_AMBIG_NAME"; break;
@@ -58,6 +59,8 @@ std::string status_to_string(PEP_STATUS status)
 		case PEP_CANNOT_EXPORT_KEY                : status_string = "PEP_CANNOT_EXPORT_KEY"; break;
 		case PEP_CANNOT_EDIT_KEY                  : status_string = "PEP_CANNOT_EDIT_KEY"; break;
 		case PEP_KEY_UNSUITABLE                   : status_string = "PEP_KEY_UNSUITABLE"; break;
+		case PEP_MALFORMED_KEY_RESET_MSG          : status_string = "PEP_MALFORMED_KEY_RESET_MSG"; break;
+		case PEP_KEY_NOT_RESET                    : status_string = "PEP_KEY_NOT_RESET"; break;
 		
 		case PEP_CANNOT_FIND_IDENTITY             : status_string = "PEP_CANNOT_FIND_IDENTITY"; break;
 		case PEP_CANNOT_SET_PERSON                : status_string = "PEP_CANNOT_SET_PERSON"; break;
@@ -100,6 +103,7 @@ std::string status_to_string(PEP_STATUS status)
 		case PEP_SYNC_NO_INJECT_CALLBACK          : status_string = "PEP_SYNC_NO_INJECT_CALLBACK"; break;
 		case PEP_SYNC_NO_CHANNEL                  : status_string = "PEP_SYNC_NO_CHANNEL"; break;
 		case PEP_SYNC_CANNOT_ENCRYPT              : status_string = "PEP_SYNC_CANNOT_ENCRYPT"; break;
+		case PEP_SYNC_NO_MESSAGE_SEND_CALLBACK    : status_string = "PEP_SYNC_NO_MESSAGE_SEND_CALLBACK"; break;
 		
 		case PEP_CANNOT_INCREASE_SEQUENCE         : status_string = "PEP_CANNOT_INCREASE_SEQUENCE"; break;
 		
@@ -110,6 +114,7 @@ std::string status_to_string(PEP_STATUS status)
 		case PEP_STATEMACHINE_INVALID_CONDITION   : status_string = "PEP_STATEMACHINE_INVALID_CONDITION"; break;
 		case PEP_STATEMACHINE_INVALID_ACTION      : status_string = "PEP_STATEMACHINE_INVALID_ACTION"; break;
 		case PEP_STATEMACHINE_INHIBITED_EVENT     : status_string = "PEP_STATEMACHINE_INHIBITED_EVENT"; break;
+		case PEP_STATEMACHINE_CANNOT_SEND         : status_string = "PEP_STATEMACHINE_CANNOT_SEND"; break;
 		
 		case PEP_COMMIT_FAILED                    : status_string = "PEP_COMMIT_FAILED"; break;
 		case PEP_MESSAGE_CONSUME                  : status_string = "PEP_MESSAGE_CONSUME"; break;
