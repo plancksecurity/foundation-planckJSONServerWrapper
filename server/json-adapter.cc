@@ -26,7 +26,7 @@
 #include "server_version.hh"
 
 #include <pEp/keymanagement.h>
-#include <status_to_string.hh>  // from libpEpAdapter.
+#include <pEp/status_to_string.hh>  // from libpEpAdapter.
 
 #include <boost/filesystem.hpp>
 #include "json_spirit/json_spirit_writer.h"

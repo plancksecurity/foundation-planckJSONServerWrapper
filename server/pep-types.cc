@@ -4,7 +4,7 @@
 #include "json-adapter.hh"
 
 #include <pEp/pEp_string.h>
-#include <status_to_string.hh>  // from libpEpAdapter
+#include <pEp/status_to_string.hh>  // from libpEpAdapter
 
 #include <iostream> // Just to print debug stuff to std::cerr
 #include "base64.hh"
