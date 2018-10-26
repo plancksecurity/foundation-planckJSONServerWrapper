@@ -3,11 +3,12 @@
 #include <fstream>
 #include <sstream>
 #include "logger.hh"
-#include "pep-utils.hh"
 #include "pep-utils-json.hh"
 #include <pEp/pEpEngine.h> // for PEP_VERSION and get_engine_version()
 #include <boost/algorithm/string/trim.hpp>
 #include "json_spirit/json_spirit_reader.h"
+
+#include <pEp/slurp.hh>
 
 namespace js = json_spirit;
 
@@ -108,7 +109,7 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 
 			const std::string file_content =
 				boost::algorithm::trim_copy(
-					pEp::utility::slurp("PackageVersion")
+					pEp::slurp("PackageVersion")
 				);
 
 			try{

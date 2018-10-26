@@ -72,7 +72,7 @@ public:
 
 	// BEWARE: msg is 1st parameter, obj is second!!!
 	static int injectSyncMsg(Sync_event* msg, void* obj);
-	static Sync_event* retrieveNextSyncMsg(void* obj, time_t timeout);
+	static Sync_event* retrieveNextSyncMsg(void* obj, unsigned timeout);
 	static void* syncThreadRoutine(void* arg);
 	
 	void startSync();

@@ -27,6 +27,7 @@
 
 #include <pEp/keymanagement.h>
 #include <pEp/status_to_string.hh>  // from libpEpAdapter.
+#include <pEp/locked_queue.hh>
 
 #include <boost/filesystem.hpp>
 #include "json_spirit/json_spirit_writer.h"
@@ -74,7 +75,7 @@ typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
 
 // keyserver lookup
-locked_queue< pEp_identity*, &free_identity> keyserver_lookup_queue;
+utility::locked_queue< pEp_identity*, &free_identity> keyserver_lookup_queue;
 PEP_SESSION keyserver_lookup_session = nullptr; // FIXME: what if another adapter started it already?
 ThreadPtr   keyserver_lookup_thread{nullptr, ThreadDeleter};
 
@@ -135,7 +136,7 @@ struct JsonAdapter::Internal
 	PEP_SESSION session = nullptr;
 	
 	// Sync
-	locked_queue< Sync_event*, &free_Sync_event>  sync_queue;
+	utility::locked_queue< Sync_event*, &free_Sync_event>  sync_queue;
 	PEP_SESSION sync_session = nullptr;
 	ThreadPtr   sync_thread{nullptr, ThreadDeleter};
 	
@@ -223,32 +224,17 @@ struct JsonAdapter::Internal
 		return 0;
 	}
 	
-	Sync_event* retrieveNextSyncMsg(time_t timeout)
+	Sync_event* retrieveNextSyncMsg(unsigned timeout)
 	{
 		Sync_event* msg = nullptr;
 		if(timeout)
 		{
-			std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now()
-			   + std::chrono::seconds(timeout);
-			
-			const bool success = sync_queue.try_pop_front(msg, end_time);
+			const bool success = sync_queue.try_pop_front(msg, std::chrono::seconds(timeout));
 			if(!success)
 			{
 				// this is timeout occurrence
-				return nullptr;
+				return new_sync_timeout_event();
 			}
-/*
-            // we got a message while waiting for timeout -> compute remaining time
-            std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-            if (now < end_time) 
-            {
-                *timeout = std::chrono::duration_cast<std::chrono::seconds>(end_time - now).count();
-            } 
-            else 
-            {
-                *timeout = 0;
-            }
-*/
 		}else{
 			msg = sync_queue.pop_front();
 		}
@@ -378,7 +364,7 @@ int JsonAdapter::injectSyncMsg(Sync_event* msg, void* obj)
 }
 
 
-Sync_event* JsonAdapter::retrieveNextSyncMsg(void* obj, time_t timeout)
+Sync_event* JsonAdapter::retrieveNextSyncMsg(void* obj, unsigned timeout)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	return ja->i->retrieveNextSyncMsg(timeout);

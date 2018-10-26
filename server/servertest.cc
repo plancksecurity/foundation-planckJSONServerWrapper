@@ -1,4 +1,4 @@
-#include "pep-utils.hh"
+#include <pep/locked_queue.hh>
 #include <thread>
 #include <atomic>
 #include <vector>
@@ -12,7 +12,7 @@ unsigned Elements = 1000*1000;
 std::atomic<bool> finished(false);
 
 void do_nothing(uint64_t) {}
-pEp::utility::locked_queue<uint64_t, &do_nothing>  Q;
+utility::locked_queue<uint64_t, &do_nothing>  Q;
 
 std::vector< std::vector<uint64_t> > v;
 

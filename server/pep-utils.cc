@@ -8,20 +8,7 @@ namespace pEp
 namespace utility
 {
 
-
-std::string slurp(const std::string& filename)
-{
-	std::ifstream input(filename.c_str());
-	if(!input)
-	{
-		throw std::runtime_error("Cannot read file \"" + filename + "\"! ");
-	}
-	
-	std::stringstream sstr;
-	sstr << input.rdbuf();
-	return sstr.str();
-}
-
+// We've all moved to libpEpAdapter.  o/
 
 } // end of namespace pEp::utility
 } // end of namespace pEp
