@@ -160,8 +160,11 @@ js::Value to_json<struct tm*>(struct tm* const& t)
 		return js::Value{};
 	}
 	
-	char s[32] = "YYYY-MM-DDThh:mm:ss";
-	snprintf(s,31, "%04u-%02u-%02uT%02u:%02u:%02u", t->tm_year+1900, t->tm_mon+1, t->tm_mday,  t->tm_hour, t->tm_min, t->tm_sec);
-	return js::Value{s};
+	// neither timegm() nor mktime() respect t->tm_gmtoff for their conversions. What a mess!
+	// Here is the approach that hopefully works independently from local timezone:
+	char s[32];
+	strftime(s, 31, "%s", t);
+	const int64_t u = strtoll(s, nullptr, 10);
+	return js::Value{u};
 }
 
