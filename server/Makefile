@@ -94,7 +94,7 @@ $(TARGET_TEST): servertest.o libjson-adapter.a
 	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 $(TARGET_GTEST): unittest_json.o unittest_nfc.o unittest_decompose.o unittest_rpc.o \
-    unittest_logger.o \
+    unittest_logger.o unittest_pep.o \
     gtest-all.o gtest_main.o libjson-adapter.a
 	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
