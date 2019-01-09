@@ -55,6 +55,8 @@ TEST_F( PEPJsonTest, Msg )
 	m->attachments = new_bloblist( new_string((char*)pep_mini_png, sizeof(pep_mini_png)), sizeof(pep_mini_png), "image/png", "pep-mini.png" );
 	bloblist_add( m->attachments, new_string(mini_text, 0), sizeof(mini_text), "text/plain", "pangram.txt" );
 	
+	m->recv = new_timestamp(1547064444);
+	
 	const js::Value v = to_json(m);
 	const std::string serialized = js::write(v);
 	std::cout << "~~~~\n" <<  serialized << "\n~~~~~~\n";
