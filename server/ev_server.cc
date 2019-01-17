@@ -147,6 +147,7 @@ const FunctionMap functions = {
 		FP( "update_identity", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &update_identity) ),
 		
 		FP( "trust_personal_key", new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>>( &trust_personal_key) ),
+		FP( "trust_own_key",      new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>>( &trust_own_key) ),
 		FP( "key_mistrusted",     new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>>( &key_mistrusted) ),
 		FP( "key_reset_trust",    new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>>( &key_reset_trust) ),
 		
