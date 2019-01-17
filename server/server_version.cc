@@ -84,10 +84,12 @@ const ServerVersion& server_version()
 
 #ifdef ENIGMAIL_2_0_COMPAT
 //const ServerVersion sv(0,14,1);  // JSON-97 : make MIME_decrypt_message() API-compatible with pre-JSON-92's changes for Enigmail 2.0
-static const ServerVersion sv(0,14,3);  // JSON-110: add encrypt_message_and_add_priv_key()
+//static const ServerVersion sv(0,14,3);  // JSON-110: add encrypt_message_and_add_priv_key()
+static const ServerVersion sv(0,14,4);  // JSON-117: add trust_own_key()
 #else
 //const ServerVersion sv(0,15,2);  // JSON-93 InLength<> is a compatible API change, because length parameter is still there but ignored. :-)
-static const ServerVersion sv(0,15,3);  // JSON-110: add encrypt_message_and_add_priv_key()
+//static const ServerVersion sv(0,15,3);  // JSON-110: add encrypt_message_and_add_priv_key()
+static const ServerVersion sv(0,15,4);  // JSON-117: add trust_own_key()
 #endif // ENIGMAIL_2_0_COMPAT
 
 	return sv;
