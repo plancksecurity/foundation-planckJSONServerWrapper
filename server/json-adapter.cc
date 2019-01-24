@@ -198,7 +198,7 @@ struct JsonAdapter::Internal
 	static void addToArray(js::Array&) { /* do nothing */ }
 	
 	template<class T, class... Rest>
-	static void addToArray(js::Array& a, const In<T>& in, Rest&&... rest)
+	static void addToArray(js::Array& a, const InOut<T>& in, Rest&&... rest)
 	{
 		a.push_back( in.to_json() );
 		addToArray( a, rest... );
@@ -345,14 +345,14 @@ ServerVersion JsonAdapter::version()
 PEP_STATUS JsonAdapter::messageToSend(message* msg)
 {
 //	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja_singleton->i->makeAndDeliverRequest2("messageToSend", In<message*>(msg) );
+	return ja_singleton->i->makeAndDeliverRequest2("messageToSend", InOut<message*>(msg) );
 }
 
 
 PEP_STATUS JsonAdapter::notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal sig)
 {
 //	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja_singleton->i->makeAndDeliverRequest2("notifyHandshake", In<pEp_identity*>(self), In<pEp_identity*>(partner), In<sync_handshake_signal>(sig) );
+	return ja_singleton->i->makeAndDeliverRequest2("notifyHandshake", InOut<pEp_identity*>(self), InOut<pEp_identity*>(partner), InOut<sync_handshake_signal>(sig) );
 }
 
 

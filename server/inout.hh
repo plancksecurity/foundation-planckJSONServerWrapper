@@ -72,7 +72,7 @@ struct In
 	
 	js::Value to_json() const
 	{
-		throw "Something went wrong here!";
+		throw std::logic_error( std::string("Never call to_json() for a In<") + typeid(T).name() + "> data type!  fn=" + __PRETTY_FUNCTION__ );
 	}
 	
 	c_type get_value() const { return value; }
