@@ -142,7 +142,17 @@ var Param2Form =
 							+ '<tr><td>longmsg: </td><td>'  + genInput('inp_param_' + nr + '_lmsg', 25, pp.direction, "longmsg") + '</td></tr>'
 							+ '<tr><td>from: </td><td>'     + Param2Form.Identity( nr + '_from', pp.direction, "(from)") + '</td></tr>'
 							+ '<tr><td>to: </td><td>'       + Param2Form.IdentityList( nr + '_to', pp.direction, "(to)") + '</td></tr>'
+							+ '<tr><td>cc: </td><td>'       + Param2Form.IdentityList( nr + '_cc', pp.direction, "(cc)") + '</td></tr>'
+							+ '<tr><td>bcc: </td><td>'      + Param2Form.IdentityList( nr + '_bcc', pp.direction, "(bcc)") + '</td></tr>'
+							+ '<tr><td>attachments:</td><td>' + Param2Form.BlobList ( nr + '_blob', pp.direction, "(att)") + '</td></tr>'
 							+ '</table>';
+					},
+		BlobList : function(nr, pp, value)
+					{
+						if(pp.direction=='Out')
+							return 'BlobList (output)';
+						
+						return '<input type="file" multiple id="' + nr + '" name="' + nr + '">';
 					},
 		Identity : function(nr, pp, value)
 					{
