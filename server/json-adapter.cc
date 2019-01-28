@@ -367,6 +367,7 @@ int JsonAdapter::injectSyncMsg(Sync_event* msg, void* obj)
 Sync_event* JsonAdapter::retrieveNextSyncMsg(void* obj, unsigned timeout)
 {
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	ja->check_guard();
 	return ja->i->retrieveNextSyncMsg(timeout);
 }
 
@@ -801,11 +802,11 @@ bool JsonAdapter::running() const
 
 void JsonAdapter::check_guard() const
 {
-	if(guard_0 != Guard_0 || guard_1 != Guard_1)
+	if(guard_0 != Guard_0 || guard_1 != Guard_1 || i==nullptr)
 	{
 		char buf[128];
-		snprintf(buf,127, "JS::check_guard failed: guard0=%llu, guard1=%llu this=%p.\n",
-			guard_0, guard_1, (void*)this
+		snprintf(buf,127, "JS::check_guard failed: guard0=%llu, guard1=%llu this=%p i=%p.\n",
+			guard_0, guard_1, (void*)this, (void*)i
 			);
 		std::cerr << buf; // Log() might not work here, when memory is corrupted
 		throw std::logic_error( buf );
