@@ -359,23 +359,23 @@ PEP_STATUS JsonAdapter::notifyHandshake(pEp_identity* self, pEp_identity* partne
 // BEWARE: msg is 1st parameter, obj is second!!!
 int JsonAdapter::injectSyncMsg(Sync_event* msg, void* obj)
 {
-	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja->i->injectSyncMsg(msg);
+//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja_singleton->i->injectSyncMsg(msg);
 }
 
 
 Sync_event* JsonAdapter::retrieveNextSyncMsg(void* obj, unsigned timeout)
 {
-	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	ja->check_guard();
-	return ja->i->retrieveNextSyncMsg(timeout);
+//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	ja_singleton->check_guard();
+	return ja_singleton->i->retrieveNextSyncMsg(timeout);
 }
 
 
 void* JsonAdapter::syncThreadRoutine(void* arg)
 {
-	JsonAdapter* ja = static_cast<JsonAdapter*>(arg);
-	return ja->i->syncThreadRoutine(arg);
+//	JsonAdapter* ja = static_cast<JsonAdapter*>(arg);
+	return ja_singleton->i->syncThreadRoutine(arg);
 }
 
 
@@ -458,15 +458,15 @@ void JsonAdapter::stopKeyserverLookup()
 
 int JsonAdapter::examineIdentity(pEp_identity* idy, void* obj)
 {
-	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja->i->injectIdentity(idy);
+//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja_singleton->i->injectIdentity(idy);
 }
 
 
 pEp_identity* JsonAdapter::retrieveNextIdentity(void* obj)
 {
-	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja->i->retrieveNextIdentity();
+//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	return ja_singleton->i->retrieveNextIdentity();
 }
 
 
