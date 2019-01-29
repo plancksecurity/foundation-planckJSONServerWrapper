@@ -64,7 +64,11 @@ static const std::string VersionName =
 //	"(36) Hatzfeld";         // JSON-81: add package_version, rename "version" into "api_version" in ServerVersion, add versions from the Engine, too
 //	"(37) Battenberg";       // JSON-75: change debonize() behavior, especially on MS Windows
 //	"(38) Frankenberg";      // JSON-92: API CHANGE: decrypt_message() has InOut src message, MIME_decrypt_message() returns changed src msg, too.
-	"(39) Gemünden";         // JSON-93: support for InLengt<> to calculate string lengths automatically.
+//	"(39) Gemünden";         // JSON-93: support for InLengt<> to calculate string lengths automatically.
+
+//  Renumbering due to political decisions - the planned exits 31..39 through the Sauerland will never be build. :-(
+//  So we got a new exit with the same number:
+	"(39) Eisenach"; // JSON-118: fix to_json() for KeySync callbacks to avoid crashes. Add attachment support in interactive.js \o/
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
