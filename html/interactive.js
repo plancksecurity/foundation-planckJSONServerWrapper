@@ -6,6 +6,8 @@ var func_params = [];
 
 var OutputParam = ["OP"];
 
+var fileInputs = {};
+
 // converts a UInt8Array into a base64-encoded String
 function arrayToBase64(arr)
 {
@@ -77,6 +79,27 @@ function genStringList(nr, pp)
 	return ret + '<input type="button" value="Add String!" onClick="addString(' + nr + ')">';
 }
 
+
+function changeBlob(inp, nr)
+{
+	fileInputs[inp.id] = [];
+	for(var i=0; i<inp.files.length; ++i)
+	{
+		var f = inp.files[i];
+		
+		var reader = new FileReader();
+		reader.onload = function(e) {
+			var content = arrayToBase64(e.target.result);
+			fileInputs[inp.id].push( { 'mime_type': f.type, 'filename': f.name, 'value': content } );
+			
+			document.getElementById('span_blob_' + nr).innerHTML += "#" + i + ": Files for " + inp.id + " = "
+			 + JSON.stringify(fileInputs) + " e=" + JSON.stringify(e.target.result.length) + "<br>";
+		}
+		
+		reader.readAsArrayBuffer(f);
+	}
+	document.getElementById('span_blob_' + nr).innerHTML = Object.keys(fileInputs).length + " files processed.";
+}
 
 // generates the HTML form for the appropriate function parameter
 var Param2Form =
@@ -155,15 +178,16 @@ var Param2Form =
 							+ '<tr><td>to: </td><td>'       + Param2Form.IdentityList( nr + '_to', pp.direction, "(to)") + '</td></tr>'
 							+ '<tr><td>cc: </td><td>'       + Param2Form.IdentityList( nr + '_cc', pp.direction, "(cc)") + '</td></tr>'
 							+ '<tr><td>bcc: </td><td>'      + Param2Form.IdentityList( nr + '_bcc', pp.direction, "(bcc)") + '</td></tr>'
-							+ '<tr><td>attachments:</td><td>' + Param2Form.BlobList ( nr + '_blob', pp.direction, "(att)") + '</td></tr>'
+							+ '<tr><td>attachments:</td><td>' + Param2Form.BlobList ( nr + '_att', pp.direction, "(att)") + '</td></tr>'
 							+ '</table>';
 					},
 		BlobList : function(nr, pp, value)
 					{
 						if(pp.direction=='Out')
 							return 'BlobList (output)';
-						
-						return '<input type="file" multiple id="inp_blob_' + nr + '" name="inp_blob_' + nr + '">';
+						var blob_id = "inp_blob_" + nr;
+						return '<input type="file" multiple id="' + blob_id + '" name="' + blob_id + '" onchange="changeBlob(this, \'' + nr + '\')" >'
+							+ '<span id="span_blob_' + nr + '">(…)</span>';
 					},
 		Identity : function(nr, pp, value)
 					{
@@ -313,22 +337,14 @@ var Form2Param =
 					},
 		BlobList : function(nr, pp, value)
 					{
-						var ret = [];
-						var att = document.getElementById('inp_blob_' + nr);
+						// var att = document.getElementById('inp_blob_' + nr);
 						
-						for(var i=0; i<att.files.length; ++i)
-						{
-							var f = att.files[i];
-							var reader = new FileReader();
-							reader.readAsArrayBuffer(f);
-							
-							var obj={};
-							obj.mime_type = f.type;
-							obj.filename = f.name;
-							obj.value = // string containinng the base64-encoded octets of the file
-							ret.push(obj);
-						}
-						return ret;
+						/* TODO:
+							Got the file data from fileInputs['inp_blob_' + nr] which should be filled by the
+							onchange callbacks of the <input type="file"> element, if they are already all there.
+						*/
+						
+						return fileInputs['inp_blob_' + nr ];
 					},
 		Identity : function(nr, pp, value)
 					{
@@ -475,6 +491,8 @@ function button_click()
 
 function prepare_call(f)
 {
+	fileInputs = {};
+	
 	func = f;
 	if(f.separator)
 	{
