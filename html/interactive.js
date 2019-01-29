@@ -1,9 +1,20 @@
+'use strict';
 
 var call_ID = 1000;
 var func;
 var func_params = [];
 
 var OutputParam = ["OP"];
+
+// converts a UInt8Array into a base64-encoded String
+function arrayToBase64(arr)
+{
+	var bins = Array.prototype.map.call(arr, function (ch) {
+		return String.fromCharCode(ch);
+	}).join('');
+	return btoa(bins);
+}
+
 
 function genInput(id, type, direction, value, onchange)
 {
@@ -219,7 +230,7 @@ function de_backslash(input)
 			var e = input.charAt(i);
 			switch(e)
 			{
-				case '0' : ret += "\000"; break;
+				case '0' : ret += "\0"; break;
 				case 'a' : ret += "\a"; break;
 				case 'b' : ret += "\b"; break;
 				case 'f' : ret += "\f"; break;
@@ -229,7 +240,7 @@ function de_backslash(input)
 				case 'v' : ret += "\v"; break;
 				case "\\" : ret += "\\"; break;
 				case "\"" : ret += "\""; break;
-				case "?"  : ret += "\177"; break;
+				case "?"  : ret += "\x7f"; break;
 				case 'u' : 
 					{
 						++i;
