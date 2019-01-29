@@ -297,6 +297,7 @@ var Form2Param =
 						ret.longmsg = document.getElementById('inp_param_' + nr + '_lmsg').value;
 						ret.from = Form2Param.Identity( nr + '_from');
 						ret.to = Form2Param.IdentityList( nr + '_to');
+						ret.attachments = Form2Param.BlobList( nr );
 						return ret;
 					},
 		BlobList : function(nr, pp, value)
