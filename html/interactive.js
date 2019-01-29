@@ -89,7 +89,7 @@ var Param2Form =
 						{
 							return 'Integer output';
 						}else{
-							return genInput('inp_param_' + nr , 'number', pp.direction, value);
+							return genInput('inp_param_' + nr , 'number', pp.direction, 0);
 						}
 					},
 		Bool : function(nr, pp, value)
@@ -152,7 +152,7 @@ var Param2Form =
 						if(pp.direction=='Out')
 							return 'BlobList (output)';
 						
-						return '<input type="file" multiple id="' + nr + '" name="' + nr + '">';
+						return '<input type="file" multiple id="inp_blob_' + nr + '" name="inp_blob_' + nr + '">';
 					},
 		Identity : function(nr, pp, value)
 					{
@@ -297,6 +297,25 @@ var Form2Param =
 						ret.longmsg = document.getElementById('inp_param_' + nr + '_lmsg').value;
 						ret.from = Form2Param.Identity( nr + '_from');
 						ret.to = Form2Param.IdentityList( nr + '_to');
+						return ret;
+					},
+		BlobList : function(nr, pp, value)
+					{
+						var ret = [];
+						var att = document.getElementById('inp_blob_' + nr);
+						
+						for(var i=0; i<att.files.length; ++i)
+						{
+							var f = att.files[i];
+							var reader = new FileReader();
+							reader.readAsArrayBuffer(f);
+							
+							var obj={};
+							obj.mime_type = f.type;
+							obj.filename = f.name;
+							obj.value = // string containinng the base64-encoded octets of the file
+							ret.push(obj);
+						}
 						return ret;
 					},
 		Identity : function(nr, pp, value)
