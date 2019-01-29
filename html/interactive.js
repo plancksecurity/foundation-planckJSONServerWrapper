@@ -80,7 +80,7 @@ function genStringList(nr, pp)
 }
 
 
-function changeBlob(inp, nr)
+function changeBlob(inp, event, nr)
 {
 	fileInputs[inp.id] = [];
 	for(var i=0; i<inp.files.length; ++i)
@@ -88,12 +88,16 @@ function changeBlob(inp, nr)
 		var f = inp.files[i];
 		
 		var reader = new FileReader();
+		reader.idx = i;
+		reader.f = f;
 		reader.onload = function(e) {
-			var content = arrayToBase64(e.target.result);
-			fileInputs[inp.id].push( { 'mime_type': f.type, 'filename': f.name, 'value': content } );
+			var ab = e.target.result;
+			var bytes = new Uint8Array(ab);
+			var content = arrayToBase64(bytes);
+			var blob = { 'mime_type': this.f.type, 'filename': this.f.name, 'value': content } 
+			fileInputs[inp.id].push( blob );
 			
-			document.getElementById('span_blob_' + nr).innerHTML += "#" + i + ": Files for " + inp.id + " = "
-			 + JSON.stringify(fileInputs) + " e=" + JSON.stringify(e.target.result.length) + "<br>";
+			document.getElementById('span_blob_' + nr).innerHTML += fileInputs[inp.id].length + " Files processed. <br>";
 		}
 		
 		reader.readAsArrayBuffer(f);
@@ -186,7 +190,7 @@ var Param2Form =
 						if(pp.direction=='Out')
 							return 'BlobList (output)';
 						var blob_id = "inp_blob_" + nr;
-						return '<input type="file" multiple id="' + blob_id + '" name="' + blob_id + '" onchange="changeBlob(this, \'' + nr + '\')" >'
+						return '<input type="file" multiple id="' + blob_id + '" name="' + blob_id + '" onchange="changeBlob(this, event, \'' + nr + '\')" >'
 							+ '<span id="span_blob_' + nr + '">(…)</span>';
 					},
 		Identity : function(nr, pp, value)
@@ -332,7 +336,7 @@ var Form2Param =
 						ret.longmsg = document.getElementById('inp_param_' + nr + '_lmsg').value;
 						ret.from = Form2Param.Identity( nr + '_from');
 						ret.to = Form2Param.IdentityList( nr + '_to');
-						ret.attachments = Form2Param.BlobList( nr );
+						ret.attachments = Form2Param.BlobList( nr + '_att' );
 						return ret;
 					},
 		BlobList : function(nr, pp, value)
@@ -343,8 +347,9 @@ var Form2Param =
 							Got the file data from fileInputs['inp_blob_' + nr] which should be filled by the
 							onchange callbacks of the <input type="file"> element, if they are already all there.
 						*/
+						var bloblist = fileInputs['inp_blob_' + nr ]
 						
-						return fileInputs['inp_blob_' + nr ];
+						return bloblist;
 					},
 		Identity : function(nr, pp, value)
 					{
