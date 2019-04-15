@@ -1,9 +1,14 @@
 #include "hotfixer.hh"
 #include "logger.hh"
 
+#ifdef __APPLE__
+    // disable boost::process because b0rken on MacOS since boost version 1.69
+#else
 #include <boost/process.hpp>
-#include <boost/filesystem.hpp>
+namespace bp = boost::process;
+#endif
 
+#include <boost/filesystem.hpp>
 
 #ifdef _WIN32
 # ifndef  HOTFIX_SENTINEL_FILE
@@ -20,7 +25,6 @@
 #define IS_ERROR_LOGGED(e) ( is_error_logged((e), "hotfixer.cc", __LINE__) )
 
 namespace fs = boost::filesystem;
-namespace bp = boost::process;
 namespace sys = boost::system;
 
 
@@ -117,6 +121,11 @@ namespace pEp
 
         int hotfix_call_execute()
         {
+
+// problems on Mac OS and boost::process version 1.69, so we disable this hotfix functionality here. :-P
+#ifdef __APPLE__
+            return 0;
+#else
             std::error_code ec;
             sys::error_code sec;
             int ret;
@@ -170,6 +179,8 @@ namespace pEp
             L.debug("sentinel file created: '%s'", sent_path.c_str());
 
             return 0;
+#endif // ! __APPLE__
+
         }
 
     }
