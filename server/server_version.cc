@@ -91,7 +91,8 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,15,3);  // JSON-110: add encrypt_message_and_add_priv_key()
 //static const ServerVersion sv(0,15,4);  // JSON-117: add trust_own_key()
 //static const ServerVersion sv(0,15,5);  // JSON-119: add get_key_rating_for_user()
-static const ServerVersion sv(0,16,0);  // Kick-out Enigmail 2.0 compat, remove MIME_*() methods, deliverHandshakeResult() changes parameter types
+//static const ServerVersion sv(0,16,0);  // Kick-out Enigmail 2.0 compat, remove MIME_*() methods, deliverHandshakeResult() changes parameter types
+static const ServerVersion sv(0,16,1);  // JSON-120: add support for key_reset_identity(), key_reset_user(), and key_reset_all_own_keys()
 
 	return sv;
 }
