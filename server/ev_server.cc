@@ -75,38 +75,21 @@ using In_Pep_Session = In<PEP_SESSION, ParamFlag::NoInput>;
 
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
-		// from message_api.h
-		FP( "Message API", new Separator ),
-		FP( "MIME_encrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, InLength<>, In<stringlist_t*>,
-			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message ) ),
-		FP( "MIME_encrypt_message_for_self", new Func<PEP_STATUS, In_Pep_Session, 
-			In<pEp_identity*>, In<c_string>, InLength<>, In<stringlist_t*>,
-			Out<char*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &MIME_encrypt_message_for_self ) ),
-		
-#ifdef ENIGMAIL_2_0_COMPAT
-		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, InLength<>,
-			Out<char*>, Out<stringlist_t*>, Out<PEP_rating>, Out<PEP_decrypt_flags_t>>( &MIME_decrypt_message_20 ) ),
-#else
-		FP( "MIME_decrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, InLength<>,
-			Out<char*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>, Out<c_string>>( &MIME_decrypt_message ) ),
-#endif
 
 		FP( "startKeySync", new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::startSync) ),
 		FP( "stopKeySync",  new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::stopSync ) ),
 		FP( "startKeyserverLookup", new Func<void>( &JsonAdapter::startKeyserverLookup) ),
 		FP( "stopKeyserverLookup",  new Func<void>( &JsonAdapter::stopKeyserverLookup ) ),
 		
+		// from message_api.h
+		FP( "Message API", new Separator ),
 		FP( "encrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
 		FP( "encrypt_message_and_add_priv_key", new Func<PEP_STATUS, In_Pep_Session,
 			In<message*>, Out<message*>, In<c_string>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_and_add_priv_key) ),
 		FP( "encrypt_message_for_self", new Func<PEP_STATUS, In_Pep_Session,
 			In<pEp_identity*>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_for_self ) ),
 
-#ifdef ENIGMAIL_2_0_COMPAT
-		FP( "decrypt_message", new Func<PEP_STATUS, In_Pep_Session,   In<message*>,  Out<message*>,    Out<stringlist_t*>, Out<PEP_rating>,    Out<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
-#else
 		FP( "decrypt_message", new Func<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
-#endif
 		FP( "outgoing_message_rating", new Func<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating ) ),
 		FP( "identity_rating" , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "get_key_rating_for_user", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<PEP_rating>>( &get_key_rating_for_user) ),
@@ -168,7 +151,7 @@ const FunctionMap functions = {
 		FP( "Event Listener & Results", new Separator ),
 		FP( "registerEventListener"  , new Func<void, In<JsonAdapter*,ParamFlag::NoInput>, In<std::string>, In<unsigned>, In<std::string>> ( &JsonAdapter::registerEventListener) ),
 		FP( "unregisterEventListener", new Func<void, In<JsonAdapter*,ParamFlag::NoInput>, In<std::string>, In<unsigned>, In<std::string>> ( &JsonAdapter::unregisterEventListener) ),
-		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, In<sync_handshake_result>> (&deliverHandshakeResult) ),
+		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In_Pep_Session, In<sync_handshake_result>, In<const identity_list*> > (&deliverHandshakeResult) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),

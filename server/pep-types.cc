@@ -89,6 +89,12 @@ Out<identity_list*>::~Out()
 	free_identity_list(value);
 }
 
+template<>
+In<const identity_list*>::~In()
+{
+	free_identity_list(const_cast<identity_list*>(value));
+}
+
 
 template<>
 In<PEP_enc_format>::~In()
@@ -357,6 +363,11 @@ identity_list* from_json<identity_list*>(const js::Value& v)
 	return il.release();
 }
 
+template<>
+const identity_list* from_json<const identity_list*>(const js::Value& v)
+{
+    return from_json<identity_list*>(v);
+}
 
 template<>
 _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
@@ -681,6 +692,8 @@ js::Value Type2String<const pEp_identity*>::get()  { return "Identity"; }
 
 template<>
 js::Value Type2String<identity_list*>::get()  { return "IdentityList"; }
+template<>
+js::Value Type2String<const identity_list*>::get()  { return "IdentityList"; }
 
 template<>
 js::Value Type2String<_stringlist_t*>::get()  { return "StringList"; }
