@@ -68,7 +68,8 @@ static const std::string VersionName =
 
 //  Renumbering due to political decisions - the planned exits 31..39 through the Sauerland will never be build. :-(
 //  So we got a new exit with the same number:
-	"(39) Eisenach"; // JSON-118: fix to_json() for KeySync callbacks to avoid crashes. Add attachment support in interactive.js \o/
+//	"(39) Eisenach"; // JSON-118: fix to_json() for KeySync callbacks to avoid crashes. Add attachment support in interactive.js \o/
+	"(40) Eisenach-Ost"; // remove all Enigmail leftovers. Bump API version to 0.17.0
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
@@ -92,7 +93,8 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,15,4);  // JSON-117: add trust_own_key()
 //static const ServerVersion sv(0,15,5);  // JSON-119: add get_key_rating_for_user()
 //static const ServerVersion sv(0,16,0);  // Kick-out Enigmail 2.0 compat, remove MIME_*() methods, deliverHandshakeResult() changes parameter types
-static const ServerVersion sv(0,16,1);  // JSON-120: add support for key_reset_identity(), key_reset_user(), and key_reset_all_own_keys()
+//static const ServerVersion sv(0,16,1);  // JSON-120: add support for key_reset_identity(), key_reset_user(), and key_reset_all_own_keys()
+static const ServerVersion sv(0,17,0);  // kick out getGpgEnvironment(). It was Enigmail-only (JSON-18) and breaks architecture. Kick-out hotfixer un-feature.
 
 	return sv;
 }

@@ -8,7 +8,6 @@
 #include "pep-types.hh"
 #include "json_rpc.hh"
 #include "pep-utils.hh"
-#include "gpg_environment.hh"
 #include "logger.hh"
 #include "server_version.hh"
 
@@ -16,8 +15,11 @@
 #include <pEp/blacklist.h>
 #include <pEp/key_reset.h>
 #include <pEp/openpgp_compat.h>
+#include <pEp/message_api.h> // for get_binary_path()
 #include <pEp/mime.h>
 
+// libpEpAdapter:
+#include <pEp/status_to_string.hh>
 #include <pEp/slurp.hh>
 
 #include <boost/filesystem.hpp>
@@ -54,21 +56,17 @@ std::string version_as_a_string()
 	return ss.str();
 }
 
-
-#ifdef ENIGMAIL_2_0_COMPAT
-
-// wrapper for Enigmail 2.0 to provide the old Engine's API before JSON-92 / ENGINE-423
-PEP_STATUS MIME_decrypt_message_20(PEP_SESSION session, const char* src, size_t src_len, char** plaintext,
-	stringlist_t** keylist, PEP_rating* rating, PEP_decrypt_flags_t* flags)
+std::string getBinaryPath()
 {
-	*flags = 0;
-	char* modified_src = nullptr;
-	PEP_STATUS status = MIME_decrypt_message(session, src, src_len, plaintext, keylist, rating, flags, &modified_src);
-	pEp_free(modified_src);
-	return status;
+	const char* gpg_path = nullptr;
+	const auto status = get_binary_path( PEP_crypt_OpenPGP, &gpg_path);
+	if(status == PEP_STATUS_OK && gpg_path)
+	{
+		return std::string(gpg_path);
+	}
+	
+	throw std::runtime_error("getBinaryPath returns error: " + ::pEp::status_to_string(status) );
 }
-
-#endif // ENIGMAIL_2_0_COMPAT
 
 
 using In_Pep_Session = In<PEP_SESSION, ParamFlag::NoInput>;
@@ -161,7 +159,7 @@ const FunctionMap functions = {
 		FP( "Other", new Separator ),
 		FP( "serverVersion",       new Func<ServerVersion>( &server_version ) ),
 		FP( "version",           new Func<std::string>( &version_as_a_string ) ),
-		FP( "getGpgEnvironment", new Func<GpgEnvironment>( &getGpgEnvironment ) ),
+		FP( "getBinaryPath", new Func<std::string>( &getBinaryPath ) ),
 
 		FP( "shutdown",  new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::shutdown_now ) ),
 	};

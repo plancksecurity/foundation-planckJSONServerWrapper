@@ -5,7 +5,6 @@
 #include "daemonize.hh"
 #include "logger.hh"
 #include "nulllogger.hh"
-#include "hotfixer.hh"
 
 #include <thread>
 #include <fstream>
@@ -104,17 +103,6 @@ try
 	
 	Logger L("main");
 	L.info("main logger started");
-
-	int hotfix_ret = 0;
-#ifdef _WIN32
-	if ((STATUS_HANDLE == 0) && pEp::utility::hotfix_call_required())
-#else
-	if (pEp::utility::hotfix_call_required())
-#endif
-	{
-		if ((hotfix_ret = pEp::utility::hotfix_call_execute()) != 0)
-			return hotfix_ret;
-	}
 
 	if(add_sharks)
 	{
