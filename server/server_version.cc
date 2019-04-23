@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include "logger.hh"
-#include "pep-utils-json.hh"
+#include "pEp-utils-json.hh"
 #include <pEp/pEpEngine.h> // for PEP_VERSION and get_engine_version()
 #include <boost/algorithm/string/trim.hpp>
 #include "json_spirit/json_spirit_reader.h"

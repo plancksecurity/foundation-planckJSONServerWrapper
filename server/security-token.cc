@@ -67,21 +67,21 @@ fs::path get_token_filename()
 		throw std::runtime_error("Cannot get home directory. $HOME environment variable is not set.");
 	}
 	
-	const fs::path pep_dir = fs::path(home_dir) / ".pEp";
+	const fs::path pEp_dir = fs::path(home_dir) / ".pEp";
 	boost::system::error_code ec;
-	fs::create_directory( pep_dir, ec );
+	fs::create_directory( pEp_dir, ec );
 	if(ec)
 	{
 		throw boost::system::system_error(ec, "Cannot create pEp home directory" );
 	}
 	
-	fs::permissions( pep_dir, fs::perms(0700), ec);
+	fs::permissions( pEp_dir, fs::perms(0700), ec);
 	if(ec)
 	{
 		throw boost::system::system_error(ec, "Cannot change permissions of pEp home directory to 0700 ");
 	}
 	
-	return  pep_dir / "json-token";
+	return  pEp_dir / "json-token";
 }
 
 

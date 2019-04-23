@@ -5,9 +5,9 @@
 #include "prefix-config.hh"
 #include "json-adapter.hh"
 #include "function_map.hh"
-#include "pep-types.hh"
+#include "pEp-types.hh"
 #include "json_rpc.hh"
-#include "pep-utils.hh"
+#include "pEp-utils.hh"
 #include "logger.hh"
 #include "server_version.hh"
 
@@ -278,7 +278,7 @@ void ev_server::OnGetFunctions(evhttp_request* req, void*)
 		"var server_version_name = \"" + version.name + "\";\n"
 		"var server_version = \"" + version.major_minor_patch() + "\";\n"
 		"var add_sharks = " + (add_sharks?"true":"false") + ";\n"
-		"var pep_functions = ";
+		"var pEp_functions = ";
 	
 	js::Array jsonfunctions;
 	for(const auto& f : functions)

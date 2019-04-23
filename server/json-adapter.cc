@@ -17,10 +17,10 @@
 
 #include "json-adapter.hh"
 #include "daemonize.hh"
-#include "pep-types.hh"
+#include "pEp-types.hh"
 #include "json_rpc.hh"
 #include "security-token.hh"
-#include "pep-utils.hh"
+#include "pEp-utils.hh"
 #include "ev_server.hh"
 #include "logger.hh"
 #include "server_version.hh"
@@ -632,7 +632,7 @@ void JsonAdapter::threadFunc()
 		
 		if(i->deliver_html)
 		{
-			evhttp_set_cb(evHttp.get(), "/pep_functions.js"      , ev_server::OnGetFunctions  , this);
+			evhttp_set_cb(evHttp.get(), "/pEp_functions.js"      , ev_server::OnGetFunctions  , this);
 			evhttp_set_gencb(evHttp.get(), ev_server::OnOtherRequest, nullptr);
 		}
 		
