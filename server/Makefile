@@ -29,7 +29,8 @@ ifdef BUILD_CONFIG
     $(info ================================================)
 endif
 
-NO_SOURCE=main.cc servertest.cc unittest_json.cc unittest_nfc.cc
+# These source files shall _not_ be part of the libjson-adapter.a:
+NO_SOURCE=mini-adapter-main.cc servertest.cc $(wildcard unittest_*.cc)
 
 ALL_SOURCE=$(filter-out $(NO_SOURCE),$(wildcard json_spirit/*.cpp))
 ALL_SOURCE+= prefix-config.cc
@@ -84,17 +85,17 @@ endif
 .PHONY: all
 all: $(TARGET) $(TARGET_TEST) $(TARGET_GTEST)
 
-$(TARGET): main.o libjson-adapter.a
+$(TARGET): mini-adapter-main.o libjson-adapter.a
 	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-$(TARGET)-static: main.o libjson-adapter.a
+$(TARGET)-static: mini-adapter-main.o libjson-adapter.a
 	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -static -o $@
 
 $(TARGET_TEST): servertest.o libjson-adapter.a
 	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 $(TARGET_GTEST): unittest_json.o unittest_nfc.o unittest_decompose.o unittest_rpc.o \
-    unittest_logger.o unittest_pep.o \
+    unittest_logger.o unittest_pEp.o \
     gtest-all.o gtest_main.o libjson-adapter.a
 	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
