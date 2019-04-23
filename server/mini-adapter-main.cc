@@ -12,6 +12,9 @@
 #include <iostream>
 #include <boost/program_options.hpp>
 
+#include <pEp/call_with_lock.hh>
+#include <pEp/status_to_string.hh>
+
 namespace po = boost::program_options;
 
 bool debug_mode = false;
@@ -27,6 +30,10 @@ std::string logfile = "";
 
 unsigned start_port = 4223;
 unsigned end_port   = 9999;
+
+// albait not documented, the first PEP_SESSION in a process is special:
+// It must be alive as long as any other PEP_SESSIONS are living.
+static PEP_SESSION first_session = nullptr;
 
 
 void print_version()
@@ -112,6 +119,20 @@ try
 	if( debug_mode == false )
 		daemonize (!debug_mode, (const uintptr_t) status_handle);
 	
+	// create a dummy session just to see whether the Engine is functional.
+	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
+	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
+	if(status != PEP_STATUS_OK || first_session==nullptr)
+	{
+		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
+		std::cerr << error_msg << std::endl; // Log to stderr intentionally, so Enigmail can grab that error message easily.
+		if( ! ignore_missing_session)
+		{
+			throw std::runtime_error(error_msg);
+		}
+	}
+
+	
 	JsonAdapter ja;
 	ja.do_sync( do_sync)
 	  .ignore_session_errors( ignore_missing_session)
@@ -145,7 +166,7 @@ try
 		}
 		ja.shutdown(nullptr);
 		ja.Log() << "Good bye. :-)";
-		JsonAdapter::global_shutdown();
+		pEp::call_with_lock(&release, first_session);
 	}
 	catch(std::exception const& e)
 	{

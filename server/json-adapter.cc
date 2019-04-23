@@ -26,6 +26,7 @@
 #include "server_version.hh"
 
 #include <pEp/keymanagement.h>
+#include <pEp/call_with_lock.hh>
 #include <pEp/status_to_string.hh>  // from libpEpAdapter.
 #include <pEp/locked_queue.hh>
 
@@ -80,27 +81,10 @@ PEP_SESSION keyserver_lookup_session = nullptr; // FIXME: what if another adapte
 ThreadPtr   keyserver_lookup_thread{nullptr, ThreadDeleter};
 
 
-
-std::mutex js_mutex;
-
-// TODO: use && and std::forward<> to avoid copying of the arguments.
-// It is not relevant, yet, because at the moment we use this function template only
-// for init() and release() which have cheap-to-copy pointer parameters only
-template<class R, class... Args>
-R call_with_lock( R(*fn)(Args...), Args... args)
-{
-	std::lock_guard<std::mutex> L(js_mutex);
-	return fn(args...);
-}
-
-
 // *sigh* necessary because messageToSend() has no obj pointer anymore. :-(
 JsonAdapter* ja_singleton = 0;
 
 } // end of anonymous namespace
-
-
-PEP_SESSION JsonAdapter::first_session = nullptr;
 
 
 typedef std::pair<std::string, unsigned> EventListenerKey;
@@ -152,7 +136,7 @@ struct JsonAdapter::Internal
 	{
 		stopSync();
 		if(session)
-			call_with_lock(&release, session);
+			pEp::call_with_lock(&release, session);
 		session=nullptr;
 	}
 	
@@ -248,7 +232,7 @@ struct JsonAdapter::Internal
 	
 	void* syncThreadRoutine(void* arg)
 	{
-		PEP_STATUS status = call_with_lock(&init, &sync_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
+		PEP_STATUS status = pEp::call_with_lock(&init, &sync_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
 		if (status != PEP_STATUS_OK)
 			throw std::runtime_error("Cannot init sync_session! status: " + ::pEp::status_to_string(status));
 		
@@ -412,7 +396,7 @@ void JsonAdapter::Internal::stopSync()
 	unregister_sync_callbacks(sync_session);
 	sync_queue.clear();
 	
-	call_with_lock(&release, sync_session);
+	pEp::call_with_lock(&release, sync_session);
 	sync_session = nullptr;
 }
 
@@ -422,7 +406,7 @@ void JsonAdapter::startKeyserverLookup()
 	if(keyserver_lookup_session)
 		throw std::runtime_error("KeyserverLookup already started.");
 
-	PEP_STATUS status = call_with_lock(&init, &keyserver_lookup_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
+	PEP_STATUS status = pEp::call_with_lock(&init, &keyserver_lookup_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
 	if(status != PEP_STATUS_OK || keyserver_lookup_session==nullptr)
 	{
 		throw std::runtime_error("Cannot create keyserver lookup session! status: " + ::pEp::status_to_string(status));
@@ -451,7 +435,7 @@ void JsonAdapter::stopKeyserverLookup()
 
 	// there is no unregister_examine_callback() function. hum...
 	keyserver_lookup_queue.clear();
-	call_with_lock(&release, keyserver_lookup_session);
+	pEp::call_with_lock(&release, keyserver_lookup_session);
 	keyserver_lookup_session = nullptr;
 }
 
@@ -544,22 +528,6 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 	i->start_port = start_port;
 	i->end_port   = end_port;
 	
-	if(first_session == nullptr) // okay, we are the 1st:
-	{
-	// create a dummy session just to see whether the Engine is functional.
-	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
-	PEP_STATUS status = call_with_lock(&init, &first_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
-	if(status != PEP_STATUS_OK || first_session==nullptr)
-	{
-		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
-		std::cerr << error_msg << std::endl; // Log to stderr intentionally, so Enigmail can grab that error message easily.
-		if( ! i->ignore_session_error)
-		{
-			throw std::runtime_error(error_msg);
-		}
-	}
-	}
-	
 	Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
 	
 	unsigned port_ofs = 0;
@@ -598,7 +566,7 @@ void JsonAdapter::threadFunc()
 		if(q==session_registry.end())
 		{
 			i->session = nullptr;
-			PEP_STATUS status = call_with_lock(&init, &i->session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg); // release(session) in ThreadDeleter
+			PEP_STATUS status = pEp::call_with_lock(&init, &i->session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg); // release(session) in ThreadDeleter
 			if(status != PEP_STATUS_OK || i->session==nullptr)
 			{
 				const std::string error_msg = "Cannot create session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
@@ -811,13 +779,6 @@ void JsonAdapter::check_guard() const
 		std::cerr << buf; // Log() might not work here, when memory is corrupted
 		throw std::logic_error( buf );
 	}
-}
-
-
-void JsonAdapter::global_shutdown()
-{
-	call_with_lock(&release, JsonAdapter::first_session);
-	JsonAdapter::first_session = nullptr;
 }
 
 
