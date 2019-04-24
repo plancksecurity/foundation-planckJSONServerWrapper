@@ -1,4 +1,6 @@
 #include "main.hh"
+#include "mini-adapter-impl.hh"
+
 #include "ev_server.hh"
 #include "prefix-config.hh"
 #include "json-adapter.hh"
@@ -47,6 +49,7 @@ void print_version()
 
 std::ostream* my_logfile = nullptr;
 std::shared_ptr<std::ostream> real_logfile;
+
 
 int main(int argc, char** argv)
 try
@@ -121,7 +124,7 @@ try
 	
 	// create a dummy session just to see whether the Engine is functional.
 	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
-	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
+	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, &JsonAdapter::messageToSend, &pEp::mini::injectSyncMsg);
 	if(status != PEP_STATUS_OK || first_session==nullptr)
 	{
 		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
@@ -134,8 +137,7 @@ try
 
 	
 	JsonAdapter ja;
-	ja.do_sync( do_sync)
-	  .ignore_session_errors( ignore_missing_session)
+	ja.ignore_session_errors( ignore_missing_session)
 	  .deliver_html( !no_html )
 	  ;
 	/*

@@ -75,11 +75,6 @@ using In_Pep_Session = In<PEP_SESSION, ParamFlag::NoInput>;
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 
-		FP( "startKeySync", new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::startSync) ),
-		FP( "stopKeySync",  new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::stopSync ) ),
-		FP( "startKeyserverLookup", new Func<void>( &JsonAdapter::startKeyserverLookup) ),
-		FP( "stopKeyserverLookup",  new Func<void>( &JsonAdapter::stopKeyserverLookup ) ),
-		
 		// from message_api.h
 		FP( "Message API", new Separator ),
 		FP( "encrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),

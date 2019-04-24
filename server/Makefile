@@ -30,7 +30,7 @@ ifdef BUILD_CONFIG
 endif
 
 # These source files shall _not_ be part of the libjson-adapter.a:
-NO_SOURCE=mini-adapter-main.cc servertest.cc $(wildcard unittest_*.cc)
+NO_SOURCE=$(wildcard mini-adapter-*.cc) servertest.cc $(wildcard unittest_*.cc)
 
 ALL_SOURCE=$(filter-out $(NO_SOURCE),$(wildcard json_spirit/*.cpp))
 ALL_SOURCE+= prefix-config.cc
@@ -85,10 +85,10 @@ endif
 .PHONY: all
 all: $(TARGET) $(TARGET_TEST) $(TARGET_GTEST)
 
-$(TARGET): mini-adapter-main.o libjson-adapter.a
+$(TARGET): mini-adapter-main.o mini-adapter-impl.o libjson-adapter.a
 	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-$(TARGET)-static: mini-adapter-main.o libjson-adapter.a
+$(TARGET)-static: mini-adapter-main.o mini-adapter-impl.o libjson-adapter.a
 	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -static -o $@
 
 $(TARGET_TEST): servertest.o libjson-adapter.a

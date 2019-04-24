@@ -75,11 +75,6 @@ auto ThreadDeleter = [](std::thread* t)
 typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
 
-// keyserver lookup
-utility::locked_queue< pEp_identity*, &free_identity> keyserver_lookup_queue;
-PEP_SESSION keyserver_lookup_session = nullptr; // FIXME: what if another adapter started it already?
-ThreadPtr   keyserver_lookup_thread{nullptr, ThreadDeleter};
-
 
 // *sigh* necessary because messageToSend() has no obj pointer anymore. :-(
 JsonAdapter* ja_singleton = 0;
@@ -118,12 +113,6 @@ struct JsonAdapter::Internal
 	bool        deliver_html = true;
 	ThreadPool  threads;
 	PEP_SESSION session = nullptr;
-	
-	// Sync
-	utility::locked_queue< Sync_event*, &free_Sync_event>  sync_queue;
-	PEP_SESSION sync_session = nullptr;
-	ThreadPtr   sync_thread{nullptr, ThreadDeleter};
-	
 	
 	explicit Internal()
 	: Log("JAI")
@@ -195,58 +184,7 @@ struct JsonAdapter::Internal
 		addToArray( param_array, params...);
 		return makeAndDeliverRequest(msg_name, param_array);
 	}
-	
-	int injectSyncMsg(Sync_event* msg)
-	{
-		sync_queue.push_back(msg);
-		return 0;
-	}
-	
-	int injectIdentity(pEp_identity* idy)
-	{
-		keyserver_lookup_queue.push_back(idy);
-		return 0;
-	}
-	
-	Sync_event* retrieveNextSyncMsg(unsigned timeout)
-	{
-		Sync_event* msg = nullptr;
-		if(timeout)
-		{
-			const bool success = sync_queue.try_pop_front(msg, std::chrono::seconds(timeout));
-			if(!success)
-			{
-				// this is timeout occurrence
-				return new_sync_timeout_event();
-			}
-		}else{
-			msg = sync_queue.pop_front();
-		}
-		return msg;
-	}
-	
-	pEp_identity* retrieveNextIdentity()
-	{
-		return keyserver_lookup_queue.pop_front();
-	}
-	
-	void* syncThreadRoutine(void* arg)
-	{
-		PEP_STATUS status = pEp::call_with_lock(&init, &sync_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
-		if (status != PEP_STATUS_OK)
-			throw std::runtime_error("Cannot init sync_session! status: " + ::pEp::status_to_string(status));
-		
-		status = register_sync_callbacks(sync_session,
-		                                 (void*) this,
-		                                 JsonAdapter::notifyHandshake,
-		                                 JsonAdapter::retrieveNextSyncMsg);
-		if (status != PEP_STATUS_OK)
-			throw std::runtime_error("Cannot register sync callbacks! status: " + ::pEp::status_to_string(status));
-		
-		status = do_sync_protocol(sync_session, arg); // does the whole work
-		sync_queue.clear(); // remove remaining messages
-		return (void*) status;
-	}
+
 };
 
 
@@ -340,131 +278,6 @@ PEP_STATUS JsonAdapter::notifyHandshake(pEp_identity* self, pEp_identity* partne
 }
 
 
-// BEWARE: msg is 1st parameter, obj is second!!!
-int JsonAdapter::injectSyncMsg(Sync_event* msg, void* obj)
-{
-//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja_singleton->i->injectSyncMsg(msg);
-}
-
-
-Sync_event* JsonAdapter::retrieveNextSyncMsg(void* obj, unsigned timeout)
-{
-//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	ja_singleton->check_guard();
-	return ja_singleton->i->retrieveNextSyncMsg(timeout);
-}
-
-
-void* JsonAdapter::syncThreadRoutine(void* arg)
-{
-//	JsonAdapter* ja = static_cast<JsonAdapter*>(arg);
-	return ja_singleton->i->syncThreadRoutine(arg);
-}
-
-
-void JsonAdapter::startSync()
-{
-	check_guard();
-	i->sync_queue.clear();
-	
-	
-//	status = attach_sync_session(i->session, i->sync_session);
-//	if(status != PEP_STATUS_OK)
-//		throw std::runtime_error("Cannot attach to sync session! status: " + status_to_string(status));
-	
-	i->sync_thread.reset( new std::thread( JsonAdapter::syncThreadRoutine, (void*)this ) );
-}
-
-
-void JsonAdapter::stopSync()
-{
-	check_guard();
-	i->stopSync();
-}
-
-
-void JsonAdapter::Internal::stopSync()
-{
-	// No sync session active
-	if(sync_session == nullptr)
-		return;
-	
-	sync_queue.push_front(NULL);
-	sync_thread->join();
-	
-	unregister_sync_callbacks(sync_session);
-	sync_queue.clear();
-	
-	pEp::call_with_lock(&release, sync_session);
-	sync_session = nullptr;
-}
-
-
-void JsonAdapter::startKeyserverLookup()
-{
-	if(keyserver_lookup_session)
-		throw std::runtime_error("KeyserverLookup already started.");
-
-	PEP_STATUS status = pEp::call_with_lock(&init, &keyserver_lookup_session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg);
-	if(status != PEP_STATUS_OK || keyserver_lookup_session==nullptr)
-	{
-		throw std::runtime_error("Cannot create keyserver lookup session! status: " + ::pEp::status_to_string(status));
-	}
-	
-	keyserver_lookup_queue.clear();
-	status = register_examine_function(keyserver_lookup_session,
-			JsonAdapter::examineIdentity,
-			&keyserver_lookup_session // nullptr is not accepted, so any dummy ptr is used here
-			);
-	if (status != PEP_STATUS_OK)
-		throw std::runtime_error("Cannot register keyserver lookup callbacks! status: " + ::pEp::status_to_string(status));
-	
-	keyserver_lookup_thread.reset( new std::thread( JsonAdapter::keyserverLookupThreadRoutine, &keyserver_lookup_session /* just a dummy */ ) );
-}
-
-
-void JsonAdapter::stopKeyserverLookup()
-{
-	// No keyserver lookup session active
-	if(keyserver_lookup_session == nullptr)
-		return;
-	
-	keyserver_lookup_queue.push_front(NULL);
-	keyserver_lookup_thread->join();
-
-	// there is no unregister_examine_callback() function. hum...
-	keyserver_lookup_queue.clear();
-	pEp::call_with_lock(&release, keyserver_lookup_session);
-	keyserver_lookup_session = nullptr;
-}
-
-
-int JsonAdapter::examineIdentity(pEp_identity* idy, void* obj)
-{
-//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja_singleton->i->injectIdentity(idy);
-}
-
-
-pEp_identity* JsonAdapter::retrieveNextIdentity(void* obj)
-{
-//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja_singleton->i->retrieveNextIdentity();
-}
-
-
-void* JsonAdapter::keyserverLookupThreadRoutine(void* arg)
-{
-	PEP_STATUS status = do_keymanagement(
-		&JsonAdapter::retrieveNextIdentity,
-		arg); // does the whole work
-	
-	keyserver_lookup_queue.clear();
-	return (void*) status;
-}
-
-
 JsonAdapter::JsonAdapter()
 : guard_0(Guard_0)
 , i(new Internal{})
@@ -489,19 +302,10 @@ JsonAdapter::~JsonAdapter()
 {
 	check_guard();
 	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered.";
-	stopSync();
 	this->shutdown(nullptr);
 	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered.";
 	delete i;
 	i=nullptr;
-}
-
-
-JsonAdapter& JsonAdapter::do_sync(bool _do_sync)
-{
-	check_guard();
-	i->shall_sync = _do_sync;
-	return *this;
 }
 
 

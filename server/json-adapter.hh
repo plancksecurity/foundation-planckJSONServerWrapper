@@ -70,6 +70,7 @@ public:
 	static PEP_STATUS messageToSend(message* msg);
 	static PEP_STATUS notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal);
 
+/*
 	// BEWARE: msg is 1st parameter, obj is second!!!
 	static int injectSyncMsg(Sync_event* msg, void* obj);
 	static Sync_event* retrieveNextSyncMsg(void* obj, unsigned timeout);
@@ -84,7 +85,8 @@ public:
 	static int examineIdentity(pEp_identity*, void* obj);
 	static pEp_identity* retrieveNextIdentity(void* obj);
 	static void* keyserverLookupThreadRoutine(void* arg);
-	
+*/
+
 	Logger::Stream Log(Logger::Severity s = Logger::Severity::Debug) const;
 	
 	// will throw logic_error if guard variables contains illegal values, which means: *this is not a valid JsonAdapter object!
