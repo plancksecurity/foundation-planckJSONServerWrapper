@@ -135,8 +135,7 @@ try
 		}
 	}
 
-	
-	JsonAdapter ja;
+	JsonAdapter& ja = JsonAdapter::getInstance();
 	ja.ignore_session_errors( ignore_missing_session)
 	  .deliver_html( !no_html )
 	  ;

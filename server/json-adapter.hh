@@ -12,8 +12,6 @@
 class JsonAdapter : public Context
 {
 public:
-	// creates an instance of the JSON adapter. It tries to bind the first available port in the given range
-	JsonAdapter();
 	
 	// calls shutdown() on the instance if it is still running().
 	virtual ~JsonAdapter();
@@ -98,7 +96,12 @@ public:
 	Internal* i; // pimpl for stable interface.
 	unsigned long long guard_1;
 
+	static JsonAdapter& getInstance();
+
 private:
+
+	// creates the one and only instance of the JSON adapter.
+	JsonAdapter();
 	static
 	void staticThreadFunc(JsonAdapter* that) { that->threadFunc(); }
 	

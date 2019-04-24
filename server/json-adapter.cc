@@ -13,8 +13,6 @@
 #include <functional>
 #include <tuple>
 
-#include <mutex>
-
 #include "json-adapter.hh"
 #include "daemonize.hh"
 #include "pEp-types.hh"
@@ -283,11 +281,6 @@ JsonAdapter::JsonAdapter()
 , i(new Internal{})
 , guard_1(Guard_1)
 {
-	if(!ja_singleton)
-	{
-		ja_singleton = this;
-	}
-	
 	i->eventBase.reset(event_base_new());
 	if (!i->eventBase)
 		throw std::runtime_error("Failed to create new base_event.");
@@ -585,6 +578,20 @@ void JsonAdapter::check_guard() const
 	}
 }
 
+
+std::recursive_mutex get_instance_mutex;
+
+JsonAdapter& JsonAdapter::getInstance()
+{
+	std::lock_guard<std::recursive_mutex> L(get_instance_mutex);
+	
+	if(!ja_singleton)
+	{
+		ja_singleton = new JsonAdapter();
+	}
+	
+	return *ja_singleton;
+}
 
 namespace {
 
