@@ -75,7 +75,8 @@ typedef std::vector<ThreadPtr> ThreadPool;
 
 
 // *sigh* necessary because messageToSend() has no obj pointer anymore. :-(
-JsonAdapter* ja_singleton = 0;
+JsonAdapter* ja_singleton = nullptr;
+inject_sync_event_t sync_fn = nullptr; // *sigh* ugly, but the Engine's API requires it.
 
 } // end of anonymous namespace
 
@@ -104,7 +105,6 @@ struct JsonAdapter::Internal
 	unsigned    port          = 0;
 	unsigned    request_count = 0;
 	evutil_socket_t sock      = -1;
-	bool        shall_sync    = false; // just hold the value from config/command line.
 	bool        running = false;
 	bool        silent  = false;
 	bool        ignore_session_error = false;
@@ -121,13 +121,10 @@ struct JsonAdapter::Internal
 	
 	~Internal()
 	{
-		stopSync();
 		if(session)
 			pEp::call_with_lock(&release, session);
 		session=nullptr;
 	}
-	
-	void stopSync();
 	
 	static
 	void requestDone(evhttp_request* req, void* userdata)
@@ -363,7 +360,7 @@ void JsonAdapter::threadFunc()
 		if(q==session_registry.end())
 		{
 			i->session = nullptr;
-			PEP_STATUS status = pEp::call_with_lock(&init, &i->session, &JsonAdapter::messageToSend, &JsonAdapter::injectSyncMsg); // release(session) in ThreadDeleter
+			PEP_STATUS status = pEp::call_with_lock(&init, &i->session, &JsonAdapter::messageToSend, sync_fn); // release(session) in ThreadDeleter
 			if(status != PEP_STATUS_OK || i->session==nullptr)
 			{
 				const std::string error_msg = "Cannot create session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
@@ -376,11 +373,6 @@ void JsonAdapter::threadFunc()
 			
 			session_registry.emplace(id, this);
 			L << Logger::Info << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".";
-			if(i->shall_sync && i->session) // startSync() does not make sense without session.
-			{
-				L << Logger::Info << "\tstartSync()...";
-				startSync();
-			}
 		}else{
 			L << Logger::Info << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".";
 		}
@@ -592,6 +584,16 @@ JsonAdapter& JsonAdapter::getInstance()
 	
 	return *ja_singleton;
 }
+
+JsonAdapter& JsonAdapter::startup(inject_sync_event_t se)
+{
+	sync_fn = se;
+	JsonAdapter& ja = getInstance();
+	ja.prepare_run("127.0.0.1", 4223, 9999);
+	ja.run();
+	return ja;
+}
+
 
 namespace {
 
