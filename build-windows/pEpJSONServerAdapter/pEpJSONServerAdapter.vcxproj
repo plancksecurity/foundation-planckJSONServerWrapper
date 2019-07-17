@@ -91,6 +91,7 @@
     <ClInclude Include="..\..\server\base64.hh" />
     <ClInclude Include="..\..\server\context.hh" />
     <ClInclude Include="..\..\server\c_string.hh" />
+    <ClInclude Include="..\..\server\daemonize.hh" />
     <ClInclude Include="..\..\server\ev_server.hh" />
     <ClInclude Include="..\..\server\function_map.hh" />
     <ClInclude Include="..\..\server\inout.hh" />
@@ -115,6 +116,7 @@
     <ClCompile Include="..\..\server\base64.cc" />
     <ClCompile Include="..\..\server\context.cc" />
     <ClCompile Include="..\..\server\c_string.cc" />
+    <ClCompile Include="..\..\server\daemonize.cc" />
     <ClCompile Include="..\..\server\ev_server.cc" />
     <ClCompile Include="..\..\server\function_map.cc" />
     <ClCompile Include="..\..\server\inout.cc" />
@@ -126,8 +128,10 @@
     <ClCompile Include="..\..\server\nfc_sets.cc" />
     <ClCompile Include="..\..\server\nulllogger.cc" />
     <ClCompile Include="..\..\server\pep-types.cc" />
+    <ClCompile Include="..\..\server\pep-utils.cc" />
     <ClCompile Include="..\..\server\registry.cc" />
     <ClCompile Include="..\..\server\security-token.cc" />
+    <ClCompile Include="..\..\server\servertest.cc" />
     <ClCompile Include="..\..\server\server_version.cc" />
   </ItemGroup>
   <ItemGroup>
