@@ -12,8 +12,6 @@
 class JsonAdapter : public Context
 {
 public:
-	// creates an instance of the JSON adapter. It tries to bind the first available port in the given range
-	JsonAdapter();
 	
 	// calls shutdown() on the instance if it is still running().
 	virtual ~JsonAdapter();
@@ -29,7 +27,6 @@ public:
 	// these functions shall be called before prepare_run()!
 	
 	// only if do_sync== true the keysync thread is stared and the keysync callbacks are registered.
-	JsonAdapter& do_sync(bool _do_sync);
 	JsonAdapter& ignore_session_errors(bool _ig);
 	
 	// if called with "false" the JSON Adpapter would no longer deliver HTML and JavaScript files, only handle JSON-RPC requests
@@ -70,29 +67,15 @@ public:
 	static PEP_STATUS messageToSend(message* msg);
 	static PEP_STATUS notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal);
 
-	// BEWARE: msg is 1st parameter, obj is second!!!
-	static int injectSyncMsg(Sync_event* msg, void* obj);
-	static Sync_event* retrieveNextSyncMsg(void* obj, unsigned timeout);
-	static void* syncThreadRoutine(void* arg);
-	
-	void startSync();
-	void stopSync();
-	
-	static void startKeyserverLookup();
-	static void stopKeyserverLookup();
-	
-	static int examineIdentity(pEp_identity*, void* obj);
-	static pEp_identity* retrieveNextIdentity(void* obj);
-	static void* keyserverLookupThreadRoutine(void* arg);
-	
 	Logger::Stream Log(Logger::Severity s = Logger::Severity::Debug) const;
 	
 	// will throw logic_error if guard variables contains illegal values, which means: *this is not a valid JsonAdapter object!
 	void check_guard() const;
 	
-	// calls release(first_session).
-	static
-	void global_shutdown();
+	static JsonAdapter& getInstance();
+	
+	// Very ugly: that function ptr has to be known to the JA before any instance is created. -.-
+	static JsonAdapter& startup(inject_sync_event_t inject_fn);
 
 //private:
 	struct Internal;
@@ -101,14 +84,15 @@ public:
 	unsigned long long guard_1;
 
 private:
+
+	// creates the one and only instance of the JSON adapter.
+	JsonAdapter();
+
 	static
 	void staticThreadFunc(JsonAdapter* that) { that->threadFunc(); }
 	
 	void threadFunc();
 	std::exception_ptr initExcept;
-	
-	// albait not documented, the first PEP_SESSION is special: It must be alive as long as any other PEP_SESSIONS are living.
-	static PEP_SESSION first_session;
 };
 
 // just for debug:

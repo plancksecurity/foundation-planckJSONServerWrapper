@@ -1,6 +1,6 @@
-#include "pep-types.hh"
-#include "pep-utils.hh"
-#include "pep-utils-json.hh"
+#include "pEp-types.hh"
+#include "pEp-utils.hh"
+#include "pEp-utils-json.hh"
 #include "json-adapter.hh"
 
 #include <pEp/pEp_string.h>

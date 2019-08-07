@@ -5,9 +5,9 @@
 #include "prefix-config.hh"
 #include "json-adapter.hh"
 #include "function_map.hh"
-#include "pep-types.hh"
+#include "pEp-types.hh"
 #include "json_rpc.hh"
-#include "pep-utils.hh"
+#include "pEp-utils.hh"
 #include "logger.hh"
 #include "server_version.hh"
 
@@ -75,11 +75,6 @@ using In_Pep_Session = In<PEP_SESSION, ParamFlag::NoInput>;
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 
-		FP( "startKeySync", new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::startSync) ),
-		FP( "stopKeySync",  new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::stopSync ) ),
-		FP( "startKeyserverLookup", new Func<void>( &JsonAdapter::startKeyserverLookup) ),
-		FP( "stopKeyserverLookup",  new Func<void>( &JsonAdapter::stopKeyserverLookup ) ),
-		
 		// from message_api.h
 		FP( "Message API", new Separator ),
 		FP( "encrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
@@ -113,7 +108,7 @@ const FunctionMap functions = {
 		FP( "unset_identity_flags"   , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &unset_identity_flags) ),
 		
 		FP( "MIME message handling", new Separator),
-		FP( "mime_decode_message", new Func<PEP_STATUS, In<c_string>, In<std::size_t>, Out<message*>>( &mime_decode_message) ),
+		FP( "mime_decode_message", new Func<PEP_STATUS, In<c_string>, In<std::size_t>, Out<message*>, Out<bool>>( &mime_decode_message) ),
 
 		FP( "Low level Key Management API", new Separator),
 		FP( "generate_keypair", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &generate_keypair) ),
@@ -278,7 +273,7 @@ void ev_server::OnGetFunctions(evhttp_request* req, void*)
 		"var server_version_name = \"" + version.name + "\";\n"
 		"var server_version = \"" + version.major_minor_patch() + "\";\n"
 		"var add_sharks = " + (add_sharks?"true":"false") + ";\n"
-		"var pep_functions = ";
+		"var pEp_functions = ";
 	
 	js::Array jsonfunctions;
 	for(const auto& f : functions)

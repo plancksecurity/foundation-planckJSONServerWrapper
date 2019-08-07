@@ -542,9 +542,9 @@ function prepare_call(f)
 function on_select_change()
 {
 	var fn = $( "#fn_name" ).val();
-	for(var i=0, len=pep_functions.length; i<len; ++i)
+	for(var i=0, len=pEp_functions.length; i<len; ++i)
 	{
-		var f = pep_functions[i];
+		var f = pEp_functions[i];
 		if(f.name == fn)
 		{
 			prepare_call(f);
@@ -553,12 +553,12 @@ function on_select_change()
 }
 
 
-function init_pep_functions()
+function init_pEp_functions()
 {
 	var optionList = "";
-	for(var i=0, len=pep_functions.length; i<len; ++i)
+	for(var i=0, len=pEp_functions.length; i<len; ++i)
 	{
-		var f = pep_functions[i];
+		var f = pEp_functions[i];
 		optionList += '<option' + (f.separator? ' disabled> —— ':'>') + f.name + "</option>\n";
 	}
 	document.getElementById("fn_name").innerHTML = optionList;
@@ -623,9 +623,9 @@ function create_doc()
 	var fd  = format_def[format_name];
 	var output = ""; 
 	
-	for(var i=0, len=pep_functions.length; i<len; ++i)
+	for(var i=0, len=pEp_functions.length; i<len; ++i)
 	{
-		var f = pep_functions[i];
+		var f = pEp_functions[i];
 		if(f.separator)
 		{
 			if(output.length > 0)
