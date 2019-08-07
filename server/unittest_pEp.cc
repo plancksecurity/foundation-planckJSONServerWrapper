@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "inout.hh" // for to_json() and from_json()
-#include "pEp-types.hh"
+#include "pep-types.hh"
 #include "json_spirit/json_spirit_writer.h"
 #include "json_spirit/json_spirit_reader.h"
 #include <pEp/message.h>
