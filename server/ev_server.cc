@@ -108,7 +108,7 @@ const FunctionMap functions = {
 		FP( "unset_identity_flags"   , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &unset_identity_flags) ),
 		
 		FP( "MIME message handling", new Separator),
-		FP( "mime_decode_message", new Func<PEP_STATUS, In<c_string>, In<std::size_t>, Out<message*>, Out<bool>>( &mime_decode_message) ),
+		FP( "mime_decode_message", new Func<PEP_STATUS, In<c_string>, In<std::size_t>, Out<message*>>( &mime_decode_message) ),
 
 		FP( "Low level Key Management API", new Separator),
 		FP( "generate_keypair", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &generate_keypair) ),
