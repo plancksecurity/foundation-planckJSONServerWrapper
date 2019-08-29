@@ -14,12 +14,13 @@ supported, Windows is about to follow.  Newer versions should also work
 ## Dependencies
 * C++ compiler: tested with g++ 4.8 and 4.9, and clang++ 2.8. Newer versions should work, too.
 * GNU make
-* libboost-thread-dev (tested with 1.58)
-* libboost-program-options-dev  (tested with 1.58)
-* libboost-filesystem-dev (tested with 1.58)
+* libboost-thread-dev (tested with 1.58, 1.62 and 1.70)
+* libboost-program-options-dev  (tested with 1.58, 1.62 and 1.70)
+* libboost-filesystem-dev (tested with 1.58, 1.62 and 1.70)
 * libevent-dev 2.0.21 or 2.0.22 (or build from source, see below)
-* [p≡p Engine](https://letsencrypt.pep.foundation/trac/wiki/Basic%20Concepts%20of%20p%E2%89%A1p%20engine)
+* [p≡p Engine](https://pep.foundation/dev/repos/pEpEngine/)
   (which needs gpgme-thread, a patched libetpan, libboost-system-dev)
+* [libpEpAdapter](https://pep.foundation/dev/repos/libpEpAdapter/)
 * OSSP libuuid
 
 ## Building/Installing
@@ -29,7 +30,8 @@ Debian 9:
 ~~~~~
 apt install -y build-essential libboost1.62-dev libboost-system1.62-dev \
     libboost-filesystem1.62-dev libboost-program-options1.62-dev \
-    libboost-thread1.62-dev libgpgme-dev uuid-dev googletest
+    libboost-thread1.62-dev libgpgme-dev uuid-dev googletest \
+    libevent-dev libevhtp-dev
 ~~~~~
 
 macOS 10.12:
@@ -43,6 +45,9 @@ Build and install the pEp Engine.  Instructions can be found here:
 [https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md](https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md).
 
 ### Build and install libevent
+
+It is recommended to use the libevent from your system's repository, if it contains the right version.
+
 ~~~~~
 mkdir ~/code/json-ad
 hg clone https://cacert.pep.foundation/dev/repos/pEpJSONServerAdapter/ ~/code/json-ad
