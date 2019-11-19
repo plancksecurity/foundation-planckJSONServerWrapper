@@ -308,7 +308,7 @@ rules and definitions to take into account.
 
 The p≡p JSON Server Adapter supports Input, Output and two ways of "In/Out"
 parameters.  You have to annotate the direction in the FunctionMap with
-`In<>` for input, `Out<>` for output and InOut<> or InOutP<> for in/out
+`In<>` for input, `Out<>` for output and `InOut<>` or `InOutP<>` for in/out
 parameters.  These wrapper classes have an optional second template
 parameter (parameter type flag) that is explained below.
 
@@ -384,8 +384,9 @@ calculate the value of that length parameter automatically because in the
 JSON API the lengths of strings are always known.
 
 Moreover, the "length" that has to be given here means the length of the
-string seen by the C API side, after processing of all JSON escaping
-mechanisms, so it might be difficult to calculate that value at client side.
+string seen by the C API side after processing of all JSON escaping
+mechanisms as raw UTF-8 NFC string, so it might be difficult to calculate
+that value at client side.
 
 Example:
 ```
