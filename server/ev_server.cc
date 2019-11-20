@@ -77,7 +77,7 @@ const FunctionMap functions = {
 
 		// from message_api.h
 		FP( "Message API", new Separator ),
-		FP( "encrypt_message", new Func<PEP_STATUS, In_Pep_Session, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
+		FP( "encrypt_message", new Func<PEP_STATUS, In_Pep_Session, InOut<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
 		FP( "encrypt_message_and_add_priv_key", new Func<PEP_STATUS, In_Pep_Session,
 			In<message*>, Out<message*>, In<c_string>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_and_add_priv_key) ),
 		FP( "encrypt_message_for_self", new Func<PEP_STATUS, In_Pep_Session,
