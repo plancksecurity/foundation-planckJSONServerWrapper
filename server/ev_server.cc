@@ -296,10 +296,9 @@ void ev_server::OnGetFunctions(evhttp_request* req, void*)
 void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 {
 	Logger L( Log(), "OnApiReq");
-	evbuffer* inbuf = evhttp_request_get_input_buffer(req);
+	evbuffer* const inbuf = evhttp_request_get_input_buffer(req);
 	const size_t length = evbuffer_get_length(inbuf);
 
-	int request_id = -42;
 	js::Object answer;
 	js::Value p;
 	
@@ -310,9 +309,9 @@ void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 	
 	std::vector<char> data(length);
 	const ev_ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
-	const std::string data_string(data.data(), data.data() + nr );
 	if(nr>0)
 	{
+		const std::string data_string(data.data(), data.data() + nr );
 		L << Logger::Debug << "Data: «" << data_string  << "»";
 		bool b = js::read( data_string, p);
 		if(p.type() == js::obj_type)
@@ -326,14 +325,43 @@ void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 		}
 	}else{
 		L << Logger::Error << "Error: " << nr << ".\n";
-		answer = make_error( JSON_RPC::INTERNAL_ERROR, "evbuffer_copyout returns negative value", p, request_id );
+		answer = make_error( JSON_RPC::INTERNAL_ERROR, "evbuffer_copyout returns negative value", p, 420010 );
 	}
 	
 	}
 	catch(const std::exception& e)
 	{
 		L << Logger::Error << "Exception: \"" << e.what() << "\"";
-		answer = make_error( JSON_RPC::INTERNAL_ERROR, "Got a std::exception: \"" + std::string(e.what()) + "\"", p, request_id );
+		answer = make_error( JSON_RPC::INTERNAL_ERROR, "Got a std::exception: \"" + std::string(e.what()) + "\"", p, 420020 );
+	}
+
+	sendReplyString(req, "text/plain", js::write(answer, js::raw_utf8));
+};
+
+
+void ev_server::OnWebSocketRequest(evhttp_request* req, void* obj)
+{
+	Logger L( Log(), "OnWSReq");
+	evbuffer* const inbuf = evhttp_request_get_input_buffer(req);
+	const size_t length = evbuffer_get_length(inbuf);
+
+	js::Object answer;
+	js::Value p;
+	
+	try
+	{
+	
+	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+	
+	std::vector<char> data(length);
+	const ev_ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
+	const std::string data_string(data.data(), data.data() + nr );
+	
+	}
+	catch(const std::exception& e)
+	{
+		L << Logger::Error << "Exception: \"" << e.what() << "\"";
+		answer = make_error( JSON_RPC::INTERNAL_ERROR, "Got a std::exception: \"" + std::string(e.what()) + "\"", p, 420020 );
 	}
 
 	sendReplyString(req, "text/plain", js::write(answer, js::raw_utf8));

@@ -44,9 +44,8 @@ namespace {
 std::string BaseUrl    = "/ja/0.1/";
 int SrvThreadCount     = 1;
 
-const std::string CreateSessionUrl = BaseUrl + "createSession";
-const std::string GetAllSessionsUrl = BaseUrl + "getAllSessions";
 const std::string ApiRequestUrl = BaseUrl + "callFunction";
+const std::string WebSocketUrl  = BaseUrl + "openWebSocket";
 
 const uint64_t Guard_0 = 123456789;
 const uint64_t Guard_1 = 987654321;
@@ -385,11 +384,12 @@ void JsonAdapter::threadFunc()
 		if (!evHttp)
 			throw std::runtime_error("Failed to create new evhttp.");
 		
-		evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
+		evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str() , ev_server::OnApiRequest      , this);
+		evhttp_set_cb(evHttp.get(), WebSocketUrl.c_str()  , ev_server::OnWebSocketRequest, this);
 		
 		if(i->deliver_html)
 		{
-			evhttp_set_cb(evHttp.get(), "/pEp_functions.js"      , ev_server::OnGetFunctions  , this);
+			evhttp_set_cb(evHttp.get(), "/pEp_functions.js" , ev_server::OnGetFunctions  , this);
 			evhttp_set_gencb(evHttp.get(), ev_server::OnOtherRequest, nullptr);
 		}
 		

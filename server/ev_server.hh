@@ -31,6 +31,10 @@ public:
 	static
 	void OnApiRequest(evhttp_request* req, void* obj);
 
+	// handles WebSocket requests
+	static
+	void OnWebSocketRequest(evhttp_request* req, void* obj);
+
 	// should be set before any of the methods above is called, due to static initializers use that value,
 	// so changing it later might be useless.
 	static boost::filesystem::path path_to_html;
