@@ -342,6 +342,7 @@ void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 void ev_server::OnWebSocketRequest(evhttp_request* req, void* obj)
 {
 	Logger L( Log(), "OnWSReq");
+	evkeyvalq* const inheader = evhttp_request_get_input_headers(req);
 	evbuffer* const inbuf = evhttp_request_get_input_buffer(req);
 	const size_t length = evbuffer_get_length(inbuf);
 

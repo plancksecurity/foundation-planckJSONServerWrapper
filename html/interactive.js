@@ -668,3 +668,21 @@ function create_doc()
 	
 	document.getElementById("doc_out").innerHTML = output;
 }
+
+
+function openWebSocket()
+{
+	var socket = new WebSocket("ws://" + location.host + "/ja/0.1/openWebSocket", ["pEp.json-rpc"]);
+	
+	socket.onopen = function(e)
+	{
+		alert("[open] Connection established");
+		alert("Sending to server");
+		socket.send("My name is John");
+	};
+	
+	socket.onmessage = function(event)
+	{
+		alert(`[message] Data received from server: ${event.data}`);
+	};
+}
