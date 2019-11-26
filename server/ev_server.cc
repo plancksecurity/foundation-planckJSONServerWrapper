@@ -10,6 +10,7 @@
 #include "pEp-utils.hh"
 #include "logger.hh"
 #include "server_version.hh"
+#include "sha1.hh" // for WebSocket handshakea
 
 #include <pEp/message_api.h>
 #include <pEp/blacklist.h>
@@ -161,6 +162,8 @@ const FunctionMap functions = {
  
 
 	bool add_sharks = false;
+
+	const std::string WebSocketUUID{"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"};
 
 } // end of anonymous namespace
 
@@ -339,30 +342,55 @@ void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 };
 
 
+std::string getHeader(const evkeyvalq* hdrs, const char* name, const char* default_value = "")
+{
+	const char* v = evhttp_find_header(hdrs, name);
+	return v ? v : default_value;
+}
+
 void ev_server::OnWebSocketRequest(evhttp_request* req, void* obj)
 {
 	Logger L( Log(), "OnWSReq");
-	evkeyvalq* const inheader = evhttp_request_get_input_headers(req);
-	evbuffer* const inbuf = evhttp_request_get_input_buffer(req);
-	const size_t length = evbuffer_get_length(inbuf);
-
 	js::Object answer;
-	js::Value p;
 	
 	try
 	{
-	
-	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	
-	std::vector<char> data(length);
-	const ev_ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
-	const std::string data_string(data.data(), data.data() + nr );
-	
+		evkeyvalq* const hdrs = evhttp_request_get_input_headers(req);
+		if(!hdrs)
+			throw std::runtime_error("Internal error: No headers in request");
+		
+		if( getHeader(hdrs, "Upgrade") != "websocket")
+			throw std::runtime_error("No WebSocket connection");
+		
+		if( getHeader(hdrs, "Sec-WebSocket-Version") != "13")
+			throw std::runtime_error("Unknown WebSocket version");
+		
+		if( getHeader(hdrs, "Sec-WebSocket-Protocol") != "pEp.json-rpc")
+			throw std::runtime_error("Unknown WebSocket subprotocol");
+		
+		const std::string key = getHeader(hdrs, "Sec-WebSocket-Key");
+		const std::string accept = sha1::base64(key + WebSocketUUID);
+		
+		const std::string dummy_output = "{\"dummy\":true}\n";
+		auto output_buffer = evhttp_request_get_output_buffer(req);
+		evbuffer_add(output_buffer, dummy_output.data(), dummy_output.size());
+		
+		evkeyvalq* out_hdrs = evhttp_request_get_output_headers(req);
+		evhttp_add_header(out_hdrs, "Upgrade", "websocket");
+		evhttp_add_header(out_hdrs, "Connection", "Upgrade");
+		evhttp_add_header(out_hdrs, "Sec-WebSocket-Accept", accept.c_str());
+		evhttp_add_header(out_hdrs, "\130-p\x45p-\x53ha\x72k\162", (add_sharks?"A\x72\162":"\116\141\171"));
+		evhttp_send_reply(req, 101, "Switching Protocols", evhttp_request_get_output_buffer(req));
+
+//		JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
+		
+		// TODO: keep this connection open and "register" it at the JSON Adapter for delivering events etc.
+		
 	}
 	catch(const std::exception& e)
 	{
 		L << Logger::Error << "Exception: \"" << e.what() << "\"";
-		answer = make_error( JSON_RPC::INTERNAL_ERROR, "Got a std::exception: \"" + std::string(e.what()) + "\"", p, 420020 );
+		answer = make_error( JSON_RPC::INTERNAL_ERROR, "Got a std::exception: \"" + std::string(e.what()) + "\"", js::Value{}, 420020 );
 	}
 
 	sendReplyString(req, "text/plain", js::write(answer, js::raw_utf8));
