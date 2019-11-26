@@ -265,7 +265,7 @@ public:
         s.finalize();
         char buf[SHA1_HEX_SIZE];
         s.print_hex(buf);
-        return std::string(buf, buf+SHA1_HEX_SIZE);
+        return std::string(buf, buf+SHA1_HEX_SIZE-1);
     }
 
     static
@@ -276,6 +276,6 @@ public:
         s.finalize();
         char buf[SHA1_BASE64_SIZE];
         s.print_base64(buf);
-        return std::string(buf, buf+SHA1_BASE64_SIZE);
+        return std::string(buf, buf+SHA1_BASE64_SIZE-1);
     }
 };
