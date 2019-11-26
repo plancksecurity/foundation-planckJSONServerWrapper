@@ -255,4 +255,27 @@ public:
         if (zero_terminate) base64[SHA1_BASE64_SIZE - 1] = '\0';
         return *this;
     }
+    
+    // one-shot functions for convenience:
+    static
+    std::string hex(const std::string& input)
+    {
+        sha1 s;
+        s.add(input.data(), input.size());
+        s.finalize();
+        char buf[SHA1_HEX_SIZE];
+        s.print_hex(buf);
+        return std::string(buf, buf+SHA1_HEX_SIZE);
+    }
+
+    static
+    std::string base64(const std::string& input)
+    {
+        sha1 s;
+        s.add(input.data(), input.size());
+        s.finalize();
+        char buf[SHA1_BASE64_SIZE];
+        s.print_base64(buf);
+        return std::string(buf, buf+SHA1_BASE64_SIZE);
+    }
 };
