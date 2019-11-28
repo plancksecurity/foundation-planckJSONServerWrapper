@@ -1,6 +1,10 @@
 // Copied from https://raw.githubusercontent.com/983/SHA1/master/sha1.hpp
 // published under the The Unlicense.
 
+// Nota bene: SHA-1 is used in the JSON Adapter _only_ for the WebSockets handshake,
+// because RFC 6455 _demands_ SHA-1 there. That is no security problem because
+// for this specific purpose also a non-cryptographic hash would be good enough.
+
 #include <stdint.h>
 #include <string.h>
 
