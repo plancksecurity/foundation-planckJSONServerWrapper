@@ -258,7 +258,11 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 	{
 		strncpy(ident->lang, lang.get(), 3);
 	}
-	ident->flags = from_json_object<unsigned, js::int_type>(o, "flags");
+	
+	ident->me        = from_json_object<bool, js::bool_type>(o, "me");
+	ident->major_ver = from_json_object<int , js::int_type> (o, "major_ver");
+	ident->minor_ver = from_json_object<int , js::int_type> (o, "minor_ver");
+	ident->flags     = from_json_object<int , js::int_type> (o, "flags");
 	
 	return ident.release();
 }
@@ -568,6 +572,11 @@ js::Value to_json<const pEp_identity*>(const pEp_identity* const& id)
 	
 	if(id->lang[0] && id->lang[1])
 		o.emplace_back( "lang", js::Value( std::string( id->lang, id->lang+2) ));
+	
+	o.emplace_back( "me"       , js::Value(id->me) );
+	o.emplace_back( "major_ver", js::Value( int64_t(id->major_ver)) );
+	o.emplace_back( "minor_ver", js::Value( int64_t(id->minor_ver)) );
+	o.emplace_back( "flags"    , js::Value( int(id->flags) ));
 	
 	return js::Value( std::move(o) );
 }
