@@ -229,7 +229,14 @@ var Param2Form =
 						return 'Message direction: '
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="0"' + disabled + '>Incoming,&nbsp;&nbsp;'
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="1"' + disabled + ' checked>Outgoing';
-					}
+					},
+		PEP_sync_handshake_result: function(nr, pp, value)
+					{
+						return 'DeliverHandshakeResultt: '
+							+ '<input type="radio" name="inp_rad_' + nr + '" value="-1" checked>Cancel,&nbsp;&nbsp;'
+							+ '<input type="radio" name="inp_rad_' + nr + '" value="0" >Accepted,&nbsp;&nbsp;'
+							+ '<input type="radio" name="inp_rad_' + nr + '" value="1" >Rejected.';
+					},
 	};
 
 function fromHex(charCode)
@@ -376,6 +383,10 @@ var Form2Param =
 						return parseInt( $('input[name=inp_rad_' + nr + ']:checked', '#frm').val() );
 					},
 		PEP_msg_direction : function(nr, pp, value)
+					{
+						return parseInt( $('input[name=inp_rad_' + nr + ']:checked', '#frm').val() );
+					},
+		PEP_sync_handshake_result : function(nr, pp, value)
 					{
 						return parseInt( $('input[name=inp_rad_' + nr + ']:checked', '#frm').val() );
 					}
