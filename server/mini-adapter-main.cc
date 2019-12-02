@@ -147,7 +147,12 @@ try
 	try
 	{
 		ja.prepare_run(address, start_port, end_port);
-
+		if( do_sync )
+		{
+			L.info("Start Sync");
+			pEp::mini::startSync();
+		}
+		
 		if( debug_mode )
 		{
 			ja.run();
