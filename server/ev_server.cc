@@ -156,6 +156,7 @@ const FunctionMap functions = {
 		FP( "serverVersion",       new Func<ServerVersion>( &server_version ) ),
 		FP( "version",           new Func<std::string>( &version_as_a_string ) ),
 		FP( "getBinaryPath", new Func<std::string>( &getBinaryPath ) ),
+		FP( "getNextEvent", new Func<std::string, In<int>>(&JsonAdapter::getNextEvent_s )),
 
 		FP( "shutdown",  new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::shutdown_now ) ),
 	};

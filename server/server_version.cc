@@ -69,7 +69,8 @@ static const std::string VersionName =
 //  Renumbering due to political decisions - the planned exits 31..39 through the Sauerland will never be build. :-(
 //  So we got a new exit with the same number:
 //	"(39) Eisenach"; // JSON-118: fix to_json() for KeySync callbacks to avoid crashes. Add attachment support in interactive.js \o/
-	"(40) Eisenach-Ost"; // remove all Enigmail leftovers. Bump API version to 0.17.0
+//	"(40) Eisenach-Ost"; // remove all Enigmail leftovers. Bump API version to 0.17.0
+	"(40b) Sättelstädt"; // JSON-128: getNextEvent() added, for long polling. API version 0.18.2
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
@@ -96,7 +97,8 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,16,1);  // JSON-120: add support for key_reset_identity(), key_reset_user(), and key_reset_all_own_keys()
 //static const ServerVersion sv(0,17,0);  // kick out getGpgEnvironment(). It was Enigmail-only (JSON-18) and breaks architecture. Kick-out hotfixer un-feature.
 //static const ServerVersion sv(0,18,0);  // JSON-127: 'src' in encrypt_message() is InOut.
-static const ServerVersion sv(0,18,1);  // JSON-130: some data members in pEp_identity added
+//static const ServerVersion sv(0,18,1);  // JSON-130: some data members in pEp_identity added
+static const ServerVersion sv(0,18,2);  // JSON-128: add getNextEvent() to JSON-RPC API
 
 	return sv;
 }
