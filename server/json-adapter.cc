@@ -84,10 +84,19 @@ typedef std::pair<std::string, unsigned> EventListenerKey;
 
 struct EventListenerValue
 {
+	// Old model: active connections to clients:
 	std::string securityContext;
 	std::unique_ptr<evhttp_connection, decltype(&evhttp_connection_free)> connection = { nullptr, &evhttp_connection_free};
+	
+	// new model: clients waits for events and fetch them via WebSockets or long polling:
+	std::unique_ptr<utility::locked_queue<std::string>> eventQueue;
+	
+	void createQueue()
+	{
+		// TODO: use std::make_unique()
+		eventQueue = std::unique_ptr<utility::locked_queue<std::string>>(new utility::locked_queue<std::string>);
+	}
 };
-
 
 
 struct JsonAdapter::Internal
@@ -132,9 +141,8 @@ struct JsonAdapter::Internal
 	}
 
 	static
-	PEP_STATUS deliverRequest(const std::string& uri, evhttp_connection* connection, const js::Object& request)
+	PEP_STATUS deliverRequest(const std::string& uri, evhttp_connection* connection, const std::string& request_s)
 	{
-		const std::string request_s = js::write(request, js::raw_utf8);
 		evhttp_request* ereq = evhttp_request_new( &requestDone, nullptr ); // ownership goes to the connection in evhttp_make_request() below.
 		evhttp_add_header(ereq->output_headers, "Content-Length", std::to_string(request_s.length()).c_str());
 		auto output_buffer = evhttp_request_get_output_buffer(ereq);
@@ -151,11 +159,20 @@ struct JsonAdapter::Internal
 		for(auto& e : eventListener)
 		{
 			const js::Object request = make_request( function_name, params, e.second.securityContext );
-			const std::string uri = "http://" + e.first.first + ":" + std::to_string(e.first.second) + "/";
-			const PEP_STATUS s2 = deliverRequest( uri, e.second.connection.get(), request );
-			if(s2!=PEP_STATUS_OK)
+			const std::string request_s = js::write(request, js::raw_utf8);
+			
+			if(e.second.eventQueue == nullptr)
 			{
-				status = s2;
+				// old approach:
+				const std::string uri = "http://" + e.first.first + ":" + std::to_string(e.first.second) + "/";
+				const PEP_STATUS s2 = deliverRequest( uri, e.second.connection.get(), request_s );
+				if(s2!=PEP_STATUS_OK)
+				{
+					status = s2;
+				}
+			}else{
+				// new approach:
+				e.second.eventQueue->push_back(request_s);
 			}
 		}
 		return status;
@@ -526,7 +543,7 @@ void JsonAdapter::registerEventListener(const std::string& address, unsigned por
 	v.securityContext = securityContext;
 // FIXME: one event_base per thread!
 //	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
-	i->eventListener[key] = std::move(v);
+	i->eventListener.emplace(key, std::move(v));
 }
 
 
@@ -592,6 +609,43 @@ JsonAdapter& JsonAdapter::startup(inject_sync_event_t se)
 	ja.prepare_run("127.0.0.1", 4223, 9999);
 	ja.run();
 	return ja;
+}
+
+
+std::string JsonAdapter::getNextEvent_s(int timeout_second)
+{
+	JsonAdapter& ja = getInstance();
+	return ja.getNextEvent(timeout_second);
+}
+
+std::string JsonAdapter::getNextEvent(int timeout_second)
+{
+	check_guard();
+	std::stringstream ss;
+	ss << std::this_thread::get_id();
+	const auto key = std::make_pair("@@LongPoll_\377_" + ss.str(), 0);
+	EventListenerValue& elv = i->eventListener[key];
+	
+	if( elv.eventQueue == nullptr)
+	{
+		elv.createQueue();
+	}
+	
+	if(timeout_second<0)
+	{
+		return elv.eventQueue->pop_front();
+	}else{
+		std::string result;
+		const bool got_value = elv.eventQueue->try_pop_front(result,
+			std::chrono::steady_clock::now() + std::chrono::seconds(timeout_second)
+			);
+		if(got_value)
+		{
+			return result;
+		}
+	}
+	
+	return "{\"timeout\":true}";
 }
 
 

@@ -76,6 +76,14 @@ public:
 	
 	// Very ugly: that function ptr has to be known to the JA before any instance is created. -.-
 	static JsonAdapter& startup(inject_sync_event_t inject_fn);
+	
+	// for "long polling": get next element as JSON object from the queue. wait timeout_seconds on empty queue.
+	// timeout_seconds == -1 means: wait infinitely.
+	// returns  ''{"timeout":true}''  on timeout
+	static
+	std::string getNextEvent_s(int timeout_seconds);
+	
+	std::string getNextEvent(int timeout_seconds);
 
 //private:
 	struct Internal;
