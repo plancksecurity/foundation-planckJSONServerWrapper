@@ -26,6 +26,9 @@
 #include <boost/filesystem.hpp>
 #include "json_spirit/json_spirit_reader.h"
 
+// HACK:
+#include "mini-adapter-impl.hh"
+
 
 template<>
 In<Context*, ParamFlag::Default>::~In()
@@ -150,6 +153,13 @@ const FunctionMap functions = {
 		FP( "registerEventListener"  , new Func<void, In<JsonAdapter*,ParamFlag::NoInput>, In<std::string>, In<unsigned>, In<std::string>> ( &JsonAdapter::registerEventListener) ),
 		FP( "unregisterEventListener", new Func<void, In<JsonAdapter*,ParamFlag::NoInput>, In<std::string>, In<unsigned>, In<std::string>> ( &JsonAdapter::unregisterEventListener) ),
 		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In_Pep_Session, In<sync_handshake_result>, In<const identity_list*> > (&deliverHandshakeResult) ),
+		
+		FP( "Sync", new Separator ),
+		FP( "leave_device_group"       , new Func<PEP_STATUS, In_Pep_Session> (&leave_device_group) ),
+		FP( "enable_identity_for_sync" , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&enable_identity_for_sync)),
+		FP( "disable_identity_for_sync", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&disable_identity_for_sync)),
+		FP( "startSync", new Func<void> (&pEp::mini::startSync) ),
+		FP( "stopSync" , new Func<void> (&pEp::mini::stopSync) ),
 		
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
