@@ -51,6 +51,18 @@ std::ostream* my_logfile = nullptr;
 std::shared_ptr<std::ostream> real_logfile;
 
 
+std::string char2s(int i)
+{
+	if(i<0) return " <EOF>";
+	
+	if(i>32 && i<127)
+	{
+		return std::string( "\"") + char(i) + std::string("\"");
+	}else
+		return std::string();
+}
+
+
 int main(int argc, char** argv)
 try
 {
@@ -161,7 +173,7 @@ try
 			do{
 				std::cout << "Press <Q> <Enter> to quit." << std::endl;
 				input = std::cin.get();
-				std::cout << "Oh, I got a '" << input << "'. \n";
+				std::cout << "I read " << input << char2s(input) << " from stdin. \n";
 			}while(std::cin && input != 'q' && input != 'Q');
 		}else{
 			ja.run();
