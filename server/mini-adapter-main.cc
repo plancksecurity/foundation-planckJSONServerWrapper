@@ -170,6 +170,11 @@ try
 				std::this_thread::sleep_for(std::chrono::seconds(3));
 			}while(ja.running());
 		}
+		
+		L.info("Shuuting down gracefully");
+		pEp::mini::stopSync();
+		pEp::mini::stopKeyserverLookup();
+		
 		ja.shutdown(nullptr);
 		ja.Log() << "Good bye. :-)";
 		pEp::call_with_lock(&release, first_session);
@@ -199,4 +204,3 @@ catch (...)
 	daemonize_commit(20);
 	exit(20);
 }
-
