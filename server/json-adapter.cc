@@ -9,12 +9,9 @@
 
 #include <string>
 #include <set>
-#include <fcntl.h>
-#include <functional>
 #include <tuple>
 
 #include "json-adapter.hh"
-#include "daemonize.hh"
 #include "pEp-types.hh"
 #include "json_rpc.hh"
 #include "security-token.hh"
@@ -28,13 +25,9 @@
 #include <pEp/status_to_string.hh>  // from libpEpAdapter.
 #include <pEp/locked_queue.hh>
 
-#include <boost/filesystem.hpp>
 #include "json_spirit/json_spirit_writer.h"
 #include "json_spirit/json_spirit_reader.h"
 #include "json_spirit/json_spirit_utils.h"
-
-
-namespace fs = boost::filesystem;
 
 
 namespace {
