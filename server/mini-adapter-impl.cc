@@ -58,33 +58,58 @@ namespace mini {
 	}
 	
 	void* syncThreadRoutine(void* arg)
-	{
+	try{
+		Logger L(Log(), "syncTR");
 		PEP_STATUS status = pEp::call_with_lock(&init, &sync_session, &JsonAdapter::messageToSend, &injectSyncMsg);
 		if (status != PEP_STATUS_OK)
 			throw std::runtime_error("Cannot init sync_session! status: " + ::pEp::status_to_string(status));
 		
+		L << Logger::Info << "sync_session initialized. Session = " << (void*)sync_session;
 		status = register_sync_callbacks(sync_session,
 		                                 (void*) -1,
 		                                 &JsonAdapter::notifyHandshake,
 		                                 &retrieveNextSyncMsg);
 		if (status != PEP_STATUS_OK)
+		{
+			L << Logger::Error << "Cannot register sync callbacks! status: " << ::pEp::status_to_string(status);
 			throw std::runtime_error("Cannot register sync callbacks! status: " + ::pEp::status_to_string(status));
+		}
+		L.info("sync callbacks registered. Now call do_sync_protocol()");
 		
 		status = do_sync_protocol(sync_session, arg); // does the whole work
+		
+		L << Logger::Info << "do_sync_protocol() returned with status " << pEp::status_to_string(status) << ".  " << sync_queue.size() << " elements in sync_queue.";
 		sync_queue.clear(); // remove remaining messages
+		
+		unregister_sync_callbacks(sync_session);
+		
 		return (void*) status;
+	}catch(std::exception& e)
+	{
+		Log().error(std::string("Got std::exception in syncThreadRoutine: ") + e.what() );
+		return nullptr;
+	}catch(...)
+	{
+		Log().error("Got unknown exception in syncThreadRoutine");
+		return nullptr;
 	}
 
 
 void startSync()
 {
+	Logger L(Log(), "startSync");
+	
+	L << Logger::Info << "Remove " << sync_queue.size() << " elements from sync_queue";
+	
 	sync_queue.clear();
 	
 //	status = attach_sync_session(i->session, i->sync_session);
 //	if(status != PEP_STATUS_OK)
 //		throw std::runtime_error("Cannot attach to sync session! status: " + status_to_string(status));
 	
+	L.info("Start sync thread");
 	sync_thread.reset( new std::thread( syncThreadRoutine, nullptr ) );
+	L.info("Sync thread startd");
 }
 
 
@@ -94,10 +119,13 @@ void stopSync()
 	if(sync_session == nullptr)
 		return;
 	
+	// this triggers do_sync_protocol() to quit
 	sync_queue.push_front(NULL);
-	sync_thread->join();
+	if(sync_thread)
+	{
+		sync_thread->join();
+	}
 	
-	unregister_sync_callbacks(sync_session);
 	sync_queue.clear();
 	
 	pEp::call_with_lock(&release, sync_session);
@@ -151,7 +179,6 @@ int examineIdentity(pEp_identity* idy, void* obj)
 }
 
 
-
 void* keyserverLookupThreadRoutine(void* arg)
 {
 	PEP_STATUS status = do_keymanagement(
@@ -161,6 +188,14 @@ void* keyserverLookupThreadRoutine(void* arg)
 	keyserver_lookup_queue.clear();
 	return (void*) status;
 }
+
+
+Logger& Log()
+{
+	static Logger L("mini");
+	return L;
+}
+
 
 } // end of namespace pEp::mini
 } // end of namespace pEp

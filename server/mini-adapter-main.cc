@@ -63,12 +63,20 @@ std::string char2s(int i)
 }
 
 
+void miau()
+{
+	logfile += "miau";
+}
+
+
 int main(int argc, char** argv)
 try
 {
 #ifdef _WIN32
 	std::ios::sync_with_stdio(false);
 #endif
+
+	atexit(&miau);
 
 	po::options_description desc("Program options for the JSON Server Adapter");
 	desc.add_options()
@@ -175,6 +183,12 @@ try
 				input = std::cin.get();
 				std::cout << "I read " << input << char2s(input) << " from stdin. \n";
 			}while(std::cin && input != 'q' && input != 'Q');
+			L << Logger::Info << "std::cin is in state " << unsigned(std::cin.rdstate())
+			  << "  good(): " << std::cin.good()
+			  << "  fail(): " << std::cin.fail()
+			  << "  bad() : " << std::cin.bad()
+			  << "  eof() : " << std::cin.eof();
+			
 		}else{
 			ja.run();
 			daemonize_commit(0);

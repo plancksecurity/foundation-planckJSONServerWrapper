@@ -3,7 +3,7 @@
 
 #include <pEp/keymanagement.h>
 #include <pEp/sync_api.h>
-
+#include "logger.hh"
 
 namespace pEp{
 namespace mini {
@@ -27,6 +27,8 @@ namespace mini {
 	int examineIdentity(pEp_identity* idy, void* obj);
 
 	void* keyserverLookupThreadRoutine(void* arg);
+
+	Logger& Log();
 
 } // end of namespace pEp::mini
 } // end of namespace pEp
