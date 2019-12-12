@@ -136,19 +136,25 @@ struct JsonAdapter::Internal
 	static
 	PEP_STATUS deliverRequest(const std::string& uri, evhttp_connection* connection, const std::string& request_s)
 	{
+		Logger L("delReq");
 		evhttp_request* ereq = evhttp_request_new( &requestDone, nullptr ); // ownership goes to the connection in evhttp_make_request() below.
 		evhttp_add_header(ereq->output_headers, "Content-Length", std::to_string(request_s.length()).c_str());
 		auto output_buffer = evhttp_request_get_output_buffer(ereq);
 		evbuffer_add(output_buffer, request_s.data(), request_s.size());
-		
+
+		DEBUG_OUT(L, "Make request to \"%s\" over connection %p. Request: ", uri.c_str(), connection, request_s.c_str() );
 		const int ret = evhttp_make_request(connection, ereq, EVHTTP_REQ_POST, uri.c_str() );
+		DEBUG_OUT(L, "evhttp_make_request returns %d (0 means: OK)", ret );
 		
 		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
 	}
 	
 	PEP_STATUS makeAndDeliverRequest(const char* function_name, const js::Array& params)
 	{
+		Logger L("makeAndDelReq");
 		PEP_STATUS status = PEP_STATUS_OK;
+		
+		DEBUG_OUT(L, "function_name=\"%s\", %zu registered Event listeners", function_name, eventListener.size());
 		for(auto& e : eventListener)
 		{
 			const js::Object request = make_request( function_name, params, e.second.securityContext );
@@ -165,9 +171,11 @@ struct JsonAdapter::Internal
 				}
 			}else{
 				// new approach:
+				DEBUG_OUT(L, "new-style client");
 				e.second.eventQueue->push_back(request_s);
 			}
 		}
+		DEBUG_OUT(L, "Return status: %s", ::pEp::status_to_string(status).c_str() );
 		return status;
 	}
 	
@@ -535,7 +543,7 @@ void JsonAdapter::registerEventListener(const std::string& address, unsigned por
 	EventListenerValue v;
 	v.securityContext = securityContext;
 // FIXME: one event_base per thread!
-//	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
+	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
 	i->eventListener.emplace(key, std::move(v));
 }
 
