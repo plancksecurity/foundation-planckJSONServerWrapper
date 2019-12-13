@@ -142,7 +142,7 @@ struct JsonAdapter::Internal
 		auto output_buffer = evhttp_request_get_output_buffer(ereq);
 		evbuffer_add(output_buffer, request_s.data(), request_s.size());
 
-		DEBUG_OUT(L, "Make request to \"%s\" over connection %p. Request: ", uri.c_str(), connection, request_s.c_str() );
+		DEBUG_OUT(L, "Make request to \"%s\" over connection %p. Request: %s", uri.c_str(), connection, request_s.c_str() );
 		const int ret = evhttp_make_request(connection, ereq, EVHTTP_REQ_POST, uri.c_str() );
 		DEBUG_OUT(L, "evhttp_make_request returns %d (0 means: OK)", ret );
 		
