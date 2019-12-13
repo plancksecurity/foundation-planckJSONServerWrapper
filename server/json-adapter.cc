@@ -130,7 +130,8 @@ struct JsonAdapter::Internal
 	static
 	void requestDone(evhttp_request* req, void* userdata)
 	{
-		// Hum, what is to do here?
+		Logger L("reqDone");
+		L.info("Request is done.");
 	}
 
 	static
@@ -141,10 +142,15 @@ struct JsonAdapter::Internal
 		evhttp_add_header(ereq->output_headers, "Content-Length", std::to_string(request_s.length()).c_str());
 		auto output_buffer = evhttp_request_get_output_buffer(ereq);
 		evbuffer_add(output_buffer, request_s.data(), request_s.size());
-
+		
+		event_base* base = event_base_new();
+		evhttp_connection* c = evhttp_connection_base_new( base, nullptr, "127.0.0.1", 3333 ); 
 		DEBUG_OUT(L, "Make request to \"%s\" over connection %p. Request: %s", uri.c_str(), connection, request_s.c_str() );
-		const int ret = evhttp_make_request(connection, ereq, EVHTTP_REQ_POST, uri.c_str() );
+		int ret = evhttp_make_request(c, ereq, EVHTTP_REQ_POST, "/" /*uri.c_str()*/ );
 		DEBUG_OUT(L, "evhttp_make_request returns %d (0 means: OK)", ret );
+		ret = event_base_dispatch(base);
+		DEBUG_OUT(L, "evbase_dispatch returns %d (0 means: OK)", ret );
+		event_base_free(base);
 		
 		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
 	}
@@ -543,7 +549,7 @@ void JsonAdapter::registerEventListener(const std::string& address, unsigned por
 	EventListenerValue v;
 	v.securityContext = securityContext;
 // FIXME: one event_base per thread!
-	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
+	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, "127.0.0.1", port ) );
 	i->eventListener.emplace(key, std::move(v));
 }
 
