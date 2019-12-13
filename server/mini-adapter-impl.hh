@@ -16,7 +16,7 @@ namespace mini {
 	
 	pEp_identity* retrieveNextIdentity( void* /*management*/);
 	
-	void* syncThreadRoutine(void* arg);
+	void syncThreadRoutine();
 
 	void startSync();
 	void stopSync();
@@ -26,7 +26,7 @@ namespace mini {
 
 	int examineIdentity(pEp_identity* idy, void* obj);
 
-	void* keyserverLookupThreadRoutine(void* arg);
+	void keyserverLookupThreadRoutine();
 
 	Logger& Log();
 
