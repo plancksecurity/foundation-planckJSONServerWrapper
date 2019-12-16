@@ -78,8 +78,10 @@ typedef std::pair<std::string, unsigned> EventListenerKey;
 struct EventListenerValue
 {
 	// Old model: active connections to clients:
+	std::string host;
+	unsigned    port;
+	std::string path;
 	std::string securityContext;
-	std::unique_ptr<evhttp_connection, decltype(&evhttp_connection_free)> connection = { nullptr, &evhttp_connection_free};
 	
 	// new model: clients waits for events and fetch them via WebSockets or long polling:
 	std::unique_ptr<utility::locked_queue<std::string>> eventQueue;
@@ -135,7 +137,7 @@ struct JsonAdapter::Internal
 	}
 
 	static
-	PEP_STATUS deliverRequest(const std::string& uri, evhttp_connection* connection, const std::string& request_s)
+	PEP_STATUS deliverRequest(const std::string& uri, const EventListenerValue& elv, const std::string& request_s)
 	{
 		Logger L("delReq");
 		evhttp_request* ereq = evhttp_request_new( &requestDone, nullptr ); // ownership goes to the connection in evhttp_make_request() below.
@@ -144,9 +146,9 @@ struct JsonAdapter::Internal
 		evbuffer_add(output_buffer, request_s.data(), request_s.size());
 		
 		event_base* base = event_base_new();
-		evhttp_connection* c = evhttp_connection_base_new( base, nullptr, "127.0.0.1", 3333 ); 
-		DEBUG_OUT(L, "Make request to \"%s\" over connection %p. Request: %s", uri.c_str(), connection, request_s.c_str() );
-		int ret = evhttp_make_request(c, ereq, EVHTTP_REQ_POST, "/" /*uri.c_str()*/ );
+		evhttp_connection* c = evhttp_connection_base_new( base, nullptr, elv.host.c_str(), elv.port );
+		DEBUG_OUT(L, "Make request to \"%s\" over connection %p. Request: %s", uri.c_str(), c, request_s.c_str() );
+		int ret = evhttp_make_request(c, ereq, EVHTTP_REQ_POST, elv.path.c_str() );
 		DEBUG_OUT(L, "evhttp_make_request returns %d (0 means: OK)", ret );
 		ret = event_base_dispatch(base);
 		DEBUG_OUT(L, "evbase_dispatch returns %d (0 means: OK)", ret );
@@ -170,7 +172,7 @@ struct JsonAdapter::Internal
 			{
 				// old approach:
 				const std::string uri = "http://" + e.first.first + ":" + std::to_string(e.first.second) + "/";
-				const PEP_STATUS s2 = deliverRequest( uri, e.second.connection.get(), request_s );
+				const PEP_STATUS s2 = deliverRequest( uri, e.second, request_s );
 				if(s2!=PEP_STATUS_OK)
 				{
 					status = s2;
@@ -546,10 +548,12 @@ void JsonAdapter::registerEventListener(const std::string& address, unsigned por
 		throw std::runtime_error("EventListener at host \"" + address + "\":" + std::to_string(port) + " is already registered with different securityContext." );
 	}
 	
+	const size_t firstSlash = address.find('/');
 	EventListenerValue v;
+	v.host = (firstSlash==std::string::npos) ? address : address.substr(0,firstSlash-1);
+	v.port = port;
+	v.path = (firstSlash==std::string::npos) ? "/" : address.substr(firstSlash);
 	v.securityContext = securityContext;
-// FIXME: one event_base per thread!
-	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, "127.0.0.1", port ) );
 	i->eventListener.emplace(key, std::move(v));
 }
 
