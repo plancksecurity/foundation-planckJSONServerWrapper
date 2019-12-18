@@ -15,19 +15,20 @@ namespace
 	// 36 alphanumeric characters
 	static const char token_alphabet[] = "qaywsxedcrfvtgbzhnujmikolp1234567890POIUZTREWQASDFGHJKLMNBVCXY";
 	
-	std::string create_random_token(unsigned length=38)
+	std::string create_random_token(unsigned length=32)
 	{
 		static std::random_device rd;
-		static std::mt19937 gen(rd());
+		static std::mt19937_64 gen(rd());
 		static std::uniform_int_distribution<> dis( 0, sizeof(token_alphabet)-2 ); // sizeof-2 because the range is a closed interval!
 		
-		const unsigned left_len = length/2;
+		std::uniform_int_distribution<> dis_len(4, length-4);
+		const unsigned left_len = dis_len(gen);
 		const unsigned right_len = length-left_len;
 		
-		std::string ret; ret.reserve(length+1);
+		std::string ret; ret.reserve(length+5);
 		
 		std::generate_n( std::back_inserter(ret), left_len, [&](){ return token_alphabet[dis(gen)]; } );
-		ret += '_';
+		ret += "_pEp_";
 		std::generate_n( std::back_inserter(ret), right_len, [&](){ return token_alphabet[dis(gen)]; } );
 		return ret;
 	}
