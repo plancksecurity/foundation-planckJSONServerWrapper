@@ -3,6 +3,7 @@
 #include <random>
 #include "inout.hh" // for to_json() and from_json()
 #include "pEp-types.hh"
+#include "pEp-utils.hh"
 #include "json_spirit/json_spirit_reader.h"
 #include <pEp/message.h>
 #include <pEp/pEp_string.h>
@@ -46,6 +47,8 @@ class EncodeDecodeTest : public ::testing::Test
 protected:
 	void SetUp() override
 	{
+		init(&session, &dummy_send, &dummy_inject);
+		
 		random_name = gen_random_name();
 		const std::string address = "encode-decode-test." + random_name + "@peptest.ch";
 		const std::string username = "Test User " + random_name;
@@ -64,7 +67,13 @@ protected:
 	
 	void TearDown() override
 	{
+		std::cout << "Delete key with fpr <" << my_identity->fpr << ">\n";
+		delete_keypair(session, my_identity->fpr);
 		free_identity(my_identity);
+		my_identity = nullptr;
+		
+		release(session);
+		session = nullptr;
 	}
 
 	static
@@ -73,6 +82,7 @@ protected:
 	static
 	PEP_STATUS dummy_send(struct _message*) { return PEP_STATUS_OK; }
 
+	PEP_SESSION session = nullptr;
 	std::string random_name;
 	pEp_identity* my_identity = nullptr;
 };
@@ -81,23 +91,46 @@ protected:
 
 TEST_F( EncodeDecodeTest, Msg )
 {
-	PEP_SESSION session;
-	init(&session, &dummy_send, &dummy_inject);
 	ASSERT_EQ( myself(session, my_identity) , PEP_STATUS_OK );
 	
-	/*
-	message* m = new_message(PEP_dir_incoming);
+	const std::string msg1s = 
+		"{ \"id\":\"<pEp." + gen_random_name() + "." + gen_random_name() + "@peptest.ch>\""
+		", \"shortmsg\": \"Subject\""
+		", \"longmsg\": \"Body\""
+		", \"attachments\": []"
+		", \"from\": " + js::write(to_json<pEp_identity*>(my_identity)) + "\n"
+		", \"to\": [ " + js::write(to_json<pEp_identity*>(my_identity)) + "] \n"
+		"}\n";
+
+	js::Value msg1v;
+	js::read_or_throw( msg1s, msg1v );
+
+	message* msg2_raw = nullptr;
+	auto msg1 = pEp::utility::make_c_ptr( from_json<message*>(msg1v), &free_message);
+
+	std::cout << "=== MESSAGE ORIGINAL ===\n"
+		<< js::write(to_json<message*>(msg1.get())) << std::endl;
+
+	PEP_STATUS status_enc = encrypt_message(session, msg1.get(), nullptr, &msg2_raw, PEP_enc_format(3), 0);
+	EXPECT_EQ( status_enc, PEP_STATUS_OK);
+	ASSERT_NE( msg2_raw , nullptr);
+	auto msg2 = pEp::utility::make_c_ptr( msg2_raw, &free_message);
+
+	std::cout << "=== MESSAGE ENCRYPTED ===\n"
+		<< js::write(to_json<message*>(msg2.get())) << std::endl;
 	
-	ASSERT_STREQ( m->id, m2->id );
-	ASSERT_STREQ( m->shortmsg, m2->shortmsg );
-	ASSERT_STREQ( m->longmsg, m2->longmsg );
+	message* msg3_raw = nullptr;
 	
-	free_message(m2);
-	free_message(m);
-	*/
+	// FIXME: do you provide a non-empty keylist?
+	stringlist_t* keylist = new_stringlist(nullptr);
+	PEP_rating rating{};
+	PEP_decrypt_flags_t flags{}; // FIXME: which flags do you use on input?
 	
-	std::cout << "@@: " << random_name << " °° " << gen_random_name() << "\n"
-		"\tiden->address: " << ptr0(my_identity->address) << "\n"
-		"\tiden->fpr: " << ptr0(my_identity->fpr) << "\n"
-		"\n";
+	PEP_STATUS status_dec = decrypt_message(session, msg2.get(), &msg3_raw, &keylist, &rating, &flags);
+	EXPECT_EQ( status_dec, PEP_STATUS_OK);
+	ASSERT_NE( msg3_raw , nullptr);
+	auto msg3 = pEp::utility::make_c_ptr( msg3_raw, &free_message);
+	
+	std::cout << "=== MESSAGE DECRYPTED ===\n"
+		<< js::write(to_json<message*>(msg3.get())) << std::endl;
 }
