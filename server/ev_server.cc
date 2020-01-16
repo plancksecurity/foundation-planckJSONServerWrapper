@@ -231,6 +231,8 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 			{ "/"                , {"text/html"      , path_to_html / "index.html"            } },
 			{ "/jquery.js"       , {"text/javascript", path_to_html / "jquery-2.2.0.min.js"   } },
 			{ "/interactive.js"  , {"text/javascript", path_to_html / "interactive.js"        } },
+			{ "/unittests.js"    , {"text/javascript", path_to_html / "unittests.js"          } },
+			{ "/test-encode-decode.js", {"text/javascript", path_to_html / "test-encode-decode.js"} },
 			{ "/favicon.ico"     , {"image/vnd.microsoft.icon", path_to_html / "json-test.ico"} },
 		};
 	
