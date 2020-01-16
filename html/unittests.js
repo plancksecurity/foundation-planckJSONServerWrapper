@@ -37,5 +37,5 @@ function add_test_buttons()
 
 function random_name_test()
 {
-	document.getElementById('unittest_out').innerHTML =  'pEp_' + gen_random_name() + '_' + gen_random_name() + '@pep.lol';
+	document.getElementById('unittest_out').innerHTML =  'pEp_' + gen_random_name() + '@pep.lol';
 }

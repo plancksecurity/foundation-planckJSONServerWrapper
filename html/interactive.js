@@ -431,36 +431,21 @@ function pc(c)
 		return '(' + c + ')';
 }
 
-function button_click()
+
+function call_json_rpc_function(fn_name, params)
 {
 	var deb = document.getElementById("debug");
 	var pre = document.getElementById("resultpre");
 	pre.innerHTML = "momentele…";
 	pre.className = "red";
-	
+
 	var url = document.getElementById("server").value + 'callFunction';
 	var request = {};
 	request.id = ++call_ID;
 	request.jsonrpc = "2.0";
 	request.security_token = document.getElementById("security_token").value;
-	request.method = document.getElementById("fn_name").value;
-	request.params = new Array(func.params.length);
-	
-	for(var i=0, len=func.params.length; i<len; ++i)
-	{
-		var pp = func.params[i];
-		
-		if(pp.direction == "Out")
-		{
-			request.params[i] = OutputParam;
-		}else{
-			var form2param_func = Form2Param[pp.type];
-			if(form2param_func == undefined)
-				form2param_func = function(nr, pp, value) { return "Unknown(" + pp.type + ") nr=" + nr + ", value=" + value; };
-			
-			request.params[i] = form2param_func(i, pp, func_params[i]);
-		}
-	}
+	request.method = fn_name;
+	request.params = params;
 	
 	var x = $.post(url, JSON.stringify(request), null, "json")
 		.done(function(moo) {
@@ -502,6 +487,32 @@ function button_click()
 	
 	pre.innerHTML = "post request sent. request=" + JSON.stringify(request, null, 2);
 	deb.innerHTML = "url=«" + url + "»,\nfn_name=“" + document.getElementById("fn_name").value + "”\nrequest=" + JSON.stringify(request, null, 2);
+}
+
+
+function button_click()
+{
+	var method = document.getElementById("fn_name").value;
+	var params = new Array(func.params.length);
+	
+	for(var i=0, len=func.params.length; i<len; ++i)
+	{
+		var pp = func.params[i];
+		
+		if(pp.direction == "Out")
+		{
+			request.params[i] = OutputParam;
+		}else{
+			var form2param_func = Form2Param[pp.type];
+			if(form2param_func == undefined)
+				form2param_func = function(nr, pp, value) { return "Unknown(" + pp.type + ") nr=" + nr + ", value=" + value; };
+			
+			params[i] = form2param_func(i, pp, func_params[i]);
+		}
+	}
+	
+	call_json_rpc_function(method, params);
+	
 }
 
 
