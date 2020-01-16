@@ -19,6 +19,8 @@ namespace {
 	}
 
 	const char alphabet_base36[]="qaywsxedcrfvtgbzhnujmikolp-_0987654321";
+	const unsigned alphabet_size = sizeof(alphabet_base36)-1;
+	
 	static_assert( sizeof(alphabet_base36) >= 37 , "alphabet must have at least 36 chars + NUL");
 	
 	std::string base36(uint64_t u)
@@ -27,8 +29,8 @@ namespace {
 		std::string ret;
 		while(u)
 		{
-			ret += alphabet_base36[u % sizeof(alphabet_base36)];
-			u = u / sizeof(alphabet_base36);
+			ret += alphabet_base36[u % alphabet_size];
+			u = u / alphabet_size;
 		}
 		return ret;
 	}
