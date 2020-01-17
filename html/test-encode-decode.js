@@ -1,6 +1,6 @@
 "use strict";
 
-function test_encode_decode()
+async function test_encode_decode()
 {
 	var rndName = gen_random_name();
 	var testAddress = 'enc-dec-test.' + rndName + '@peptest.ch';
