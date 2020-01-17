@@ -7,7 +7,7 @@ function test_encode_decode()
 	var testUsername = 'Test User ' + rndName;
 	var identity = { "address": testAddress, "user_id": "pEp_own_userId", "username": testUsername };
 	
-	call_json_rpc_function("myself", [identity] );
+	var result = await call_json_rpc_function("myself", [identity] );
 	
 }
 
