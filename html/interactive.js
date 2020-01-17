@@ -450,6 +450,7 @@ function call_json_rpc_function(fn_name, params)
 	var x = $.post(url, JSON.stringify(request), null, "json")
 		.done(function(moo) {
 			displayResult(moo);
+			return moo;
 		})
 		.fail(function( hdr, txt, err) {
 			var emsg = 
@@ -487,6 +488,8 @@ function call_json_rpc_function(fn_name, params)
 	
 	pre.innerHTML = "post request sent. request=" + JSON.stringify(request, null, 2);
 	deb.innerHTML = "url=«" + url + "»,\nfn_name=“" + document.getElementById("fn_name").value + "”\nrequest=" + JSON.stringify(request, null, 2);
+
+	return x;
 }
 
 
