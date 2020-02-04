@@ -15,19 +15,19 @@
     <ProjectGuid>{E711B215-E1D4-408A-A9AD-B5F44F6F5BEE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>pEpJSONServerAdapter</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -100,17 +100,21 @@
     <ClInclude Include="..\..\server\logger.hh" />
     <ClInclude Include="..\..\server\logger_config.hh" />
     <ClInclude Include="..\..\server\main.hh" />
+    <ClInclude Include="..\..\server\mini-adapter-impl.hh" />
     <ClInclude Include="..\..\server\nfc.hh" />
     <ClInclude Include="..\..\server\nfc_sets.hh" />
     <ClInclude Include="..\..\server\nulllogger.hh" />
-    <ClInclude Include="..\..\server\pep-types.hh" />
-    <ClInclude Include="..\..\server\pep-utils-json.hh" />
-    <ClInclude Include="..\..\server\pep-utils.hh" />
+    <ClInclude Include="..\..\server\pEp-types.hh" />
+    <ClInclude Include="..\..\server\pEp-utils-json.hh" />
+    <ClInclude Include="..\..\server\pEp-utils.hh" />
     <ClInclude Include="..\..\server\prefix-config.hh" />
     <ClInclude Include="..\..\server\registry.hh" />
     <ClInclude Include="..\..\server\security-token.hh" />
     <ClInclude Include="..\..\server\server_version.hh" />
     <ClInclude Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\server\base64.cc" />
@@ -123,19 +127,17 @@
     <ClCompile Include="..\..\server\json-adapter.cc" />
     <ClCompile Include="..\..\server\json_rpc.cc" />
     <ClCompile Include="..\..\server\logger.cc" />
-    <ClCompile Include="..\..\server\main.cc" />
+    <ClCompile Include="..\..\server\mini-adapter-impl.cc" />
+    <ClCompile Include="..\..\server\mini-adapter-main.cc" />
     <ClCompile Include="..\..\server\nfc.cc" />
     <ClCompile Include="..\..\server\nfc_sets.cc" />
     <ClCompile Include="..\..\server\nulllogger.cc" />
-    <ClCompile Include="..\..\server\pep-types.cc" />
-    <ClCompile Include="..\..\server\pep-utils.cc" />
+    <ClCompile Include="..\..\server\pEp-types.cc" />
+    <ClCompile Include="..\..\server\pEp-utils.cc" />
     <ClCompile Include="..\..\server\registry.cc" />
     <ClCompile Include="..\..\server\security-token.cc" />
     <ClCompile Include="..\..\server\servertest.cc" />
     <ClCompile Include="..\..\server\server_version.cc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
