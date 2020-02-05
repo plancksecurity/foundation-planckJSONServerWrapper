@@ -11,6 +11,7 @@
 #include "logger.hh"
 #include "server_version.hh"
 #include "sha1.hh" // for WebSocket handshakea
+#include "websocket.hh" // for ws::encode_frame()
 
 #include <pEp/message_api.h>
 #include <pEp/blacklist.h>
@@ -384,8 +385,8 @@ void ev_server::OnWebSocketRequest(evhttp_request* req, void* obj)
 		const std::string key = getHeader(hdrs, "Sec-WebSocket-Key");
 		const std::string accept = sha1::base64(key + WebSocketUUID);
 		
-		const std::string dummy_output = "{\"dummy\":true}\n";
-		auto output_buffer = evhttp_request_get_output_buffer(req);
+		const std::string dummy_output = ws::encode_frame("{\"dummy\":true, \"WebSocketBanana\":42.23}\n");
+		evbuffer* output_buffer = evhttp_request_get_output_buffer(req);
 		evbuffer_add(output_buffer, dummy_output.data(), dummy_output.size());
 		
 		evkeyvalq* out_hdrs = evhttp_request_get_output_headers(req);
@@ -393,12 +394,13 @@ void ev_server::OnWebSocketRequest(evhttp_request* req, void* obj)
 		evhttp_add_header(out_hdrs, "Connection", "Upgrade");
 		evhttp_add_header(out_hdrs, "Sec-WebSocket-Accept", accept.c_str());
 		evhttp_add_header(out_hdrs, "\130-p\x45p-\x53ha\x72k\162", (add_sharks?"A\x72\162":"\116\141\171"));
-		evhttp_send_reply(req, 101, "Switching Protocols", evhttp_request_get_output_buffer(req));
+		evhttp_send_reply(req, 101, "Switching Protocols", output_buffer);
 
 //		JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 		
 		// TODO: keep this connection open and "register" it at the JSON Adapter for delivering events etc.
-		
+		L << Logger::Debug << "Done.";
+		return;
 	}
 	catch(const std::exception& e)
 	{
