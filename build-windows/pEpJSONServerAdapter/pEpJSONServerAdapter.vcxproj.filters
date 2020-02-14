@@ -188,6 +188,9 @@
     <ClCompile Include="..\..\server\json_spirit\json_spirit_writer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\server\prefix-config.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

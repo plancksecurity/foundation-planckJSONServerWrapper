@@ -146,6 +146,7 @@
     <ClCompile Include="..\..\server\nulllogger.cc" />
     <ClCompile Include="..\..\server\pEp-types.cc" />
     <ClCompile Include="..\..\server\pEp-utils.cc" />
+    <ClCompile Include="..\..\server\prefix-config.cc" />
     <ClCompile Include="..\..\server\registry.cc" />
     <ClCompile Include="..\..\server\security-token.cc" />
     <ClCompile Include="..\..\server\servertest.cc">
