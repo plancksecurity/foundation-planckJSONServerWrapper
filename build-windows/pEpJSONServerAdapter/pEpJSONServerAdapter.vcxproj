@@ -100,6 +100,15 @@
     <ClInclude Include="..\..\server\inout.hh" />
     <ClInclude Include="..\..\server\json-adapter.hh" />
     <ClInclude Include="..\..\server\json_rpc.hh" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_error_position.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_reader.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_stream_reader.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_utils.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_value.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_writer.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_writer_options.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_writer_template.h" />
     <ClInclude Include="..\..\server\logger.hh" />
     <ClInclude Include="..\..\server\logger_config.hh" />
     <ClInclude Include="..\..\server\main.hh" />
@@ -126,6 +135,9 @@
     <ClCompile Include="..\..\server\inout.cc" />
     <ClCompile Include="..\..\server\json-adapter.cc" />
     <ClCompile Include="..\..\server\json_rpc.cc" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_reader.cpp" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_value.cpp" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_writer.cpp" />
     <ClCompile Include="..\..\server\logger.cc" />
     <ClCompile Include="..\..\server\mini-adapter-impl.cc" />
     <ClCompile Include="..\..\server\mini-adapter-main.cc" />
