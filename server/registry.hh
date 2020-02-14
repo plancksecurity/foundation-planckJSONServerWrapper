@@ -7,6 +7,7 @@
 #include <map>
 #include <memory>  // for unique ptr
 #include <vector>
+#include <stdexcept>
 
 //////////////////////////////
 //
