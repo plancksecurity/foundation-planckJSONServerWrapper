@@ -64,7 +64,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\msys64\mingw32\lib;$(ProjectDir)..\..\libevent-2.0.22-stable\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\libevent-2.0.22-stable\</AdditionalLibraryDirectories>
       <AdditionalDependencies>libevent.lib;libevent_core.lib;libevent_extras.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:LIBCMT %(AdditionalOptions)</AdditionalOptions>
     </Link>
