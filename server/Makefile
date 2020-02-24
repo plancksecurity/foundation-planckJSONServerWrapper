@@ -82,8 +82,10 @@ ifdef DEBUG
     CMD_PFX+= $(LD_EAGER_VAR)
 endif
 
-.PHONY: all
+.PHONY: all lib
 all: $(TARGET) $(TARGET_TEST) $(TARGET_GTEST)
+
+lib: libjson-adapter.a
 
 $(TARGET): mini-adapter-main.o mini-adapter-impl.o libjson-adapter.a
 	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
