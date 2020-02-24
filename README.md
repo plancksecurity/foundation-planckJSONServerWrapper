@@ -123,6 +123,10 @@ make all
 make install
 ~~~~~
 
+If you only want to build the JsonAdapter library, run `make lib` and you'll get
+a libjson-adapter.a
+
+
 With `make test` you can execute the server's tests.
 
 ### Macports
