@@ -54,3 +54,12 @@ server/*.d
 server/json_spirit/*.d
 
 build/
+
+*.vcxproj.user
+*.obj
+*.exe
+*.lib
+build-windows/libevent/Release/*
+build-windows/libevent/Debug/*
+build-windows/pEpJSONServerAdapter/Release/*
+build-windows/pEpJSONServerAdapter/Debug/*

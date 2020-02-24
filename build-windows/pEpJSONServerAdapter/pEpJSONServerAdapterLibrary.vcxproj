@@ -12,20 +12,20 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{E711B215-E1D4-408A-A9AD-B5F44F6F5BEE}</ProjectGuid>
+    <ProjectGuid>{644D1BA4-084C-47B2-8A9E-00A8D9F9A35C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>pEpJSONServerAdapter</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -64,9 +64,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\libevent-2.0.22-stable\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libevent.lib;libevent_core.lib;libevent_extras.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/NODEFAULTLIB:LIBCMT %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -88,19 +86,65 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\libevent-2.0.22-stable\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libevent.lib;libevent_core.lib;libevent_extras.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/NODEFAULTLIB:LIBCMT %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\server\base64.hh" />
+    <ClInclude Include="..\..\server\context.hh" />
+    <ClInclude Include="..\..\server\c_string.hh" />
+    <ClInclude Include="..\..\server\daemonize.hh" />
+    <ClInclude Include="..\..\server\ev_server.hh" />
+    <ClInclude Include="..\..\server\function_map.hh" />
+    <ClInclude Include="..\..\server\inout.hh" />
     <ClInclude Include="..\..\server\json-adapter.hh" />
-    <ClInclude Include="..\..\server\main.hh" />
-    <ClInclude Include="..\..\server\mini-adapter-impl.hh" />
+    <ClInclude Include="..\..\server\json_rpc.hh" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_error_position.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_reader.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_stream_reader.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_utils.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_value.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_writer.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_writer_options.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_writer_template.h" />
+    <ClInclude Include="..\..\server\logger.hh" />
+    <ClInclude Include="..\..\server\logger_config.hh" />
+    <ClInclude Include="..\..\server\nfc.hh" />
+    <ClInclude Include="..\..\server\nfc_sets.hh" />
+    <ClInclude Include="..\..\server\nulllogger.hh" />
+    <ClInclude Include="..\..\server\pEp-types.hh" />
+    <ClInclude Include="..\..\server\pEp-utils-json.hh" />
+    <ClInclude Include="..\..\server\pEp-utils.hh" />
+    <ClInclude Include="..\..\server\prefix-config.hh" />
+    <ClInclude Include="..\..\server\registry.hh" />
+    <ClInclude Include="..\..\server\security-token.hh" />
+    <ClInclude Include="..\..\server\server_version.hh" />
+    <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\server\mini-adapter-impl.cc" />
-    <ClCompile Include="..\..\server\mini-adapter-main.cc" />
+    <ClCompile Include="..\..\server\base64.cc" />
+    <ClCompile Include="..\..\server\context.cc" />
+    <ClCompile Include="..\..\server\c_string.cc" />
+    <ClCompile Include="..\..\server\daemonize.cc" />
+    <ClCompile Include="..\..\server\ev_server.cc" />
+    <ClCompile Include="..\..\server\function_map.cc" />
+    <ClCompile Include="..\..\server\inout.cc" />
+    <ClCompile Include="..\..\server\json-adapter.cc" />
+    <ClCompile Include="..\..\server\json_rpc.cc" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_reader.cpp" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_value.cpp" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_writer.cpp" />
+    <ClCompile Include="..\..\server\logger.cc" />
+    <ClCompile Include="..\..\server\nfc.cc" />
+    <ClCompile Include="..\..\server\nfc_sets.cc" />
+    <ClCompile Include="..\..\server\nulllogger.cc" />
+    <ClCompile Include="..\..\server\pEp-types.cc" />
+    <ClCompile Include="..\..\server\pEp-utils.cc" />
+    <ClCompile Include="..\..\server\prefix-config.cc" />
+    <ClCompile Include="..\..\server\registry.cc" />
+    <ClCompile Include="..\..\server\security-token.cc" />
+    <ClCompile Include="..\..\server\server_version.cc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -111,9 +155,6 @@
     </ProjectReference>
     <ProjectReference Include="..\..\..\pEpEngine\build-windows\pEpEngine.vcxproj">
       <Project>{146e69f8-e1da-456a-b048-6dd29d9acf6b}</Project>
-    </ProjectReference>
-    <ProjectReference Include="pEpJSONServerAdapterLibrary.vcxproj">
-      <Project>{644d1ba4-084c-47b2-8a9e-00a8d9f9a35c}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
