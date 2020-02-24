@@ -19,13 +19,13 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -62,8 +62,11 @@
       <AdditionalOptions>-D__PRETTY_FUNCTION__=__FUNCSIG__ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\libevent-2.0.22-stable\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libevent.lib;libevent_core.lib;libevent_extras.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/NODEFAULTLIB:LIBCMT %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -81,10 +84,13 @@
       <AdditionalOptions>-D__PRETTY_FUNCTION__=__FUNCSIG__ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\libevent-2.0.22-stable\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libevent.lib;libevent_core.lib;libevent_extras.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/NODEFAULTLIB:LIBCMT %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -97,6 +103,15 @@
     <ClInclude Include="..\..\server\inout.hh" />
     <ClInclude Include="..\..\server\json-adapter.hh" />
     <ClInclude Include="..\..\server\json_rpc.hh" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_error_position.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_reader.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_stream_reader.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_utils.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_value.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_writer.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_writer_options.h" />
+    <ClInclude Include="..\..\server\json_spirit\json_spirit_writer_template.h" />
     <ClInclude Include="..\..\server\logger.hh" />
     <ClInclude Include="..\..\server\logger_config.hh" />
     <ClInclude Include="..\..\server\main.hh" />
@@ -114,9 +129,6 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\..\server\base64.cc" />
     <ClCompile Include="..\..\server\context.cc" />
     <ClCompile Include="..\..\server\c_string.cc" />
@@ -126,6 +138,9 @@
     <ClCompile Include="..\..\server\inout.cc" />
     <ClCompile Include="..\..\server\json-adapter.cc" />
     <ClCompile Include="..\..\server\json_rpc.cc" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_reader.cpp" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_value.cpp" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_writer.cpp" />
     <ClCompile Include="..\..\server\logger.cc" />
     <ClCompile Include="..\..\server\mini-adapter-impl.cc" />
     <ClCompile Include="..\..\server\mini-adapter-main.cc" />
@@ -134,19 +149,44 @@
     <ClCompile Include="..\..\server\nulllogger.cc" />
     <ClCompile Include="..\..\server\pEp-types.cc" />
     <ClCompile Include="..\..\server\pEp-utils.cc" />
+    <ClCompile Include="..\..\server\prefix-config.cc" />
     <ClCompile Include="..\..\server\registry.cc" />
     <ClCompile Include="..\..\server\security-token.cc" />
-    <ClCompile Include="..\..\server\servertest.cc" />
+    <ClCompile Include="..\..\server\servertest.cc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\server\server_version.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\libpEpAdapter\libpEpAdapter\libpEpAdapter.vcxproj">
+      <Project>{ec44fec9-2f3a-4a0c-b60e-0f22aa43ef58}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\pEpEngine\build-windows\pEpEngine.vcxproj">
+      <Project>{146e69f8-e1da-456a-b048-6dd29d9acf6b}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\..\packages\boost.1.70.0.0\build\boost.targets" Condition="Exists('..\..\..\packages\boost.1.70.0.0\build\boost.targets')" />
+    <Import Project="..\..\..\packages\boost.1.71.0.0\build\boost.targets" Condition="Exists('..\..\..\packages\boost.1.71.0.0\build\boost.targets')" />
+    <Import Project="..\..\..\packages\boost_filesystem-vc142.1.71.0.0\build\boost_filesystem-vc142.targets" Condition="Exists('..\..\..\packages\boost_filesystem-vc142.1.71.0.0\build\boost_filesystem-vc142.targets')" />
+    <Import Project="..\..\..\packages\boost_thread-vc142.1.71.0.0\build\boost_thread-vc142.targets" Condition="Exists('..\..\..\packages\boost_thread-vc142.1.71.0.0\build\boost_thread-vc142.targets')" />
+    <Import Project="..\..\..\packages\boost_date_time-vc142.1.71.0.0\build\boost_date_time-vc142.targets" Condition="Exists('..\..\..\packages\boost_date_time-vc142.1.71.0.0\build\boost_date_time-vc142.targets')" />
+    <Import Project="..\..\..\packages\boost_chrono-vc142.1.71.0.0\build\boost_chrono-vc142.targets" Condition="Exists('..\..\..\packages\boost_chrono-vc142.1.71.0.0\build\boost_chrono-vc142.targets')" />
+    <Import Project="..\..\..\packages\boost_program_options-vc142.1.71.0.0\build\boost_program_options-vc142.targets" Condition="Exists('..\..\..\packages\boost_program_options-vc142.1.71.0.0\build\boost_program_options-vc142.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\..\packages\boost.1.70.0.0\build\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost.1.70.0.0\build\boost.targets'))" />
+    <Error Condition="!Exists('..\..\..\packages\boost.1.71.0.0\build\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost.1.71.0.0\build\boost.targets'))" />
+    <Error Condition="!Exists('..\..\..\packages\boost_filesystem-vc142.1.71.0.0\build\boost_filesystem-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost_filesystem-vc142.1.71.0.0\build\boost_filesystem-vc142.targets'))" />
+    <Error Condition="!Exists('..\..\..\packages\boost_thread-vc142.1.71.0.0\build\boost_thread-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost_thread-vc142.1.71.0.0\build\boost_thread-vc142.targets'))" />
+    <Error Condition="!Exists('..\..\..\packages\boost_date_time-vc142.1.71.0.0\build\boost_date_time-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost_date_time-vc142.1.71.0.0\build\boost_date_time-vc142.targets'))" />
+    <Error Condition="!Exists('..\..\..\packages\boost_chrono-vc142.1.71.0.0\build\boost_chrono-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost_chrono-vc142.1.71.0.0\build\boost_chrono-vc142.targets'))" />
+    <Error Condition="!Exists('..\..\..\packages\boost_program_options-vc142.1.71.0.0\build\boost_program_options-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost_program_options-vc142.1.71.0.0\build\boost_program_options-vc142.targets'))" />
   </Target>
 </Project>
