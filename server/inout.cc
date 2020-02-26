@@ -2,6 +2,7 @@
 #include "nfc.hh"
 #include <stdexcept>
 #include <pEp/pEpEngine.h>
+#include <pEp/platform.h> // for timegm() replacement on Windows
 
 
 #define SIMPLE_TYPE(TYPE)     \
@@ -161,10 +162,9 @@ js::Value to_json<struct tm*>(struct tm* const& t)
 	}
 	
 	// neither timegm() nor mktime() respect t->tm_gmtoff for their conversions. What a mess!
-	// Here is the approach that hopefully works independently from local timezone:
-	char s[32];
-	strftime(s, 31, "%s", t);
-	const int64_t u = strtoll(s, nullptr, 10);
+	// But t->tm_gmtoff is non-standard, though, and doesn't exist on MS Windows.
+	// So just hope the tm struct holds GMT.
+	const int64_t u = timegm(t);
 	return js::Value{u};
 }
 
