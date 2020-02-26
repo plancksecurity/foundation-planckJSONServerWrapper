@@ -23,7 +23,7 @@ supported, Windows is about to follow.  Newer versions should also work
 * [libpEpAdapter](https://pep.foundation/dev/repos/libpEpAdapter/)
 * OSSP libuuid
 
-## Building/Installing
+## Building/Installing (Linux and macOS)
 ### Install the dependencies
 Debian 9:
 
@@ -129,6 +129,7 @@ a libjson-adapter.a
 
 With `make test` you can execute the server's tests.
 
+
 ### Macports
 [Install MacPorts](https://www.macports.org/install.php) for your version of macOS.
 
@@ -145,6 +146,21 @@ Install dependencies packaged with MacPorts as follows.
 ```
 sudo port install gpgme boost ossp-uuid
 ```
+
+## Building/Installing (Windows)
+Clone the repository from https://pep.foundation/dev/repos/pEpJSONServerAdapter and add the
+following projects to your MS Visual Studio solution:
+pEpJSONServerAdapter\build-windows\pEpJSONServerAdapter\pEpJSONServerAdapter.vcxproj
+pEpJSONServerAdapter\build-windows\pEpJSONServerAdapter\pEpJSONServerAdapterLibrary.vcxproj
+pEpJSONServerAdapter\build-windows\libevent\libevent.vcxproj
+
+In order to build, the MS VS solution also needs to build the following dependent projects:
+- pEpEngine (note that this requires further dependent projects)
+- libpEpAdapter
+- libevent
+
+The resulting executable is called pEpJSONServerAdapter.exe and will be placed into
+the `Debug` or `Release` directory of the solution.
 
 ## Running the pEp JSON Adapter
 You can use `make run` to start the server.
