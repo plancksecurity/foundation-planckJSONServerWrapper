@@ -70,6 +70,11 @@ TEST_F( PEPJsonTest, Msg )
 	ASSERT_STREQ( m->shortmsg, m2->shortmsg );
 	ASSERT_STREQ( m->longmsg, m2->longmsg );
 	
+	ASSERT_NE( m2->attachments, nullptr );
+	EXPECT_EQ( bloblist_length(m->attachments), 2 );
+	EXPECT_EQ( bloblist_length(m2->attachments), 2 );
+	
+	
 	free_message(m2);
 	free_message(m);
 }

@@ -29,6 +29,8 @@ namespace
 			obj.emplace_back( key, js::Value( base64_encode( raw_string ) ) );
 		}
 	}
+	
+//	Logger L("pEp-T");
 
 } // end of anonymous namespace
 
@@ -373,6 +375,7 @@ const identity_list* from_json<const identity_list*>(const js::Value& v)
     return from_json<identity_list*>(v);
 }
 
+
 template<>
 _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 {
@@ -386,7 +389,8 @@ _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 		return nullptr;
 	
 	auto element = a.begin();
-	_bloblist_t* bl = NULL;
+	_bloblist_t* bl = NULL; // last element of the bloblist
+	_bloblist_t* bl_1st = NULL; // 1st element of the bloblist
 	
 	for(; element!=a.end(); ++element)
 	{
@@ -407,11 +411,20 @@ _bloblist_t* from_json<_bloblist_t*>(const js::Value& v)
 		
 		bl = bloblist_add(bl, vc, vs, mime_type.get(), filename.get());
 		
-		if(bl == NULL)
+		if(bl == nullptr)
+		{
 			throw std::runtime_error("Couldn't add blob to bloblist");
+		}
+		
+		if(bl_1st == nullptr)
+		{
+		    bl_1st = bl;
+		}
 	}
 	
-	return bl;
+//	L << Logger::Debug << "from_json<blob>: a.len=" << a.size() << ", bloblen(b)=" << bloblist_length(bl_1st) << ".";
+	
+	return bl_1st;
 }
 
 
@@ -444,6 +457,8 @@ js::Value to_json<_bloblist_t*>(_bloblist_t* const& bl)
 		b = b->next;
 	}
 	
+//	L << Logger::Debug << "to_json<blob>:  bloblen(b)=" << bloblist_length(bl) << ", a.len=" << a.size() << ".";
+
 	return js::Value( std::move(a) );
 }
 
