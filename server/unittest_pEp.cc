@@ -36,7 +36,6 @@ class PEPJsonTest : public ::testing::Test
 };
 
 
-
 TEST_F( PEPJsonTest, Msg )
 {
 	message* m = new_message(PEP_dir_incoming);
@@ -74,7 +73,113 @@ TEST_F( PEPJsonTest, Msg )
 	EXPECT_EQ( bloblist_length(m->attachments), 2 );
 	EXPECT_EQ( bloblist_length(m2->attachments), 2 );
 	
-	
 	free_message(m2);
 	free_message(m);
+}
+
+
+TEST_F(PEPJsonTest, StringList)
+{
+	struct TestValue { std::string input; size_t length; std::string first, last; };
+	
+	static const std::vector<TestValue> values =
+		{
+			{ "[]", 0, "<dontcare>", "(dontcare)" },
+			{ "[\"Alice\"]", 1, "Alice", "Alice" },
+			{ "[\"Alice\", \"Bob\", \"Carol\", \"Dave\"]", 4, "Alice", "Dave" },
+		};
+	
+	for(const TestValue& tv : values)
+	{
+		js::Value v;
+		js::read_or_throw(tv.input, v);
+		stringlist_t* sl = from_json<stringlist_t*>(v);
+		
+		EXPECT_EQ( tv.length, stringlist_length(sl) );
+		if(tv.length)
+		{
+			ASSERT_NE( sl->value, nullptr );
+			EXPECT_EQ( tv.first, std::string(sl->value) );
+			
+			const stringlist_t* s_last = sl;
+			while(s_last->next)
+			{
+				s_last = s_last->next;
+			};
+			
+			EXPECT_EQ( tv.last, std::string(s_last->value) );
+		}
+		
+		const js::Value v2 = to_json<stringlist_t*>(sl);
+		free_stringlist(sl);
+		EXPECT_EQ( v, v2 );
+	}
+}
+
+
+TEST_F(PEPJsonTest, StringPair)
+{
+	struct TestValue { std::string input, key, value; };
+	
+	static const std::vector<TestValue> values =
+		{
+			{ "{ \"key\":\"\", \"value\":\"\" }", "", "" },
+			{ "{ \"key\":\"Schlüssel\", \"value\":\"\" }", "Schlüssel", "" },
+			{ "{ \"key\":\"\", \"value\":\"1€\" }", "", "1€" },
+			{ "{ \"key\":\"Awesome\", \"value\":\"Übergrößenänderung\" }", "Awesome", "Übergrößenänderung" },
+		};
+	
+	for(const TestValue& tv : values)
+	{
+		js::Value v;
+		js::read_or_throw(tv.input, v);
+		stringpair_t* sp = from_json<stringpair_t*>(v);
+		
+		EXPECT_EQ( tv.key, std::string(sp->key) );
+		EXPECT_EQ( tv.value, std::string(sp->value) );
+		
+		const js::Value v2 = to_json<stringpair_t*>(sp);
+		free_stringpair(sp);
+		EXPECT_EQ( v, v2 );
+	}
+}
+
+
+TEST_F(PEPJsonTest, StringPairList)
+{
+	struct TestValue { std::string input; size_t length; std::string last_key, last_value; };
+	
+	static const std::vector<TestValue> values =
+		{
+			{ "[]", 0, "<dontcare>", "(dontcare)" },
+			{ "[ { \"key\":\"KKK\", \"value\":\"VVV\" } ]", 1, "KKK", "VVV" },
+			{ "[ { \"key\":\"K0\", \"value\":\"Va\" },"
+			   " { \"key\":\"K1\", \"value\":\"Vb\" },"
+			   " { \"key\":\"K2\", \"value\":\"Vc\" }"
+			 " ]", 3, "K2", "Vc" },
+		};
+	
+	for(const TestValue& tv : values)
+	{
+		js::Value v;
+		js::read_or_throw(tv.input, v);
+		stringpair_list_t* spl = from_json<stringpair_list_t*>(v);
+		
+		EXPECT_EQ( tv.length, stringpair_list_length(spl) );
+		
+		if(tv.length)
+		{
+			const stringpair_list_t* sp_last = spl;
+			while(sp_last->next)
+			{
+				sp_last = sp_last->next;
+			};
+			
+			EXPECT_EQ( tv.last_key  , std::string(sp_last->value->key) );
+			EXPECT_EQ( tv.last_value, std::string(sp_last->value->value) );
+		}
+		const js::Value v2 = to_json<stringpair_list_t*>(spl);
+		free_stringpair_list(spl);
+		EXPECT_EQ( v, v2 );
+	}
 }

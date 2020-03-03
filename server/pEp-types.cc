@@ -481,6 +481,15 @@ stringpair_t* from_json<stringpair_t*>(const js::Value& v)
 }
 
 
+template<>
+js::Value to_json<stringpair_t*>(stringpair_t* const& sp)
+{
+	js::Object o;
+	o.emplace_back( "key", sp->key );
+	o.emplace_back( "value", sp->value );
+	return o;
+}
+
 
 template<>
 stringpair_list_t* from_json<stringpair_list_t*>(const js::Value& v)
@@ -501,7 +510,7 @@ stringpair_list_t* from_json<stringpair_list_t*>(const js::Value& v)
 	
 	for(; element!=a.end(); ++element)
 	{
-		spl = stringpair_list_add(spl, from_json<stringpair_t*>(*element) );
+		stringpair_list_add(spl, from_json<stringpair_t*>(*element) );
 	}
 
 	return spl;
@@ -518,10 +527,7 @@ js::Value to_json<stringpair_list_t*>(stringpair_list_t* const& osl)
 	{
 		if(spl->value)
 		{
-			js::Object o;
-			o.emplace_back( "key", spl->value->key );
-			o.emplace_back( "value", spl->value->value );
-			a.push_back( std::move(o) );
+			a.push_back( to_json<stringpair_t*>(spl->value) );
 		}
 		spl = spl->next;
 	}
