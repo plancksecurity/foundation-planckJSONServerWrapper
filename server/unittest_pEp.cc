@@ -36,7 +36,6 @@ class PEPJsonTest : public ::testing::Test
 };
 
 
-
 TEST_F( PEPJsonTest, Msg )
 {
 	message* m = new_message(PEP_dir_incoming);
@@ -74,7 +73,37 @@ TEST_F( PEPJsonTest, Msg )
 	EXPECT_EQ( bloblist_length(m->attachments), 2 );
 	EXPECT_EQ( bloblist_length(m2->attachments), 2 );
 	
-	
 	free_message(m2);
 	free_message(m);
+}
+
+
+TEST_F(PEPJsonTest, StringList)
+{
+	struct TestValue { std::string input; size_t length; std::string first; };
+	
+	static const std::vector<TestValue> values =
+		{
+			{ "[]", 0, "" },
+			{ "[\"Alice\"]", 1, "Alice" },
+			{ "[\"Alice\", \"Bob\", \"Carol\", \"Dave\"]", 4, "Alice" },
+		};
+	
+	for(const TestValue& tv : values)
+	{
+		js::Value v;
+		js::read_or_throw(tv.input, v);
+		stringlist_t* sl = from_json<stringlist_t*>(v);
+		
+		EXPECT_EQ( tv.length, stringlist_length(sl) );
+		if(tv.length)
+		{
+			ASSERT_NE( sl->value, nullptr );
+			EXPECT_EQ( tv.first, std::string(sl->value) );
+		}
+		
+		const js::Value v2 = to_json<stringlist_t*>(sl);
+		
+		EXPECT_EQ( v, v2 );
+	}
 }
