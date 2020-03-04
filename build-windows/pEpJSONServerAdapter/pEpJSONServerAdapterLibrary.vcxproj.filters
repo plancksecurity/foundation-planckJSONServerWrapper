@@ -108,6 +108,9 @@
     <ClInclude Include="..\..\server\json_spirit\json_spirit_writer_template.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\server\mini-adapter-impl.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\server\server_version.cc">
