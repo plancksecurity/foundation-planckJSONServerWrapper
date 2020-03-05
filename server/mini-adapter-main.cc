@@ -146,8 +146,8 @@ try
 
 	try
 	{
-		ja.prepare_run(address, start_port, end_port);
-
+		ja.prepare_run(address, start_port, end_port, &pEp::mini::injectSyncMsg);
+		
 		if( debug_mode )
 		{
 			ja.run();

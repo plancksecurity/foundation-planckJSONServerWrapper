@@ -76,7 +76,6 @@ typedef std::vector<ThreadPtr> ThreadPool;
 
 // *sigh* necessary because messageToSend() has no obj pointer anymore. :-(
 JsonAdapter* ja_singleton = nullptr;
-inject_sync_event_t sync_fn = nullptr; // *sigh* ugly, but the Engine's API requires it.
 
 } // end of anonymous namespace
 
@@ -103,6 +102,8 @@ struct JsonAdapter::Internal
 	unsigned    start_port    = 0;
 	unsigned    end_port      = 0;
 	unsigned    port          = 0;
+	inject_sync_event_t inject_sync_event = nullptr;
+	
 	unsigned    request_count = 0;
 	evutil_socket_t sock      = -1;
 	bool        running = false;
@@ -315,12 +316,13 @@ JsonAdapter& JsonAdapter::deliver_html(bool dh)
 }
 
 
-void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port)
+void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port, inject_sync_event_t se)
 {
 	check_guard();
 	i->address    = address;
 	i->start_port = start_port;
 	i->end_port   = end_port;
+	i->inject_sync_event = se;
 	
 	Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
 	
@@ -360,7 +362,7 @@ void JsonAdapter::threadFunc()
 		if(q==session_registry.end())
 		{
 			i->session = nullptr;
-			PEP_STATUS status = pEp::call_with_lock(&init, &i->session, &JsonAdapter::messageToSend, sync_fn); // release(session) in ThreadDeleter
+			PEP_STATUS status = pEp::call_with_lock(&init, &i->session, &JsonAdapter::messageToSend, i->inject_sync_event); // release(session) in ThreadDeleter
 			if(status != PEP_STATUS_OK || i->session==nullptr)
 			{
 				const std::string error_msg = "Cannot create session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
@@ -587,9 +589,8 @@ JsonAdapter& JsonAdapter::getInstance()
 
 JsonAdapter& JsonAdapter::startup(inject_sync_event_t se)
 {
-	sync_fn = se;
 	JsonAdapter& ja = getInstance();
-	ja.prepare_run("127.0.0.1", 4223, 9999);
+	ja.prepare_run("127.0.0.1", 4223, 9999, se);
 	ja.run();
 	return ja;
 }

@@ -32,10 +32,10 @@ public:
 	// if called with "false" the JSON Adpapter would no longer deliver HTML and JavaScript files, only handle JSON-RPC requests
 	JsonAdapter& deliver_html(bool _deliver_html);
 	
-	// look for a free port to listen on
-	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port);
+	// look for a free port to listen on and set the given configuration
+	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port, inject_sync_event_t se);
 	
-	// run the server in another thread and returns immediately.
+	// run the server in another thread and returns immediately. prepare_run() has to be called before!
 	void run();
 	
 	// exits gracefully after the given number of seconds.
