@@ -446,6 +446,24 @@ Now the 2nd parameter is omitted:
 }
 ```
 
+### Embedding in other (desktop) adapters
+
+The JSON Adapter can run as a stand-alone program (called the "mini-adapter") or
+as part of another desktop adapter to enhance that adapter with a JSON-RPC interface.
+
+For this the JSON Adapter has to co-operate with the desktop adapter in several ways:
+
+* Startup, configuration and shutdown is managed by the desktop adapter.
+
+* Handshake events and sync messages created by the pEpEngine have to be dispatched
+  to *all* connected clients, no matter whether they are JSON clients or "native"
+  clients of the desktop adapter. See "messageToSend" and "notifyHandshake" callbacks.
+
+* The sync thread loop has to be managed by the desktop adapter. The libpEpAdapter
+  contains an example implementation for that.
+
+* (something else?)
+
 
 ## TODOs
 
