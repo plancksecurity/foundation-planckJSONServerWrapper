@@ -388,7 +388,7 @@ bitfield, so they can be combined:
 More flags will be added when different semantics will be needed.
 
 
-### Automatic parameter value generation
+#### Automatic parameter value generation
 
 For some parameters or parameter combinations the JSON Server Adapter is
 able to generate the values automatically either from the environment or
@@ -396,7 +396,7 @@ from other parameters.
 
 These automatic parameter value generators are supported at the moment:
 
-#### InLength
+##### In<c_string> and InLength
 
 For functions that have a string parameter of type `const char*` followed by
 a `size_t` that specifies the length of the string, the JSON Adapter can
@@ -407,6 +407,10 @@ Moreover, the "length" that has to be given here means the length of the
 string seen by the C API side after processing of all JSON escaping
 mechanisms as raw UTF-8 NFC string, so it might be difficult to calculate
 that value at client side.
+
+The "magic" is done inside the In<c_string> constructor that stores the string
+length in its "Context", and the InLength<> constructore retrieves the value
+from its "Context".
 
 Example:
 ```
