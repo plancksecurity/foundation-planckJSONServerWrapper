@@ -306,7 +306,7 @@ file that has user-only read permissions.
 If you want to extend or customize the p≡p JSON Adapter, there are several
 rules and definitions to take into account.
 
-### Definitions
+### API Functions
 
 * The `FunctionMap function` in `ev_server.cc` defines which functions
   are callable via the JSON-RPC interface.  The existing entries show the
@@ -355,15 +355,15 @@ number of parameters at the JSON side the same with the C side.
 For In/Out parameters there exist two calling conventions for
 call-by-pointer types:
 
-1. caller allocates object and fills with input values, callee can only change members.
-The C type of the parameter is usually `struct T*`. Use the wrapper `InOut<>`
+1. caller allocates object and fills with input values, callee can only *change members*.
+The C type of the parameter is usually `struct T*`. Use the wrapper `InOut<T*>`
 for these parameters.
 
 2. caller allocates object and fills with input values, callee might
-change/reallocate the whole object. The C type of the parameter is
-`struct T**`. Use the wrapper `InOutP<>` in these cases.
+change/reallocate the *whole object*. The C type of the parameter is
+`struct T**`. Use the wrapper `InOutP<T*>` in these cases.
 
-`InOutP<>` is also the right wrapper for in/out parameters of fundamental or
+`InOutP<T>` is also the right wrapper for in/out parameters of fundamental or
 enum types due to the additional indirection in the C function call
 signature.
 
@@ -377,7 +377,7 @@ semantics described already above.
 At the moment there exist two parameter type flags which are interpreted as
 bitfield, so they can be combined:
 
-* NoInput : This flags a parameter at the C side that shall not be exposed
+* NoInput : This denotes a parameter at the C side that shall *not be exposed*
   at the JSON side. So the value cannot be specified by the client, it is
   provided by the JSON Server Adapter internally (e.g. for PEP_SESSION)
 
@@ -400,7 +400,7 @@ These automatic parameter value generators are supported at the moment:
 
 For functions that have a string parameter of type `const char*` followed by
 a `size_t` that specifies the length of the string, the JSON Adapter can
-calculate the value of that length parameter automatically because in the
+calculate the value of that length parameter automatically, because in the
 JSON API the lengths of strings are always known.
 
 Moreover, the "length" that has to be given here means the length of the

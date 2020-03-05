@@ -1,5 +1,9 @@
 // simple string wrapper that can be used in my template magic to call
 // a C function expecting a "const char*" directly.
+//
+// Moreover: In<c_string> stores the length of the string (in UTF-8 NFC octets)
+// in the "Context" where it can be retreived by the following InLeng<> parameter
+// in the called function's parameter list. Yeah!  See examples in READNE.md!
 
 #ifndef PEP_JSON_ADAPTER_C_STRING_HH
 #define PEP_JSON_ADAPTER_C_STRING_HH
