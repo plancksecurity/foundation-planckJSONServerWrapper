@@ -91,6 +91,12 @@ const FunctionMap functions = {
 		FP( "identity_rating" , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "get_key_rating_for_user", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<PEP_rating>>( &get_key_rating_for_user) ),
 		
+		// from mime.h
+		FP( "MIME handling API", new Separator),
+		FP( "mime_encode_message", new Func<PEP_STATUS, In<const message*>, In<bool>, Out<char*>>( &mime_encode_message )),
+		FP( "mime_decode_message", new Func<PEP_STATUS, In<c_string>, InLength<>, Out<message*>> ( &mime_decode_message )),
+		
+		// from pEpEngine.h
 		FP( "pEp Engine Core API", new Separator),
 //		FP( "log_event",  new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, In<c_string>, In<c_string>>( &log_event) ),
 		FP( "get_trustwords", new Func<PEP_STATUS, In_Pep_Session, In<const pEp_identity*>, In<const pEp_identity*>, In<Language>, Out<char*>, Out<size_t>, In<bool>>( &get_trustwords) ),

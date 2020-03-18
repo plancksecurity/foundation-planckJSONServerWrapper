@@ -56,6 +56,12 @@ In<message*>::~In()
 }
 
 template<>
+In<const message*>::~In()
+{
+	free_message(const_cast<message*>(value));
+}
+
+template<>
 In<stringlist_t*, ParamFlag::Default>::~In()
 {
 	free_stringlist(value);
@@ -228,6 +234,12 @@ message* from_json<message*>(const js::Value& v)
 	msg->enc_format = from_json_object<PEP_enc_format, js::int_type>(o, "enc_format");
 	
 	return msg.release();
+}
+
+template<>
+const message* from_json<const message*>(const js::Value& v)
+{
+    return const_cast<const message*>( from_json<message*>(v) );
 }
 
 
@@ -711,6 +723,8 @@ js::Value Type2String<PEP_SESSION>::get()  { return "Session"; }
 
 template<>
 js::Value Type2String<_message*>::get()  { return "Message"; }
+template<>
+js::Value Type2String<const _message*>::get()  { return "Message"; }
 
 template<>
 js::Value Type2String<const timestamp*>::get()  { return "Timestamp"; }
