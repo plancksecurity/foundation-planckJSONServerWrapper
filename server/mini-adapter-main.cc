@@ -156,8 +156,8 @@ try
 			do{
 				std::cout << "Press <Q> <Enter> to quit." << std::endl;
 				input = std::cin.get();
-				std::cout << "Oh, I got a '" << input << "'. \n";
-			}while(std::cin && input != 'q' && input != 'Q');
+				std::cout << "I read a " << input << " from stdin. \n";
+			}while(ja.running() && std::cin && input != 'q' && input != 'Q');
 		}else{
 			ja.run();
 			daemonize_commit(0);

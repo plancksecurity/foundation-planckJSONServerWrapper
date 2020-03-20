@@ -474,13 +474,13 @@ void JsonAdapter::shutdown(timeval* t)
 	Log() << "JS::shutdown() was called.";
 	i->running = false;
 	
-	/**** FIXME: proper shutdown!
+	/**** FIXME: proper shutdown! */
 	const int ret = event_base_loopexit(i->eventBase.get(), t);
 	if(ret!=0)
 	{
 		throw std::runtime_error("JsonAdapter::shutdown() failed.");
 	}
-	****/
+	/****/
 	Log() << "JS::shutdown(): event_base loop is finished.\n";
 	Log() << "\t there are " << i->threads.size() << " threads remaining in the threadpool.";
 	for(const auto& t : i->threads)
