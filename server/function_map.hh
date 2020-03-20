@@ -137,6 +137,7 @@ public:
 	virtual bool  isSeparator() const = 0;
 	virtual void  setJavaScriptSignature(js::Object& o) const = 0;
 	virtual js::Value  call(const js::Array& params, Context* context) const = 0;
+	virtual const void* fn_ptr() const = 0;
 };
 
 
@@ -147,7 +148,7 @@ public:
 	typedef typename Return<R>::return_type ReturnType;
 	
 	virtual ~Func() = default;
-	virtual bool isSeparator() const override
+	virtual bool isSeparator() const noexcept override
 	{
 		return false;
 	}
@@ -159,6 +160,12 @@ public:
 	{}
 
 	std::function<ReturnType(typename Args::c_type ...)> fn;
+	
+	const void* fn_ptr() const noexcept override
+	{
+//		return static_cast<const void*>(fn);
+		return nullptr;
+	}
 
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
@@ -216,13 +223,34 @@ class Separator : public FuncBase
 {
 public:
 	Separator() = default;
-	virtual bool isSeparator()                          const override { return true; }
+	virtual bool isSeparator()                          const noexcept override { return true; }
 	virtual void setJavaScriptSignature(js::Object& o)  const override { o.emplace_back("separator", true); }
 	virtual js::Value  call(const js::Array&, Context*) const override { return js::Value{}; }
+	virtual void* fn_ptr() const noexcept override { return nullptr; }
 };
 
 //typedef std::map< std::string, FuncBase* > FunctionMap;
-typedef std::vector< std::pair< std::string, FuncBase*> > FunctionMap;
+
+typedef std::vector< std::pair< std::string, FuncBase*> > FunctionMapBase;
+
+class FunctionMap
+{
+public:
+    typedef FunctionMapBase::value_type     value_type;
+    typedef FunctionMapBase::const_iterator const_iterator;
+    
+    const_iterator begin() const noexcept { return v.begin(); }
+    const_iterator end()   const noexcept { return v.end(); }
+
+    const_iterator find(const std::string&) const noexcept;
+
+    FunctionMap(std::initializer_list<value_type> il);
+
+private:
+    FunctionMapBase v;
+};
+
 typedef FunctionMap::value_type FP;
+
 
 #endif // FUNCTION_MAP_HH

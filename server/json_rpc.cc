@@ -65,14 +65,6 @@ js::Object make_request(const std::string& functionName, const js::Array& parame
 }
 
 
-namespace
-{
-	FunctionMap::const_iterator find_in_vector(const FunctionMap& fm, const std::string& key)
-	{
-		return std::find_if(fm.begin(), fm.end(), [&key](const FunctionMap::value_type& v){ return v.first == key; });
-	}
-}
-
 using json_spirit::find_value;
 
 
@@ -102,8 +94,8 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 		}
 		
 		const std::string method_name = method.get_str();
-		//const auto fn = fm.find(method_name);
-		const auto fn = find_in_vector(fm,method_name);
+		const auto fn = fm.find(method_name);
+		//const auto fn = find_in_vector(fm,method_name);
 		if(fn == fm.end() || fn->second->isSeparator())
 		{
 			return make_error(JSON_RPC::METHOD_NOT_FOUND, "Method \"" + method_name + "\" is unknown to me.", request, request_id);
