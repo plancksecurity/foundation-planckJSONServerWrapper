@@ -137,7 +137,6 @@ public:
 	virtual bool  isSeparator() const = 0;
 	virtual void  setJavaScriptSignature(js::Object& o) const = 0;
 	virtual js::Value  call(const js::Array& params, Context* context) const = 0;
-	virtual const void* fn_ptr() const = 0;
 };
 
 
@@ -161,12 +160,6 @@ public:
 
 	std::function<ReturnType(typename Args::c_type ...)> fn;
 	
-	const void* fn_ptr() const noexcept override
-	{
-//		return static_cast<const void*>(fn);
-		return nullptr;
-	}
-
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
 		typedef helper<R, 0, sizeof...(Args), Args...> Helper;
@@ -226,7 +219,6 @@ public:
 	virtual bool isSeparator()                          const noexcept override { return true; }
 	virtual void setJavaScriptSignature(js::Object& o)  const override { o.emplace_back("separator", true); }
 	virtual js::Value  call(const js::Array&, Context*) const override { return js::Value{}; }
-	virtual void* fn_ptr() const noexcept override { return nullptr; }
 };
 
 //typedef std::map< std::string, FuncBase* > FunctionMap;

@@ -107,7 +107,7 @@ const FunctionMap functions = {
 		
 		FP( "Identity Management API", new Separator),
 		FP( "get_identity"       , new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<pEp_identity*>>( &get_identity) ),
-		FP( "set_identity"       , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>> ( &set_identity) ),
+		FP( "set_identity"       , new Func<PEP_STATUS, In_Pep_Session, In<const pEp_identity*>> ( &set_identity) ),
 		FP( "mark_as_comprimized", new Func<PEP_STATUS, In_Pep_Session, In<c_string>> ( &mark_as_compromized) ),
 		FP( "identity_rating"    , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "outgoing_message_rating", new Func<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating) ),
@@ -163,8 +163,8 @@ const FunctionMap functions = {
 		
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
-		FP( "serverVersion",       new Func<ServerVersion>( &server_version ) ),
-		FP( "version",           new Func<std::string>( &version_as_a_string ) ),
+		FP( "serverVersion", new Func<ServerVersion>( &server_version ) ),
+		FP( "version",       new Func<std::string>( &version_as_a_string ) ),
 		FP( "getBinaryPath", new Func<std::string>( &getBinaryPath ) ),
 
 		FP( "shutdown",  new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::shutdown_now ) ),
