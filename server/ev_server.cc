@@ -87,8 +87,6 @@ const FunctionMap functions = {
 			In<pEp_identity*>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_for_self ) ),
 
 		FP( "decrypt_message", new Func<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
-		FP( "outgoing_message_rating", new Func<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating ) ),
-		FP( "identity_rating" , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "get_key_rating_for_user", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<PEP_rating>>( &get_key_rating_for_user) ),
 		
 		// from mime.h
@@ -109,16 +107,13 @@ const FunctionMap functions = {
 		
 		FP( "Identity Management API", new Separator),
 		FP( "get_identity"       , new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<pEp_identity*>>( &get_identity) ),
-		FP( "set_identity"       , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>> ( &set_identity) ),
+		FP( "set_identity"       , new Func<PEP_STATUS, In_Pep_Session, In<const pEp_identity*>> ( &set_identity) ),
 		FP( "mark_as_comprimized", new Func<PEP_STATUS, In_Pep_Session, In<c_string>> ( &mark_as_compromized) ),
 		FP( "identity_rating"    , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "outgoing_message_rating", new Func<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating) ),
 		FP( "set_identity_flags"     , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &set_identity_flags) ),
 		FP( "unset_identity_flags"   , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &unset_identity_flags) ),
 		
-		FP( "MIME message handling", new Separator),
-		FP( "mime_decode_message", new Func<PEP_STATUS, In<c_string>, In<std::size_t>, Out<message*>>( &mime_decode_message) ),
-
 		FP( "Low level Key Management API", new Separator),
 		FP( "generate_keypair", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &generate_keypair) ),
 		FP( "delete_keypair", new Func<PEP_STATUS, In_Pep_Session, In<c_string>> ( &delete_keypair) ),
@@ -168,8 +163,8 @@ const FunctionMap functions = {
 		
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
-		FP( "serverVersion",       new Func<ServerVersion>( &server_version ) ),
-		FP( "version",           new Func<std::string>( &version_as_a_string ) ),
+		FP( "serverVersion", new Func<ServerVersion>( &server_version ) ),
+		FP( "version",       new Func<std::string>( &version_as_a_string ) ),
 		FP( "getBinaryPath", new Func<std::string>( &getBinaryPath ) ),
 
 		FP( "shutdown",  new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::shutdown_now ) ),
