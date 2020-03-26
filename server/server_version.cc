@@ -97,7 +97,8 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,17,0);  // kick out getGpgEnvironment(). It was Enigmail-only (JSON-18) and breaks architecture. Kick-out hotfixer un-feature.
 //static const ServerVersion sv(0,18,0);  // JSON-127: 'src' in encrypt_message() is InOut.
 //static const ServerVersion sv(0,18,1);  // JSON-130: some data members in pEp_identity added
-static const ServerVersion sv(0,18,2);  // JSON-135: Add mime_encode_message() and mime_decode_message() to the JSON API
+//static const ServerVersion sv(0,18,2);  // JSON-135: Add mime_encode_message() and mime_decode_message() to the JSON API
+static const ServerVersion sv(0,18,3);  // JSON-137: Add outgoing_message_rating_preview() to the JSON API
 
 	return sv;
 }

@@ -111,6 +111,7 @@ const FunctionMap functions = {
 		FP( "mark_as_comprimized", new Func<PEP_STATUS, In_Pep_Session, In<c_string>> ( &mark_as_compromized) ),
 		FP( "identity_rating"    , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "outgoing_message_rating", new Func<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating) ),
+		FP( "outgoing_message_rating_preview", new Func<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating_preview) ),
 		FP( "set_identity_flags"     , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &set_identity_flags) ),
 		FP( "unset_identity_flags"   , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &unset_identity_flags) ),
 		
