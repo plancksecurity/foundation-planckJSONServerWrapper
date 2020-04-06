@@ -32,7 +32,7 @@ struct In<c_string, PF>
 	
 	In(const js::Value& v, Context* ctx, unsigned param_nr)
 	: is_null ( v.is_null() )
-	, value( (PF | ParamFlag::NullOkay) && is_null ? "" : from_json<std::string>(v) )
+	, value( bool(PF & ParamFlag::NullOkay) && is_null ? "" : from_json<std::string>(v) )
 	{
 		ctx->store(param_nr, value.length());
 	}
