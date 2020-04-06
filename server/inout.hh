@@ -16,6 +16,7 @@ enum class ParamFlag : unsigned
 	Default = 0,
 	NoInput = 1,        // has no input parameter in the JSON API. Value comes from Context.
 	DontOwn = 2,        // parameter holds a "shared resource". Don't free() it in destructor.
+	NullOkay = 4,       // JSON 'null' value accepted, will become a C NULL pointer.
 };
 
 inline constexpr
