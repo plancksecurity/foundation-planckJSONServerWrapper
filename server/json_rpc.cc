@@ -131,7 +131,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 	catch(const std::exception& e)
 	{
 		// JSON-RPC "internal error"
-		return make_error(JSON_RPC::INTERNAL_ERROR, std::string("std::exception catched: \"") + e.what() + "\".", request, request_id );
+		return make_error(JSON_RPC::INTERNAL_ERROR, std::string("std::exception caught: \"") + e.what() + "\".", request, request_id );
 	}
 	catch(...)
 	{
