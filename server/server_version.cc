@@ -69,7 +69,8 @@ static const std::string VersionName =
 //  Renumbering due to political decisions - the planned exits 31..39 through the Sauerland will never be build. :-(
 //  So we got a new exit with the same number:
 //	"(39) Eisenach"; // JSON-118: fix to_json() for KeySync callbacks to avoid crashes. Add attachment support in interactive.js \o/
-	"(40) Eisenach-Ost"; // remove all Enigmail leftovers. Bump API version to 0.17.0
+//	"(40) Eisenach-Ost"; // remove all Enigmail leftovers. Bump API version to 0.17.0
+	"(40b) Sättelstädt"; // JSON-139: support for NULL pointers in "const char*" parameters: In<c_string, NullOkay>
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
