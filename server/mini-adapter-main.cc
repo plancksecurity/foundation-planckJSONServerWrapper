@@ -141,7 +141,7 @@ try
 	  ;
 	/*
 	 * FIXME: why are exceptions risen after the instantiation of JsonAdapter
-	 *        not catched in the outer try/catch?
+	 *        not caught in the outer try/catch?
 	 */
 
 	try
@@ -194,4 +194,3 @@ catch (...)
 	daemonize_commit(20);
 	exit(20);
 }
-

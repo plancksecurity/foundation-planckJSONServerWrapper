@@ -31,18 +31,20 @@ struct In<c_string, PF>
 	Self& operator=(const Self&) = delete;
 	
 	In(const js::Value& v, Context* ctx, unsigned param_nr)
-	: value( from_json<std::string>(v) )
+	: is_null ( v.is_null() )
+	, value( bool(PF & ParamFlag::NullOkay) && is_null ? "" : from_json<std::string>(v) )
 	{
 		ctx->store(param_nr, value.length());
 	}
 	
 	js::Value to_json() const
 	{
-		return ::to_json<std::string>(value);
+		return is_null ? js::Value{} : ::to_json<std::string>(value);
 	}
 	
-	c_type get_value() const { return value.c_str(); }
+	c_type get_value() const { return is_null ? nullptr : value.c_str(); }
 	
+	const bool is_null;
 	const std::string value;
 };
 
