@@ -651,7 +651,7 @@ template<>
 PEP_rating from_json<PEP_rating>(const js::Value& v)
 {
 	const js::Object& o = v.get_obj();
-	return from_json_object<PEP_rating, js::int_type>(o, "rating");
+	return static_cast<PEP_rating>( from_json_object<int, js::int_type>(o, "rating") );
 }
 
 
