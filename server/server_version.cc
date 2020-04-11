@@ -99,7 +99,8 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,18,0);  // JSON-127: 'src' in encrypt_message() is InOut.
 //static const ServerVersion sv(0,18,1);  // JSON-130: some data members in pEp_identity added
 //static const ServerVersion sv(0,18,2);  // JSON-135: Add mime_encode_message() and mime_decode_message() to the JSON API
-static const ServerVersion sv(0,18,3);  // JSON-137: Add outgoing_message_rating_preview() to the JSON API
+//static const ServerVersion sv(0,18,3);  // JSON-137: Add outgoing_message_rating_preview() to the JSON API
+static const ServerVersion sv(0,18,4);  // JSON-141: fix handling of parameters of type PEP_rating
 
 	return sv;
 }
@@ -113,15 +114,15 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 {
 	Logger L("ServerVersion");
 	if (!PackageVersion)
-		
+	{
 		try{
 			PackageVersion = "0.0.0";  /* break the loop */
-
+			
 			const std::string file_content =
 				boost::algorithm::trim_copy(
 					pEp::slurp("PackageVersion")
 				);
-
+			
 			try{
 				js::Value v;
 				js::read_or_throw(file_content, v);
@@ -133,7 +134,7 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 				L.warning(std::string("Cannot parse file \"PackageVersion\" as JSON object: ") + e.what() );
 				PackageVersion = strdup(file_content.c_str());
 			}
-
+			
 			this->package_version = PackageVersion;
 		}
 		catch(std::runtime_error& e)
@@ -141,7 +142,7 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 			// slurp() throws when it cannot read the file.
 			L.info(std::string("Cannot read file \"PackageVersion\": ") + e.what() );
 		}
-	
+	}
 	L.debug("ServerVersion set as %u.%u.%u name=\"%s\" package_version=\"%s\".",
 		major, minor, patch, name.c_str(), package_version
 		);

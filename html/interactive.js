@@ -229,7 +229,16 @@ var Param2Form =
 						return 'Message direction: '
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="0"' + disabled + '>Incoming,&nbsp;&nbsp;'
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="1"' + disabled + ' checked>Outgoing';
-					}
+					},
+		PEP_rating : function(nr, pp, value)
+					{
+						if(pp.direction=="Out")
+						{
+							return 'PEP Rating output';
+						}else{
+							return 'PEP Rating: ' + genInput('inp_param_' + nr , 'number', pp.direction, 0);
+						}
+					},
 	};
 
 function fromHex(charCode)
@@ -378,7 +387,13 @@ var Form2Param =
 		PEP_msg_direction : function(nr, pp, value)
 					{
 						return parseInt( $('input[name=inp_rad_' + nr + ']:checked', '#frm').val() );
-					}
+					},
+		PEP_rating : function(nr, pp, value)
+					{
+						var r = {};
+						r.rating = parseInt( document.getElementById('inp_param_' + nr ).value );
+						return r;
+					},
 	};
 
 // uses {0}, {1} etc. instead of %d etc.
