@@ -549,13 +549,13 @@ js::Value to_json<stringpair_list_t*>(stringpair_list_t* const& osl)
 
 
 template<>
-tm* from_json<tm*>(const js::Value& v)
+timestamp* from_json<timestamp *>(const js::Value& v)
 {
 	return new_timestamp( v.get_int64() );
 }
 
 template<>
-const tm* from_json<const tm*>(const js::Value& v)
+const timestamp* from_json<const timestamp*>(const js::Value& v)
 {
 	return new_timestamp( v.get_int64() );
 }
