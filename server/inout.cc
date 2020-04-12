@@ -154,7 +154,7 @@ js::Value to_json<char*>(char* const & s)
 
 
 template<>
-js::Value to_json<struct tm*>(struct tm* const& t)
+js::Value to_json<timestamp *>(timestamp * const& t)
 {
 	if(t==nullptr)
 	{
