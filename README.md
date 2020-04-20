@@ -301,6 +301,37 @@ file that has user-only read permissions.
    token".
 
 
+### Callbacks / Reverse connection
+
+p≡p applications must register callback handlers at the Engine. At the moment
+there are these callbacks:
+
+* `PEP_STATUS messageToSend(message* msg)`
+* `PEP_STATUS notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal)`
+
+The JSON adapter register its own functions at the Engine which propagate these
+events to all connected clients.
+
+The event propagation to the clients are also done via JSON RPC calls. Here
+the JSON Adapter acts as "client" which connects to a host:port that was told
+to by the Client to the JSON Adapter via `registerEventListener()` call, where
+Client also sends a security token to the JSON Adapter for the reverse JSON RPC
+connection.
+
+Note: It is planned to change the way how events are sent to the Client, when
+the Client is unable to open listen sockets (it is rumored that future versions
+of Mozilla Thunderbird's plugin API will no longer allow this).
+
+Idea 1: Use long polling: The Client calls a function that blocks until an event
+from the Engine arrives. This approach requires only a few changes in the JSON Adapter.
+
+Idea 2: Use WebSockets: In fact this is also a type of "long polling" and an open
+TCP connection, opened by the Client. But it requires additional code in the JSON
+Adapter for the WebSockets protocol and a mechanism how to transfer the underlaying
+TCP socket and buffer from the libevent library to the WebSockets implementation.
+See: https://pep.foundation/jira/browse/JSON-128
+
+
 ## Extending / customizing
 
 If you want to extend or customize the p≡p JSON Adapter, there are several
