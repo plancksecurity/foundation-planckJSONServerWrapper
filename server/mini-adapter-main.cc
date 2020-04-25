@@ -20,6 +20,7 @@
 namespace po = boost::program_options;
 
 bool debug_mode = false;
+bool foreground = false;
 bool do_sync    = false;
 bool ignore_missing_session = false;
 bool add_sharks = false;
@@ -63,6 +64,7 @@ try
 		("help,h", "print this help messages")
 		("version,v", "print program version")
 		("debug,d"  , po::value<bool>(&debug_mode)->default_value(false), "Run in debug mode, don't fork() in background: --debug true")
+        ("foreground,D", po::bool_switch(&foreground), "do not fork and detach terminal")
 		("sync"     , po::value<bool>(&do_sync)->default_value(true)    , "Start keysync in an asynchounous thread (default) or not (--sync false)")
 		("start-port,s", po::value<unsigned>(&start_port)->default_value(start_port),  "First port to bind on")
 		("end-port,e",   po::value<unsigned>(&end_port)->default_value(end_port),      "Last port to bind on")
@@ -160,7 +162,8 @@ try
 			}while(std::cin && input != 'q' && input != 'Q');
 		}else{
 			ja.run();
-			daemonize_commit(0);
+            if (!foreground)
+                daemonize_commit(0);
 			do{
 				std::this_thread::sleep_for(std::chrono::seconds(3));
 			}while(ja.running());
