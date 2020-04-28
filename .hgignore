@@ -63,3 +63,7 @@ build-windows/libevent/Release/*
 build-windows/libevent/Debug/*
 build-windows/pEpJSONServerAdapter/Release/*
 build-windows/pEpJSONServerAdapter/Debug/*
+
+*.d.*
+.??*.swp
+tags
