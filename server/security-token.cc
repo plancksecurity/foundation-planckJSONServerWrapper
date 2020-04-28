@@ -7,6 +7,7 @@
 
 #include <cstdlib>     // for getenv()
 #include <boost/filesystem.hpp>
+#include <pEp/pEpEngine.h> // for per_user_directory()
 
 namespace fs = boost::filesystem;
 
@@ -37,9 +38,8 @@ namespace
 
 fs::path get_token_filename()
 {
-	// Windows guarantees that this directory is rw by the user only?
-	const char* const dir = getenv("LOCALAPPDATA");
-	return dir / fs::path("pEp") / fs::path("json-token");
+	// Get the directory from the pEp Engine.
+	return per_user_directory() / fs::path("json-token");
 }
 
 void write_security_file(const std::string& content)
