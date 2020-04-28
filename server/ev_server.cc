@@ -91,8 +91,8 @@ const FunctionMap functions = {
 		
 		// from mime.h
 		FP( "MIME handling API", new Separator),
-		FP( "mime_encode_message", new Func<PEP_STATUS, In<const message*>, In<bool>, Out<char*>>( &mime_encode_message )),
-		FP( "mime_decode_message", new Func<PEP_STATUS, In<c_string>, InLength<>, Out<message*>> ( &mime_decode_message )),
+		FP( "mime_encode_message", new Func<PEP_STATUS, In<const message*>, In<bool>, Out<char*>, In<bool>>( &mime_encode_message )),
+		FP( "mime_decode_message", new Func<PEP_STATUS, In<c_string>, InLength<>, Out<message*>, Out<bool>>( &mime_decode_message )),
 		
 		// from pEpEngine.h
 		FP( "pEp Engine Core API", new Separator),
