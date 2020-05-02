@@ -82,6 +82,36 @@ struct In
 };
 
 
+template<class T>
+struct In<T, ParamFlag::NoInput>
+{
+	typedef T c_type; // the according type in C function parameter
+	enum { is_output = false, need_input = false };
+	typedef In<T, ParamFlag::NoInput> Self;
+	
+	explicit In(const T& t) : value(T{}) {}
+	~In() {}
+	
+	In(const Self& other) = delete;
+	In(Self&& victim) = delete;
+	Self& operator=(const Self&) = delete;
+	
+	// default implementation:
+	In(const js::Value& v, Context*, unsigned param_nr)
+	: value{ T{} }
+	{ }
+	
+	js::Value to_json() const
+	{
+		throw std::logic_error( std::string("Never call to_json() for a In<") + typeid(T).name() + "> data type!  fn=" + __PRETTY_FUNCTION__ );
+	}
+	
+	T get_value() const { return value; }
+	
+	T value;
+};
+
+
 // to call functions that operate directly on the JSON data type
 template<class T, ParamFlag PF=ParamFlag::Default>
 struct InRaw
