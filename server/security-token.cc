@@ -67,7 +67,7 @@ fs::path get_token_filename()
 		throw std::runtime_error("per_user_directory() fails.");
 	}
 	
-	const fs::path pEp_dir = fs::path(pEp_home_dir)
+	const fs::path pEp_dir = fs::path(pEp_home_dir);
 	boost::system::error_code ec;
 	fs::create_directory( pEp_dir );
 	
