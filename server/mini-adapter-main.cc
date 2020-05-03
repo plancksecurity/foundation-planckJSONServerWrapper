@@ -23,6 +23,7 @@ bool debug_mode = false;
 bool do_sync    = false;
 bool ignore_missing_session = false;
 bool add_sharks = false;
+bool no_detach  = false;
 bool no_html    = false;
 
 uintptr_t status_handle = 0;
@@ -63,6 +64,7 @@ try
 		("help,h", "print this help messages")
 		("version,v", "print program version")
 		("debug,d"  , po::value<bool>(&debug_mode)->default_value(false), "Run in debug mode, don't fork() in background: --debug true")
+        ("--no-detach,D", po::bool_switch(&no_detach), "do not detach from controlling terminal")
 		("sync"     , po::value<bool>(&do_sync)->default_value(true)    , "Start keysync in an asynchounous thread (default) or not (--sync false)")
 		("start-port,s", po::value<unsigned>(&start_port)->default_value(start_port),  "First port to bind on")
 		("end-port,e",   po::value<unsigned>(&end_port)->default_value(end_port),      "Last port to bind on")
@@ -119,7 +121,7 @@ try
 		ev_server::addSharks();
 	}
 	
-	if( debug_mode == false )
+	if( debug_mode == false && no_detach == false )
 		daemonize (!debug_mode, (const uintptr_t) status_handle);
 	
 	// create a dummy session just to see whether the Engine is functional.
