@@ -155,6 +155,7 @@ const FunctionMap functions = {
 		FP( "registerEventListener"  , new Func<void, In<JsonAdapter*,ParamFlag::NoInput>, In<std::string>, In<unsigned>, In<std::string>> ( &JsonAdapter::registerEventListener) ),
 		FP( "unregisterEventListener", new Func<void, In<JsonAdapter*,ParamFlag::NoInput>, In<std::string>, In<unsigned>, In<std::string>> ( &JsonAdapter::unregisterEventListener) ),
 		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In_Pep_Session, In<sync_handshake_result>, In<const identity_list*> > (&deliverHandshakeResult) ),
+		FP( "pollForEvents"          , new Func<js::Array, In<JsonAdapter*,ParamFlag::NoInput>, In<unsigned>> (&JsonAdapter::pollForEvents) ),
 		
 		FP( "Sync", new Separator ),
 		FP( "leave_device_group"       , new Func<PEP_STATUS, In_Pep_Session> (&leave_device_group) ),

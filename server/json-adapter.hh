@@ -23,6 +23,9 @@ public:
 	void   registerEventListener(const std::string& address, unsigned port, const std::string& securityContext);
 	void unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext);
 	
+	// returns all events in queue, if any. Blocks for given number of seconds and returns empty array on timeout
+	json_spirit::Array pollForEvents(unsigned timeout_seconds);
+	
 	// set some internal variables and return itself for chaining.
 	// these functions shall be called before prepare_run()!
 	

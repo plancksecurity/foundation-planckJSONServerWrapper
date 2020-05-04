@@ -60,3 +60,6 @@ js::Value Type2String<bool>::get()  { return "Bool"; }
 
 template<>
 js::Value Type2String<void>::get()  { return "Void"; }
+
+template<>
+js::Value Type2String<js::Array>::get()  { return "Array"; }

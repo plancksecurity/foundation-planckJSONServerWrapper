@@ -546,6 +546,12 @@ void JsonAdapter::unregisterEventListener(const std::string& address, unsigned p
 }
 
 
+js::Array JsonAdapter::pollForEvents(unsigned timeout_seconds)
+{
+    return js::Array{};
+}
+
+
 Logger::Stream JsonAdapter::Log(Logger::Severity sev) const
 {
 	check_guard();
