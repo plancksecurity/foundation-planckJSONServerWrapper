@@ -89,7 +89,7 @@ struct In<T, ParamFlag::NoInput>
 	enum { is_output = false, need_input = false };
 	typedef In<T, ParamFlag::NoInput> Self;
 	
-	explicit In(const T& t) : value(T{}) {}
+	explicit In(const T& t) : value(t) {}
 	~In() {}
 	
 	In(const Self& other) = delete;
