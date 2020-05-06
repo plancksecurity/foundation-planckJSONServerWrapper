@@ -7,6 +7,7 @@
 
 #include <cstdlib>     // for getenv()
 #include <boost/filesystem.hpp>
+#include <pEp/pEpEngine.h> // for per_user_directory()
 
 namespace fs = boost::filesystem;
 
@@ -37,9 +38,8 @@ namespace
 
 fs::path get_token_filename()
 {
-	// Windows guarantees that this directory is rw by the user only?
-	const char* const dir = getenv("LOCALAPPDATA");
-	return dir / fs::path("pEp") / fs::path("json-token");
+	// Get the directory from the pEp Engine.
+	return per_user_directory() / fs::path("json-token");
 }
 
 void write_security_file(const std::string& content)
@@ -61,19 +61,15 @@ void write_security_file(const std::string& content)
 
 fs::path get_token_filename()
 {
-	const char* const home_dir = getenv("HOME");
-	if(home_dir == nullptr)
+	const char* const pEp_home_dir = per_user_directory();
+	if(pEp_home_dir == nullptr)
 	{
-		throw std::runtime_error("Cannot get home directory. $HOME environment variable is not set.");
+		throw std::runtime_error("per_user_directory() fails.");
 	}
 	
-	const fs::path pEp_dir = fs::path(home_dir) / ".pEp";
+	const fs::path pEp_dir = fs::path(pEp_home_dir);
 	boost::system::error_code ec;
-	fs::create_directory( pEp_dir, ec );
-	if(ec)
-	{
-		throw boost::system::system_error(ec, "Cannot create pEp home directory" );
-	}
+	fs::create_directory( pEp_dir );
 	
 	fs::permissions( pEp_dir, fs::perms(0700), ec);
 	if(ec)
