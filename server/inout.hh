@@ -234,6 +234,13 @@ struct Type2String<In<T, PF>>
 
 
 template<class T>
+struct Type2String<In<T, ParamFlag::NoInput>>
+{
+    static js::Value get() { throw std::logic_error("Stupid MSVC compiler requiring this!"); }
+};
+
+
+template<class T>
 struct Type2String<InRaw<T, ParamFlag::Default>>
 {
 	static js::Value get() { js::Object ret; ret.emplace_back("direction", "In"); ret.emplace_back("type", Type2String<T>::get() ); return ret; }
