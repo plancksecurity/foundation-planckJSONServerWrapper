@@ -7,7 +7,7 @@ any client.
 
 ## Requirements
 In order to use the p≡p JSON Server Adapter, you need to build and run it.
-Currently, Linux (Debian 9, Ubuntu 16.04) and MacOS (10.11, 10.12) are
+Currently, Linux (Debian 9, Ubuntu 16.04) and MacOS (10.11, 10.12, 10.13) are
 supported, Windows is about to follow.  Newer versions should also work
 (file a bug report if not) but are not in our main focus, yet.
 
@@ -18,6 +18,7 @@ supported, Windows is about to follow.  Newer versions should also work
 * libboost-program-options-dev  (tested with 1.58, 1.62 and 1.70)
 * libboost-filesystem-dev (tested with 1.58, 1.62 and 1.70)
 * libevent-dev 2.0.21 or 2.0.22 (or build from source, see below)
+* libevhtp-dev (1.2.18)
 * [p≡p Engine](https://pep.foundation/dev/repos/pEpEngine/)
   (which needs gpgme-thread, a patched libetpan, libboost-system-dev)
 * [libpEpAdapter](https://pep.foundation/dev/repos/libpEpAdapter/)
