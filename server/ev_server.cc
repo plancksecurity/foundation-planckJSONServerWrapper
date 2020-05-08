@@ -1,4 +1,4 @@
-#include <evhttp.h>
+#include <evhtp.h>
 
 #include "ev_server.hh"
 #include "c_string.hh"
@@ -178,22 +178,22 @@ const FunctionMap functions = {
 } // end of anonymous namespace
 
 
-void ev_server::sendReplyString(evhttp_request* req, const char* contentType, const std::string& outputText)
+void ev_server::sendReplyString(evhtp_request* req, const char* contentType, const std::string& outputText)
 {
-	auto* outBuf = evhttp_request_get_output_buffer(req);
+	auto* outBuf = req->buffer_out;
 	if (!outBuf)
 		return;
 	
 	if(contentType)
 	{
-		evhttp_add_header(evhttp_request_get_output_headers(req), "Content-Type", contentType);
+		evhtp_headers_add_header(req->headers_out, evhtp_header_new("Content-Type", contentType, 0,0));
 	}
 	const int ret = evbuffer_add(outBuf, outputText.data(), outputText.size());
 	if(ret==0)
 	{
-		evhttp_send_reply(req, HTTP_OK, "", outBuf);
+		evhtp_send_reply(req, EVHTP_RES_OK);
 	}else{
-		evhttp_send_reply(req, 500, "evbuffer_add() failed.", outBuf);
+		evhtp_send_reply(req, EVHTP_RES_500);
 	}
 	
 	Log() << Logger::Debug << "sendReplyString(): ret=" << ret
@@ -202,17 +202,17 @@ void ev_server::sendReplyString(evhttp_request* req, const char* contentType, co
 }
 
 
-void ev_server::sendFile( evhttp_request* req, const std::string& mimeType, const fs::path& fileName)
+void ev_server::sendFile( evhtp_request* req, const std::string& mimeType, const fs::path& fileName)
 {
-	auto* outBuf = evhttp_request_get_output_buffer(req);
+	auto* outBuf = req->buffer_out;
 	if (!outBuf)
 		return;
 	
 	// not the best for big files, but this server does not send big files. :-)
 	const std::string fileContent = pEp::slurp(fileName.string());
 	evbuffer_add(outBuf, fileContent.data(), fileContent.size());
-	evhttp_add_header(evhttp_request_get_output_headers(req), "Content-Type", mimeType.c_str());
-	evhttp_send_reply(req, HTTP_OK, "", outBuf);
+	evhtp_headers_add_header(req->headers_out, evhtp_header_new("Content-Type", mimeType.c_str(),0,0));
+	evhtp_send_reply(req, EVHTP_RES_OK);
 }
 
 
@@ -223,7 +223,7 @@ struct FileRequest
 };
 
 // catch-all callback
-void ev_server::OnOtherRequest(evhttp_request* req, void*)
+void ev_server::OnOtherRequest(evhtp_request* req, void*)
 {
 	static const std::map<std::string, FileRequest > files =
 		{
@@ -233,10 +233,9 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 			{ "/favicon.ico"     , {"image/vnd.microsoft.icon", path_to_html / "json-test.ico"} },
 		};
 	
-	const evhttp_uri* uri = evhttp_request_get_evhttp_uri(req);
-	const char* path = evhttp_uri_get_path(uri);
-	const char* uri_string = evhttp_request_get_uri(req);
-	Log() << Logger::Debug << "** Request: [" << uri_string << "] " << (path? " Path: [" + std::string(path) + "]" : "null path") << "\n";
+	const evhtp_uri* uri = req->uri;
+	const char* path = uri->path->full;
+	Log() << Logger::Debug << "** Request: " << (path? " Path: [" + std::string(path) + "]" : "null path") << "\n";
 	
 	try{
 		if(path)
@@ -250,23 +249,27 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 			}
 		}
 	
-		const std::string reply = std::string("URI \"") + uri_string + "\" not found! "
+		const std::string reply = std::string("URI not found! ")
 			+ (!path ? "NULL Path" : "Path: \"" + std::string(path) + "\"");
-		evhttp_send_error(req, HTTP_NOTFOUND, reply.c_str());
+		Log() << Logger::Warn << reply;
+		
+		evhtp_send_reply(req, EVHTP_RES_NOTFOUND);
 	}
 	catch(const std::runtime_error& e)
 	{
-		const std::string error_msg = "Internal error caused by URI \"" + std::string(uri_string) + "\"";
+		const std::string error_msg = std::string("Internal error caused by URI ")
+			+ (!path ? "NULL Path" : "Path: \"" + std::string(path) + "\"");
+		
 		// Log e.what() to log file, but DON'T send it in HTTP error message
 		// because it might contain sensitive information, e.g. local file paths etc.!
 		Log() << Logger::Error << "OnOtherRequest: " << error_msg << ".  what:" << e.what();
-		evhttp_send_error(req, HTTP_INTERNAL, error_msg.c_str() );
+		evhtp_send_reply(req, EVHTP_RES_500 );
 	}
 };
 
 
 // generate a JavaScript file containing the definition of all registered callable functions, see above.
-void ev_server::OnGetFunctions(evhttp_request* req, void*)
+void ev_server::OnGetFunctions(evhtp_request* req, void*)
 {
 	static const auto& version = server_version();
 	static const std::string preamble =
@@ -306,10 +309,10 @@ void ev_server::OnGetFunctions(evhttp_request* req, void*)
 }
 
 
-void ev_server::OnApiRequest(evhttp_request* req, void* obj)
+void ev_server::OnApiRequest(evhtp_request* req, void* obj)
 {
 	Logger L( Log(), "OnApiReq");
-	evbuffer* inbuf = evhttp_request_get_input_buffer(req);
+	evbuffer* inbuf = req->buffer_in;
 	const size_t length = evbuffer_get_length(inbuf);
 
 	int request_id = -42;

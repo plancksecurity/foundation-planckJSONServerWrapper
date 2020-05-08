@@ -5,7 +5,7 @@
 #include <thread>
 #include <cstdint>
 #include <vector>
-#include <evhttp.h>
+#include <evhtp.h>
 
 #include <string>
 #include <set>
@@ -85,7 +85,7 @@ typedef std::pair<std::string, unsigned> EventListenerKey;
 struct EventListenerValue
 {
 	std::string securityContext;
-	std::unique_ptr<evhttp_connection, decltype(&evhttp_connection_free)> connection = { nullptr, &evhttp_connection_free};
+	std::unique_ptr<evhtp_connection, decltype(&evhtp_connection_free)> connection = { nullptr, &evhtp_connection_free};
 };
 
 
@@ -93,7 +93,7 @@ struct EventListenerValue
 struct JsonAdapter::Internal
 {
 	std::unique_ptr<event_base, decltype(&event_base_free)> eventBase = {nullptr, &event_base_free};
-	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
+	std::unique_ptr<evhtp, decltype(&evhtp_free)> evHtp = {nullptr, &evhtp_free};
 	std::string address;
 	std::string token;
 	std::map<EventListenerKey, EventListenerValue> eventListener;
@@ -128,23 +128,25 @@ struct JsonAdapter::Internal
 	}
 	
 	static
-	void requestDone(evhttp_request* req, void* userdata)
+	void requestDone(evhtp_request* req, void* userdata)
 	{
 		// Hum, what is to do here?
 	}
 
 	static
-	PEP_STATUS deliverRequest(const std::string& uri, evhttp_connection* connection, const js::Object& request)
+	PEP_STATUS deliverRequest(const std::string& uri, evhtp_connection* connection, const js::Object& request)
 	{
+	/*
 		const std::string request_s = js::write(request, js::raw_utf8);
-		evhttp_request* ereq = evhttp_request_new( &requestDone, nullptr ); // ownership goes to the connection in evhttp_make_request() below.
-		evhttp_add_header(ereq->output_headers, "Content-Length", std::to_string(request_s.length()).c_str());
+		evhtp_request* ereq = evhtp_request_new( &requestDone, nullptr ); // ownership goes to the connection in evhttp_make_request() below.
+		evhtp_add_header(ereq->output_headers, "Content-Length", std::to_string(request_s.length()).c_str());
 		auto output_buffer = evhttp_request_get_output_buffer(ereq);
 		evbuffer_add(output_buffer, request_s.data(), request_s.size());
 		
-		const int ret = evhttp_make_request(connection, ereq, EVHTTP_REQ_POST, uri.c_str() );
+		const int ret = evhtp_make_request(connection, ereq, EVHTTP_REQ_POST, uri.c_str() );
 		
 		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
+	*/ return PEP_STATUS_OK;
 	}
 	
 	PEP_STATUS makeAndDeliverRequest(const char* function_name, const js::Array& params)
@@ -283,8 +285,8 @@ JsonAdapter::JsonAdapter()
 	if (!i->eventBase)
 		throw std::runtime_error("Failed to create new base_event.");
 	
-	i->evHttp.reset( evhttp_new(i->eventBase.get()) );
-	if (!i->evHttp)
+	i->evHtp.reset( evhtp_new(i->eventBase.get(), nullptr) );
+	if (!i->evHtp)
 		throw std::runtime_error("Failed to create new evhttp.");
 }
 
@@ -328,8 +330,8 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 	
 	unsigned port_ofs = 0;
 try_next_port:
-	auto* boundSock = evhttp_bind_socket_with_handle(i->evHttp.get(), i->address.c_str(), i->start_port + port_ofs);
-	if (!boundSock)
+	int boundSock = evhtp_bind_socket(i->evHtp.get(), i->address.c_str(), i->start_port + port_ofs, 0);
+	if (boundSock == -1)
 	{
 		++port_ofs;
 		if(i->start_port + port_ofs > i->end_port)
@@ -341,8 +343,8 @@ try_next_port:
 		goto try_next_port;
 	}
 	
-	if ((i->sock = evhttp_bound_socket_get_fd(boundSock)) == -1)
-		throw std::runtime_error("Failed to get server socket for next instance.");
+//	if ((i->sock = evhtp_bound_socket_get_fd(boundSock)) == -1)
+//		throw std::runtime_error("Failed to get server socket for next instance.");
 	
 	i->port = i->start_port + port_ofs;
 	i->token = create_security_token(i->address, i->port, BaseUrl);
@@ -383,16 +385,16 @@ void JsonAdapter::threadFunc()
 		if (!eventBase)
 			throw std::runtime_error("Failed to create new base_event.");
 		
-		std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp(evhttp_new(eventBase.get()), &evhttp_free);
-		if (!evHttp)
-			throw std::runtime_error("Failed to create new evhttp.");
+		std::unique_ptr<evhtp, decltype(&evhtp_free)> evHtp(evhtp_new(eventBase.get(), nullptr), &evhtp_free);
+		if (!evHtp)
+			throw std::runtime_error("Failed to create new evhtp.");
 		
-		evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
+		evhtp_set_cb(evHtp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
 		
 		if(i->deliver_html)
 		{
-			evhttp_set_cb(evHttp.get(), "/pEp_functions.js"      , ev_server::OnGetFunctions  , this);
-			evhttp_set_gencb(evHttp.get(), ev_server::OnOtherRequest, nullptr);
+			evhtp_set_cb(evHtp.get(), "/pEp_functions.js"  , ev_server::OnGetFunctions  , this);
+			evhtp_set_gencb(evHtp.get(), ev_server::OnOtherRequest, nullptr);
 		}
 		
 		if (i->sock == -1) // no port bound, yet
@@ -402,7 +404,7 @@ void JsonAdapter::threadFunc()
 		else
 		{
 			L << Logger::Info << "\tnow I call evhttp_accept_socket()...";
-			if (evhttp_accept_socket(evHttp.get(), i->sock) == -1)
+			if (evhtp_accept_socket(evHtp.get(), i->sock, 0) == -1)
 				throw std::runtime_error("Failed to accept() on server socket for new instance.");
 		}
 		
