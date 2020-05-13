@@ -162,5 +162,11 @@ void* keyserverLookupThreadRoutine(void* arg)
 	return (void*) status;
 }
 
+
+Adapter& Adapter::createInstance()
+{
+	return dynamic_cast<Adapter&>(JsonAdapter::createInstance( new Adapter() ));
+}
+
 } // end of namespace pEp::mini
 } // end of namespace pEp

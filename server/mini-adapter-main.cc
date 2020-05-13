@@ -136,8 +136,8 @@ try
 			throw std::runtime_error(error_msg);
 		}
 	}
-
-	JsonAdapter& ja = JsonAdapter::getInstance();
+	
+	JsonAdapter& ja = pEp::mini::Adapter::getInstance();
 	ja.ignore_session_errors( ignore_missing_session)
 	  .deliver_html( !no_html )
 	  ;
@@ -148,7 +148,7 @@ try
 
 	try
 	{
-		ja.prepare_run(address, start_port, end_port, &pEp::mini::injectSyncMsg);
+		ja.prepare_run(address, start_port, end_port);
 		
 		if( debug_mode )
 		{
