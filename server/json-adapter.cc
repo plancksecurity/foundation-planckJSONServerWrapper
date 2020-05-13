@@ -22,6 +22,7 @@
 #include "ev_server.hh"
 #include "logger.hh"
 #include "server_version.hh"
+#include "session_registry.hh"
 
 #include <pEp/keymanagement.h>
 #include <pEp/call_with_lock.hh>
@@ -51,8 +52,6 @@ const std::string ApiRequestUrl = BaseUrl + "callFunction";
 const uint64_t Guard_0 = 123456789;
 const uint64_t Guard_1 = 987654321;
 
-typedef std::map<std::thread::id, JsonAdapter*> SessionRegistry;
-
 SessionRegistry session_registry;
 std::string to_string(const SessionRegistry& reg);
 
@@ -63,7 +62,7 @@ auto ThreadDeleter = [](std::thread* t)
 	const auto q = session_registry.find( id );
 	if(q != session_registry.end())
 	{
-		delete q->second;
+		pEp::call_with_lock(&release, q->second);
 	}
 	
 	delete t;
@@ -73,19 +72,16 @@ auto ThreadDeleter = [](std::thread* t)
 typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
 
-
-// *sigh* necessary because messageToSend() has no obj pointer anymore. :-(
-JsonAdapter* ja_singleton = nullptr;
-
 } // end of anonymous namespace
 
+// *sigh* necessary because messageToSend() has no obj pointer anymore. :-(
+JsonAdapter* JsonAdapter::singleton = nullptr;
 
-typedef std::pair<std::string, unsigned> EventListenerKey;
+
 
 struct EventListenerValue
 {
-	std::string securityContext;
-	std::unique_ptr<evhttp_connection, decltype(&evhttp_connection_free)> connection = { nullptr, &evhttp_connection_free};
+	utility::locked_queue<std::string> Q;
 };
 
 
@@ -96,7 +92,7 @@ struct JsonAdapter::Internal
 	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
 	std::string address;
 	std::string token;
-	std::map<EventListenerKey, EventListenerValue> eventListener;
+	std::map<std::thread::id, EventListenerValue> eventListener;
 	
 	Logger      Log;
 	unsigned    start_port    = 0;
@@ -111,7 +107,7 @@ struct JsonAdapter::Internal
 	bool        ignore_session_error = false;
 	bool        deliver_html = true;
 	ThreadPool  threads;
-	PEP_SESSION session = nullptr;
+//	PEP_SESSION session = nullptr;
 	
 	explicit Internal()
 	: Log("JAI")
@@ -122,9 +118,9 @@ struct JsonAdapter::Internal
 	
 	~Internal()
 	{
-		if(session)
-			pEp::call_with_lock(&release, session);
-		session=nullptr;
+//		if(session)
+//			pEp::call_with_lock(&release, session);
+//		session=nullptr;
 	}
 	
 	static
@@ -133,6 +129,7 @@ struct JsonAdapter::Internal
 		// Hum, what is to do here?
 	}
 
+/*
 	static
 	PEP_STATUS deliverRequest(const std::string& uri, evhttp_connection* connection, const js::Object& request)
 	{
@@ -146,21 +143,17 @@ struct JsonAdapter::Internal
 		
 		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
 	}
+*/
 	
-	PEP_STATUS makeAndDeliverRequest(const char* function_name, const js::Array& params)
+	void makeAndDeliverRequest(const char* function_name, const js::Array& params)
 	{
-		PEP_STATUS status = PEP_STATUS_OK;
+		const js::Object request = make_request( function_name, params);
+		const std::string request_r = js::write(request);
+		
 		for(auto& e : eventListener)
 		{
-			const js::Object request = make_request( function_name, params, e.second.securityContext );
-			const std::string uri = "http://" + e.first.first + ":" + std::to_string(e.first.second) + "/";
-			const PEP_STATUS s2 = deliverRequest( uri, e.second.connection.get(), request );
-			if(s2!=PEP_STATUS_OK)
-			{
-				status = s2;
-			}
+			e.second.Q.push_back(request_r);
 		}
-		return status;
 	}
 	
 	
@@ -174,11 +167,11 @@ struct JsonAdapter::Internal
 	}
 	
 	template<class... Params>
-	PEP_STATUS makeAndDeliverRequest2(const char* msg_name, Params&&... params)
+	void makeAndDeliverRequest2(const char* msg_name, Params&&... params)
 	{
 		js::Array param_array;
 		addToArray( param_array, params...);
-		return makeAndDeliverRequest(msg_name, param_array);
+		makeAndDeliverRequest(msg_name, param_array);
 	}
 
 };
@@ -220,7 +213,7 @@ PEP_SESSION JsonAdapter::getSessionForThread()
 	}else{
 //		std::cerr << "from_json<PEP_SESSION> for thread " << id << " got " << (void*)q->second->i->session << ".\n";
 	}
-	return q->second->i->session;
+	return q->second;
 }
 
 
@@ -232,15 +225,7 @@ In_Pep_Session::In_Pep_Session(const js::Value& v, Context*, unsigned)
 template<>
 JsonAdapter* from_json(const js::Value& /* not used */)
 {
-	const auto id = std::this_thread::get_id();
-	const auto q = session_registry.find( id );
-	if(q == session_registry.end())
-	{
-		std::stringstream ss;
-		ss << "There is no JsonAdapter registered for this thread (" << id << ")!"; 
-		throw std::logic_error( ss.str() );
-	}
-	return q->second;
+	return &JsonAdapter::getInstance();
 }
 
 
@@ -273,14 +258,16 @@ ServerVersion JsonAdapter::version()
 PEP_STATUS JsonAdapter::messageToSend(message* msg)
 {
 //	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja_singleton->i->makeAndDeliverRequest2("messageToSend", InOut<message*>(msg) );
+	getInstance().i->makeAndDeliverRequest2("messageToSend", InOut<message*>(msg) );
+	return PEP_STATUS_OK;
 }
 
 
 PEP_STATUS JsonAdapter::notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal sig)
 {
 //	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja_singleton->i->makeAndDeliverRequest2("notifyHandshake", InOut<pEp_identity*>(self), InOut<pEp_identity*>(partner), InOut<sync_handshake_signal>(sig) );
+	getInstance().i->makeAndDeliverRequest2("notifyHandshake", InOut<pEp_identity*>(self), InOut<pEp_identity*>(partner), InOut<sync_handshake_signal>(sig) );
+	return PEP_STATUS_OK;
 }
 
 
@@ -326,13 +313,12 @@ JsonAdapter& JsonAdapter::deliver_html(bool dh)
 }
 
 
-void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port, inject_sync_event_t se)
+void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port)
 {
 	check_guard();
 	i->address    = address;
 	i->start_port = start_port;
 	i->end_port   = end_port;
-	i->inject_sync_event = se;
 	
 	Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
 	
@@ -371,7 +357,6 @@ void JsonAdapter::threadFunc()
 		const auto q=session_registry.find(id);
 		if(q==session_registry.end())
 		{
-			i->session = nullptr;
 			PEP_STATUS status = pEp::call_with_lock(&init, &i->session, &JsonAdapter::messageToSend, i->inject_sync_event); // release(session) in ThreadDeleter
 			if(status != PEP_STATUS_OK || i->session==nullptr)
 			{
@@ -517,42 +502,12 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 void JsonAdapter::augment(json_spirit::Object& returnObject)
 {
 	check_guard();
+	/*
 	PEP_SESSION session = this->i->session;
 	auto errorstack = get_errorstack(session);
 	returnObject.emplace_back( "errorstack", to_json(errorstack) );
 	clear_errorstack(session);
-}
-
-
-void JsonAdapter::registerEventListener(const std::string& address, unsigned port, const std::string& securityContext)
-{
-	check_guard();
-	const auto key = std::make_pair(address, port);
-	const auto q = i->eventListener.find(key);
-	if( q != i->eventListener.end() && q->second.securityContext != securityContext)
-	{
-		throw std::runtime_error("EventListener at host \"" + address + "\":" + std::to_string(port) + " is already registered with different securityContext." );
-	}
-	
-	EventListenerValue v;
-	v.securityContext = securityContext;
-// FIXME: one event_base per thread!
-//	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
-	i->eventListener[key] = std::move(v);
-}
-
-
-void JsonAdapter::unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext)
-{
-	check_guard();
-	const auto key = std::make_pair(address, port);
-	const auto q = i->eventListener.find(key);
-	if( q == i->eventListener.end() || q->second.securityContext != securityContext)
-	{
-		throw std::runtime_error("Cannot unregister EventListener at host \"" + address + "\":" + std::to_string(port) + ". Not registered or wrong securityContext." );
-	}
-	
-	i->eventListener.erase(q);
+	*/
 }
 
 
@@ -591,17 +546,29 @@ void JsonAdapter::check_guard() const
 
 std::recursive_mutex get_instance_mutex;
 
-JsonAdapter& JsonAdapter::getInstance()
+JsonAdapter& JsonAdapter::createInstance(JsonAdapter* instance)
 {
 	std::lock_guard<std::recursive_mutex> L(get_instance_mutex);
 	
-	if(!ja_singleton)
+	if(!jsingleton)
 	{
-		ja_singleton = new JsonAdapter();
+		singleton = instance;
 	}
 	
-	return *ja_singleton;
+	return *singleton;
 }
+
+
+JsonAdapter& JsonAdapter::getInstance()
+{
+	if(!singleton)
+	{
+		throw std::logic_error("You forgot to call JsonAdapter::createInstance() before!");
+	}
+	
+	return *singleton;
+}
+
 
 JsonAdapter& JsonAdapter::startup(inject_sync_event_t se)
 {
