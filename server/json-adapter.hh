@@ -66,7 +66,10 @@ public:
 	// returns the version of the JsonAdapter
 	static
 	ServerVersion version();
-
+	
+	// returns the PEP_SESSION registered for the current thread
+	static PEP_SESSION getSessionForThread();
+	
 	static PEP_STATUS messageToSend(message* msg);
 	static PEP_STATUS notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal);
 

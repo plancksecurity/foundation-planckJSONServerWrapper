@@ -72,9 +72,6 @@ std::string getBinaryPath()
 }
 
 
-using In_Pep_Session = In<PEP_SESSION, ParamFlag::NoInput>;
-
-
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 
