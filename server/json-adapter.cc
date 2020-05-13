@@ -210,8 +210,7 @@ std::string getSessions()
 }
 
 
-template<>
-PEP_SESSION from_json(const js::Value& /* not used */)
+PEP_SESSION JsonAdapter::getSessionForThread()
 {
 	const auto id = std::this_thread::get_id();
 	const auto q = session_registry.find( id );
@@ -225,6 +224,11 @@ PEP_SESSION from_json(const js::Value& /* not used */)
 	}
 	return q->second->i->session;
 }
+
+
+In_Pep_Session::In_Pep_Session(const js::Value& v, Context*, unsigned)
+: Base( JsonAdapter::getSessionForThread() )
+{}
 
 
 template<>
