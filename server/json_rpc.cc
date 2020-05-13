@@ -48,16 +48,10 @@ Logger& Log()
 		return ret;
 	}
 
-// Client side:
-
-js::Object make_request(const std::string& functionName, const js::Array& parameters, const std::string& securityContext)
+// for event delivery to clients:
+js::Object make_request(const std::string& functionName, const js::Array& parameters)
 {
-	static int request_id = 2000;
-	
 	js::Object request;
-	request.emplace_back( "jsonrpc", "2.0" );
-	request.emplace_back( "id"     , ++request_id );
-	request.emplace_back( "security_token", securityContext );
 	request.emplace_back( "method", functionName );
 	request.emplace_back( "params", parameters );
 	

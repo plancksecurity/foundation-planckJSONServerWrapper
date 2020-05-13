@@ -30,7 +30,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 js::Object make_error(JSON_RPC error_code, const std::string& error_message, const js::Value& data, int id);
 
 
-// Client side:
-js::Object make_request(const std::string& functionName, const js::Array& parameters, const std::string& securityContext);
+// for events to clients:
+js::Object make_request(const std::string& functionName, const js::Array& parameters);
 
 #endif // JSON_RPC_HH
