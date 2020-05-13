@@ -105,7 +105,7 @@ struct JsonAdapter::Internal
 	inject_sync_event_t inject_sync_event = nullptr;
 	
 	unsigned    request_count = 0;
-	evutil_socket_t sock      = -1;
+//	evutil_socket_t sock      = -1;
 	bool        running = false;
 	bool        silent  = false;
 	bool        ignore_session_error = false;
@@ -399,17 +399,6 @@ void JsonAdapter::threadFunc()
 		{
 			evhtp_set_cb(evHtp.get(), "/pEp_functions.js"  , ev_server::OnGetFunctions  , this);
 			evhtp_set_gencb(evHtp.get(), ev_server::OnOtherRequest, nullptr);
-		}
-		
-		if (i->sock == -1) // no port bound, yet
-		{
-			throw std::runtime_error("You have to call prepare_run() before run()!");
-		}
-		else
-		{
-			L << Logger::Info << "\tnow I call evhttp_accept_socket()...";
-			if (evhtp_accept_socket(evHtp.get(), i->sock, 0) == -1)
-				throw std::runtime_error("Failed to accept() on server socket for new instance.");
 		}
 		
 		while(i->running)
