@@ -52,44 +52,33 @@ const std::string ApiRequestUrl = BaseUrl + "callFunction";
 const uint64_t Guard_0 = 123456789;
 const uint64_t Guard_1 = 987654321;
 
-SessionRegistry session_registry;
-std::string to_string(const SessionRegistry& reg);
-
-
 auto ThreadDeleter = [](std::thread* t)
 {
-	const auto id = t->get_id();
-	const auto q = session_registry.find( id );
-	if(q != session_registry.end())
-	{
-		pEp::call_with_lock(&release, q->second);
-	}
-	
-	delete t;
+	auto& session_registry = JsonAdapter::getSessionRegistry();
+	session_registry.remove(t->get_id());
 };
 
 
 typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
 
-} // end of anonymous namespace
-
-// *sigh* necessary because messageToSend() has no obj pointer anymore. :-(
-JsonAdapter* JsonAdapter::singleton = nullptr;
-
-
-
 struct EventListenerValue
 {
 	utility::locked_queue<std::string> Q;
 };
 
+} // end of anonymous namespace
+
+
+// *sigh* necessary because messageToSend() has no obj pointer anymore. :-(
+JsonAdapter* JsonAdapter::singleton = nullptr;
 
 
 struct JsonAdapter::Internal
 {
 	std::unique_ptr<event_base, decltype(&event_base_free)> eventBase = {nullptr, &event_base_free};
 	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
+	std::unique_ptr<SessionRegistry> session_registry{};
 	std::string address;
 	std::string token;
 	std::map<std::thread::id, EventListenerValue> eventListener;
@@ -177,43 +166,10 @@ struct JsonAdapter::Internal
 };
 
 
-std::string getSessions()
-{
-	js::Array a;
-	a.reserve(session_registry.size());
-	for(const auto& s : session_registry)
-	{
-		std::stringstream ss;
-		js::Object o;
-		ss << s.first;
-		o.emplace_back("tid", ss.str() );
-		ss.str("");
-		ss << static_cast<void*>(s.second);
-		o.emplace_back("session", ss.str() );
-		if(s.first == std::this_thread::get_id())
-		{
-			o.emplace_back("mine", true);
-		}
-		a.push_back( std::move(o) );
-	}
-	
-	return js::write( a, js::pretty_print | js::raw_utf8 | js::single_line_arrays );
-}
-
-
 PEP_SESSION JsonAdapter::getSessionForThread()
 {
 	const auto id = std::this_thread::get_id();
-	const auto q = session_registry.find( id );
-	if(q == session_registry.end())
-	{
-		std::stringstream ss;
-		ss << "There is no SESSION for this thread (" << id << ")!"; 
-		throw std::logic_error( ss.str() );
-	}else{
-//		std::cerr << "from_json<PEP_SESSION> for thread " << id << " got " << (void*)q->second->i->session << ".\n";
-	}
-	return q->second;
+	return JsonAdapter::getInstance().i->session_registry->get(id);
 }
 
 
@@ -289,9 +245,9 @@ JsonAdapter::JsonAdapter()
 JsonAdapter::~JsonAdapter()
 {
 	check_guard();
-	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered.";
+	Log() << "~JsonAdapter(): " << i->session_registry->size() << " sessions registered.";
 	this->shutdown(nullptr);
-	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered.";
+	Log() << "\t After stopSync() and shutdown() there are " << i->session_registry->size() << " sessions registered.";
 	delete i;
 	i=nullptr;
 }
@@ -316,11 +272,13 @@ JsonAdapter& JsonAdapter::deliver_html(bool dh)
 void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port)
 {
 	check_guard();
+	// delayed after constructor, so virtual functions are working:
+	i->session_registry.reset(new SessionRegistry(this->getMessageToSend(), this->getInjectSyncEvent()));
 	i->address    = address;
 	i->start_port = start_port;
 	i->end_port   = end_port;
 	
-	Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
+//	Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
 	
 	unsigned port_ofs = 0;
 try_next_port:
@@ -354,25 +312,8 @@ void JsonAdapter::threadFunc()
 	{
 		const auto id = std::this_thread::get_id();
 		L << Logger::Info << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++";
-		const auto q=session_registry.find(id);
-		if(q==session_registry.end())
-		{
-			PEP_STATUS status = pEp::call_with_lock(&init, &i->session, &JsonAdapter::messageToSend, i->inject_sync_event); // release(session) in ThreadDeleter
-			if(status != PEP_STATUS_OK || i->session==nullptr)
-			{
-				const std::string error_msg = "Cannot create session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
-				L << Logger::Error << error_msg;
-				if( ! i->ignore_session_error)
-				{
-					throw std::runtime_error(error_msg);
-				}
-			}
-			
-			session_registry.emplace(id, this);
-			L << Logger::Info << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".";
-		}else{
-			L << Logger::Info << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".";
-		}
+		PEP_SESSION session = i->session_registry->get(id);
+		(void)session; // not used, yet.
 		
 		std::unique_ptr<event_base, decltype(&event_base_free)> eventBase(event_base_new(), &event_base_free);
 		if (!eventBase)
@@ -433,7 +374,7 @@ try
 	Logger L("JA:run");
 	
 	L << Logger::Info << "This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".";
-	L << Logger::Debug << to_string( session_registry);
+	L << Logger::Debug << "Registry:\n" << i->session_registry->to_string();
 	
 	i->running = true;
 	for(int t=0; t<SrvThreadCount; ++t)
@@ -550,7 +491,7 @@ JsonAdapter& JsonAdapter::createInstance(JsonAdapter* instance)
 {
 	std::lock_guard<std::recursive_mutex> L(get_instance_mutex);
 	
-	if(!jsingleton)
+	if(!singleton)
 	{
 		singleton = instance;
 	}
@@ -570,35 +511,17 @@ JsonAdapter& JsonAdapter::getInstance()
 }
 
 
-JsonAdapter& JsonAdapter::startup(inject_sync_event_t se)
+SessionRegistry& JsonAdapter::getSessionRegistry()
+{
+	return *(singleton->i->session_registry.get());
+}
+
+
+JsonAdapter& JsonAdapter::startup()
 {
 	JsonAdapter& ja = getInstance();
-	ja.prepare_run("127.0.0.1", 4223, 9999, se);
+	ja.prepare_run("127.0.0.1", 4223, 9999);
 	ja.run();
 	return ja;
 }
 
-
-namespace {
-
-std::string to_string(const SessionRegistry& reg)
-{
-	std::stringstream ss;
-	ss << "There are " << reg.size() << " sessions registered" << (reg.empty() ? '.' : ':' ) << std::endl;
-	for(const auto s : reg)
-	{
-		ss << "\t thread id " << s.first << " : JA=" << (void*)s.second << ". ";
-		if(s.second)
-		{
-			ss << " js.i=" << (void*)(s.second->i) << ". ";
-			if(s.second->i)
-			{
-				ss << "  session=" << (void*)(s.second->i->session) << ".";
-			}
-		}
-		ss << std::endl;
-	}
-	return ss.str();
-}
-
-}

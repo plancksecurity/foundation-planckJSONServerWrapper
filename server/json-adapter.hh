@@ -9,6 +9,9 @@
 #include "server_version.hh"
 
 
+class SessionRegistry;
+
+
 class JsonAdapter : public Context
 {
 public:
@@ -77,8 +80,9 @@ public:
 	
 	static JsonAdapter& getInstance();
 	
-	// Very ugly: that function ptr has to be known to the JA before any instance is created. -.-
-	static JsonAdapter& startup(inject_sync_event_t inject_fn);
+	static JsonAdapter& startup();
+	
+	static SessionRegistry& getSessionRegistry();
 
 protected:
 
@@ -99,6 +103,8 @@ protected:
 
 //private:
 	struct Internal;
+	friend struct Internal;
+	
 	unsigned long long guard_0;
 	Internal* i; // pimpl for stable interface.
 	unsigned long long guard_1;
