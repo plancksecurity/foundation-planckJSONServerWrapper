@@ -18,6 +18,11 @@ public:
 	PEP_SESSION get(std::thread::id tid = std::this_thread::get_id());
 	void     remove(std::thread::id tid = std::this_thread::get_id());
 	
+	std::size_t  size() const { return m.size();  }
+	bool        empty() const { return m.empty(); }
+	
+	std::string to_string() const;
+	
 private:
 	std::map<std::thread::id, PEP_SESSION> m;
 	messageToSend_t      mts;
@@ -25,7 +30,7 @@ private:
 	
 	typedef std::recursive_mutex     Mutex;
 	typedef std::unique_lock<Mutex>  Lock;
-	Mutex  _mtx;
+	mutable Mutex  _mtx;
 };
 
 #endif // JSON_ADAPTER_SESSION_REGISTRY_HH

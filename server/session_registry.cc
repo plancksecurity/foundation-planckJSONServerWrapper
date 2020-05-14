@@ -36,3 +36,16 @@ void SessionRegistry::remove(std::thread::id tid)
 		m.erase(q);
 	}
 }
+
+
+std::string SessionRegistry::to_string() const
+{
+	Lock L(_mtx);
+	std::stringstream ss;
+	ss << m.size() << " session" << (m.size()==1?"":"s") << " in registry" << (m.empty()?".\n":":\n");
+	for(const auto& e:m)
+	{
+		ss << "\t" << e.first << ": " << e.second << "\n";
+	}
+	return ss.str();
+}
