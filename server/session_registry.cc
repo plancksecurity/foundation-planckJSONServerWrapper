@@ -4,15 +4,15 @@
 #include <pEp/status_to_string.hh>
 
 
-// calls "init" for the given thread
-PEP_SESSION SessionRegistry::add(std::thread::id tid)
+// creates a PEP_SESSION if none yet exists for the given thread
+PEP_SESSION SessionRegistry::get(std::thread::id tid)
 {
 	Lock L(_mtx);
 	
-	if(m.count(tid) > 0)
+	auto q = m.find(tid);
+	if(q != m.end())
 	{
-		std::stringstream ss; ss << tid;
-		throw std::runtime_error("There is already a session for thread " + ss.str() + "!");
+		return q->second;
 	}
 	
 	PEP_SESSION session = nullptr;
@@ -35,12 +35,4 @@ void SessionRegistry::remove(std::thread::id tid)
 		pEp::call_with_lock(&release, q->second);
 		m.erase(q);
 	}
-}
-
-
-PEP_SESSION SessionRegistry::get(std::thread::id tid) const
-{
-	Lock L(_mtx);
-	auto q = m.find(tid);
-	return (q==m.end()) ? nullptr : q->second;
 }

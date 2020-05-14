@@ -14,10 +14,9 @@ public:
 	, ise{_ise}
 	{}
 	
-	// calls "init" for the given thread
-	PEP_SESSION add(std::thread::id tid = std::this_thread::get_id());
+	// calls "init" for the given thread if no PEP_SESSION exists, yet for the given thread
+	PEP_SESSION get(std::thread::id tid = std::this_thread::get_id());
 	void     remove(std::thread::id tid = std::this_thread::get_id());
-	PEP_SESSION get(std::thread::id tid = std::this_thread::get_id()) const;
 	
 private:
 	std::map<std::thread::id, PEP_SESSION> m;
@@ -26,7 +25,7 @@ private:
 	
 	typedef std::recursive_mutex     Mutex;
 	typedef std::unique_lock<Mutex>  Lock;
-	mutable Mutex  _mtx;
+	Mutex  _mtx;
 };
 
 #endif // JSON_ADAPTER_SESSION_REGISTRY_HH
