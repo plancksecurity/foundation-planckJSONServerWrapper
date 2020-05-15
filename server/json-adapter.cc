@@ -62,6 +62,11 @@ auto ThreadDeleter = [](std::thread* t)
 typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
 
+typedef std::recursive_mutex     Mutex;
+typedef std::unique_lock<Mutex>  Lock;
+Mutex  _mtx;
+
+
 struct EventListenerValue
 {
 	utility::locked_queue<std::string> Q;
@@ -139,6 +144,7 @@ struct JsonAdapter::Internal
 		const js::Object request = make_request( function_name, params);
 		const std::string request_r = js::write(request);
 		
+		Lock L(_mtx);
 		for(auto& e : eventListener)
 		{
 			e.second.Q.push_back(request_r);
@@ -352,16 +358,23 @@ void JsonAdapter::threadFunc()
 			event_base_loop(eventBase.get(), 0);
 #endif
 		}
+		
+		Lock L{_mtx};
+		i->eventListener.erase( std::this_thread::get_id() );
 	}
 	catch (const std::exception& e)
 	{
 		L << Logger::Error << " +++ std::exception in ThreadFunc: " << e.what();
 		initExcept = std::current_exception();
+		Lock L{_mtx};
+		i->eventListener.erase( std::this_thread::get_id() );
 	}
 	catch (...)
 	{
 		L << Logger::Crit << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ ";
 		initExcept = std::current_exception();
+		Lock L{_mtx};
+		i->eventListener.erase( std::this_thread::get_id() );
 	}
 	L << Logger::Info << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++";
 }
@@ -454,7 +467,30 @@ void JsonAdapter::augment(json_spirit::Object& returnObject)
 
 js::Array JsonAdapter::pollForEvents(unsigned timeout_seconds)
 {
-    return js::Array{};
+	js::Array arr{};
+	
+	Lock L{_mtx};
+	EventListenerValue& el = i->eventListener[ std::this_thread::get_id() ];  // adds an entry, if not already there. :-)
+	L.unlock();
+	
+	const size_t size = el.Q.size();
+	if(size)
+	{
+		// fetch all elements from queue
+		for(size_t i=0; i<size; ++i)
+		{
+			arr.emplace_back( el.Q.pop_front() );
+		}
+	}else{
+		// block until there is at least one element or timeout
+		std::string event;
+		const bool success = el.Q.try_pop_front( event, std::chrono::steady_clock::now() + std::chrono::seconds(timeout_seconds) );
+		if(success)
+		{
+			arr.emplace_back( std::move(event) );
+		}
+	}
+	return arr;
 }
 
 
