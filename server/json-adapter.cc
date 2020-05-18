@@ -307,7 +307,7 @@ try_next_port:
 	i->port = i->start_port + port_ofs;
 	i->token = create_security_token(i->address, i->port, BaseUrl);
 	
-	Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"";
+	Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\", sock=" << i->sock << ".";
 }
 
 

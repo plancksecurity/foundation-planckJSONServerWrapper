@@ -137,7 +137,7 @@ try
 		}
 	}
 	
-	JsonAdapter& ja = pEp::mini::Adapter::getInstance();
+	JsonAdapter& ja = pEp::mini::Adapter::createInstance();
 	ja.ignore_session_errors( ignore_missing_session)
 	  .deliver_html( !no_html )
 	  ;
