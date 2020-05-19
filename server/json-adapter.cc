@@ -43,7 +43,7 @@ namespace {
 
 
 std::string BaseUrl    = "/ja/0.1/";
-int SrvThreadCount     = 1;
+int SrvThreadCount     = 6;
 
 const std::string CreateSessionUrl = BaseUrl + "createSession";
 const std::string GetAllSessionsUrl = BaseUrl + "getAllSessions";
@@ -192,7 +192,8 @@ JsonAdapter* from_json(const js::Value& /* not used */)
 
 
 template<>
-In<JsonAdapter*, ParamFlag::NoInput>::~In()
+In<JsonAdapter*, ParamFlag::NoInput>::In(const js::Value&, Context*, unsigned)
+: value{ &JsonAdapter::getInstance() }
 {
 	// nothing to do here. :-D
 }
