@@ -198,16 +198,7 @@ In<JsonAdapter*, ParamFlag::NoInput>::~In()
 }
 
 template<>
-struct Type2String<In<JsonAdapter*, ParamFlag::NoInput>>
-{
-	static js::Value get() { throw "Make MSVC happy again. m("; }
-};
-
-template<>
-struct Type2String<In_Pep_Session>
-{
-	static js::Value get() { throw "Make MSVC happy again. m("; }
-};
+js::Value Type2String<In_Pep_Session>::get() { throw "Make MSVC happy again. m("; }
 
 
 ServerVersion JsonAdapter::version()
