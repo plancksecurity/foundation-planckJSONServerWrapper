@@ -53,6 +53,7 @@ template<>
 In<message*>::~In()
 {
 	free_message(value);
+	value=nullptr;
 }
 
 template<>
@@ -65,6 +66,7 @@ template<>
 In<stringlist_t*, ParamFlag::Default>::~In()
 {
 	free_stringlist(value);
+	value=nullptr;
 }
 
 template<>
@@ -77,6 +79,7 @@ template<>
 In<pEp_identity*>::~In()
 {
 	free_identity(value);
+	value=nullptr;
 }
 
 template<>
@@ -89,12 +92,14 @@ template<>
 Out<pEp_identity*>::~Out()
 {
 	free_identity(value);
+	value=nullptr;
 }
 
 template<>
 Out<identity_list*>::~Out()
 {
 	free_identity_list(value);
+	value=nullptr;
 }
 
 template<>
@@ -137,6 +142,7 @@ template<>
 Out<stringlist_t*, ParamFlag::Default>::~Out()
 {
 	free_stringlist(value);
+	value=nullptr;
 }
 
 template<>
@@ -149,6 +155,7 @@ template<>
 Out<stringpair_list_t*>::~Out()
 {
 	free_stringpair_list(value);
+	value=nullptr;
 }
 
 
@@ -156,6 +163,7 @@ template<>
 Out<_message*>::~Out()
 {
 	free_message(value);
+	value=nullptr;
 }
 
 
