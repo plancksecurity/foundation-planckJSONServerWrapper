@@ -43,7 +43,7 @@ namespace {
 
 
 std::string BaseUrl    = "/ja/0.1/";
-int SrvThreadCount     = 6;
+int SrvThreadCount     = 3;
 
 const std::string CreateSessionUrl = BaseUrl + "createSession";
 const std::string GetAllSessionsUrl = BaseUrl + "getAllSessions";
@@ -212,7 +212,8 @@ ServerVersion JsonAdapter::version()
 PEP_STATUS JsonAdapter::messageToSend(message* msg)
 {
 //	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	getInstance().i->makeAndDeliverRequest2("messageToSend", InOut<message*>(msg) );
+	js::Value v{to_json(msg)};
+	getInstance().i->makeAndDeliverRequest("messageToSend", js::Array{ std::move(v) } );
 	return PEP_STATUS_OK;
 }
 
