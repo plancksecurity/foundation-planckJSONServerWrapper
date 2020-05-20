@@ -150,25 +150,6 @@ struct JsonAdapter::Internal
 			e.second.Q.push_back(request_r);
 		}
 	}
-	
-	
-	static void addToArray(js::Array&) { /* do nothing */ }
-	
-	template<class T, class... Rest>
-	static void addToArray(js::Array& a, const InOut<T>& in, Rest&&... rest)
-	{
-		a.push_back( in.to_json() );
-		addToArray( a, rest... );
-	}
-	
-	template<class... Params>
-	void makeAndDeliverRequest2(const char* msg_name, Params&&... params)
-	{
-		js::Array param_array;
-		addToArray( param_array, params...);
-		makeAndDeliverRequest(msg_name, param_array);
-	}
-
 };
 
 
@@ -224,7 +205,7 @@ PEP_STATUS JsonAdapter::notifyHandshake(pEp_identity* self, pEp_identity* partne
 	js::Array param_array;
 	param_array.emplace_back( to_json(self) );
 	param_array.emplace_back( to_json(partner) );
-	param_array.emplace_back( to_json(sync_handshake_signal) );
+	param_array.emplace_back( to_json(sig) );
 	getInstance().i->makeAndDeliverRequest("notifyHandshake", param_array );
 	return PEP_STATUS_OK;
 }
