@@ -221,7 +221,11 @@ PEP_STATUS JsonAdapter::messageToSend(message* msg)
 PEP_STATUS JsonAdapter::notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal sig)
 {
 //	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	getInstance().i->makeAndDeliverRequest2("notifyHandshake", InOut<pEp_identity*>(self), InOut<pEp_identity*>(partner), InOut<sync_handshake_signal>(sig) );
+	js::Array param_array;
+	param_array.emplace_back( to_json(self) );
+	param_array.emplace_back( to_json(partner) );
+	param_array.emplace_back( to_json(sync_handshake_signal) );
+	getInstance().i->makeAndDeliverRequest("notifyHandshake", param_array );
 	return PEP_STATUS_OK;
 }
 
