@@ -10,6 +10,7 @@
 // Just for debugging:
 #include <iostream>
 
+
 // is a bitfield that controls the In<> / Out<> parameter types
 enum class ParamFlag : unsigned
 {
@@ -40,10 +41,7 @@ bool operator!(ParamFlag pf)
 
 namespace js = json_spirit;
 
-template<class T, ParamFlag PF> struct In;
-template<class T, ParamFlag PF> struct Out;
 
-// "params" and "position" might be used to fetch additional parameters from the array.
 template<class T>
 T from_json(const js::Value& v);
 
@@ -51,25 +49,16 @@ T from_json(const js::Value& v);
 template<class T>
 js::Value to_json(const T& t);
 
-
-// helper classes to specify in- and out-parameters
-template<class T, ParamFlag PF=ParamFlag::Default>
-struct In
+// common stuff in base class
+template<class T, ParamFlag PF>
+struct InBase
 {
 	typedef T c_type; // the according type in C function parameter
 	enum { is_output = false, need_input = !(PF & ParamFlag::NoInput) };
 	
-	explicit In(const T& t) : value(t) {}
-	~In();
-	
-	In(const In<T,PF>& other) = delete;
-	In(In<T,PF>&& victim) = delete;
-	In<T,PF>& operator=(const In<T,PF>&) = delete;
-	
-	// default implementation:
-	In(const js::Value& v, Context*, unsigned param_nr)
-	: In( from_json<T>(v) )
-	{ }
+	InBase(const InBase<T,PF>& other) = delete;
+	InBase(InBase<T,PF>&& victim) = delete;
+	void operator=(const InBase<T,PF>&) = delete;
 	
 	js::Value to_json() const
 	{
@@ -79,66 +68,61 @@ struct In
 	c_type get_value() const { return value; }
 	
 	T value;
+	
+protected:
+	explicit InBase(T&& t) : value(t) {}
+};
+
+
+// helper classes to specify in- and out-parameters
+template<class T, ParamFlag PF=ParamFlag::Default>
+struct In : public InBase<T,PF>
+{
+	typedef InBase<T,PF> Base;
+	~In();
+	
+	// default implementation:
+	In(const js::Value& v, Context*, unsigned param_nr)
+	: Base( from_json<T>(v) )
+	{ }
 };
 
 
 template<class T>
-struct In<T, ParamFlag::NoInput>
+struct In<T, ParamFlag::NoInput> : public InBase<T, ParamFlag::NoInput>
 {
-	typedef T c_type; // the according type in C function parameter
-	enum { is_output = false, need_input = false };
-	typedef In<T, ParamFlag::NoInput> Self;
-	
-	explicit In(const T& t) : value(t) {}
+	typedef InBase<T, ParamFlag::NoInput> Base;
 	~In() {}
 	
-	In(const Self& other) = delete;
-	In(Self&& victim) = delete;
-	Self& operator=(const Self&) = delete;
-	
-	// default implementation:
-	In(const js::Value& v, Context*, unsigned param_nr)
-	: value{ T{} }
+	// default implementation: ignore all parameters
+	In(const js::Value&, Context*, unsigned param_nr)
+	: Base{ T{} }
 	{ }
-	
-	js::Value to_json() const
-	{
-		throw std::logic_error( std::string("Never call to_json() for a In<") + typeid(T).name() + "> data type!  fn=" + __PRETTY_FUNCTION__ );
-	}
-	
-	T get_value() const { return value; }
-	
-	T value;
 };
 
 
+class JsonAdapter;
+
+template<>
+struct In<JsonAdapter*, ParamFlag::NoInput> : public InBase<JsonAdapter*, ParamFlag::NoInput>
+{
+	typedef InBase<JsonAdapter*, ParamFlag::NoInput> Base;
+	~In() {}
+	
+	// defined in json-adapter.cc
+	In(const js::Value&, Context*, unsigned param_nr);
+};
+
 // to call functions that operate directly on the JSON data type
 template<class T, ParamFlag PF=ParamFlag::Default>
-struct InRaw
+struct InRaw : public InBase<T, PF>
 {
-	typedef js::Value c_type; // do not unwrap JSON data type
-	enum { is_output = false, need_input = !(PF & ParamFlag::NoInput) };
-	
-	explicit InRaw(const js::Value& t) : value(t) {}
 	~InRaw() = default;
-	
-	InRaw(const InRaw<T,PF>& other) = delete;
-	InRaw(InRaw<T,PF>&& victim) = delete;
-	InRaw<T,PF>& operator=(const InRaw<T,PF>&) = delete;
 	
 	// default implementation:
 	InRaw(const js::Value& v, Context*, unsigned param_nr)
-	: InRaw(v)
+	: InBase<T,PF>(v)
 	{ }
-
-	js::Value to_json() const
-	{
-		throw std::logic_error( std::string(typeid(T).name()) + " is not for output!" );
-	}
-	
-	c_type get_value() const { return value; }
-	
-	js::Value value;
 };
 
 
@@ -149,15 +133,9 @@ struct InOut : public In<T,PF>
 {
 	typedef In<T,PF> Base;
 	enum { is_output = true, need_input = !(PF & ParamFlag::NoInput) };
-
-	explicit InOut(const T& t) : Base(t) {}
-	~InOut() = default;
 	
-	InOut<T,PF>& operator=(const InOut<T,PF>&) = delete;
-	
-	// default implementation:
-	InOut(const js::Value& v, Context*, unsigned param_nr)
-	: Base( from_json<T>(v) )
+	InOut(const js::Value& v, Context* ctx, unsigned param_nr)
+	: Base(v, ctx, param_nr)
 	{ }
 	
 	js::Value to_json() const

@@ -29,20 +29,6 @@
 #include "mini-adapter-impl.hh"
 
 
-template<>
-In<Context*, ParamFlag::Default>::~In()
-{
-	// do nothing
-}
-
-template<>
-In<Context*, ParamFlag::Default>::In(const js::Value&, Context* ctx, unsigned)
-: value( ctx )
-{
-
-}
-
-
 namespace fs = boost::filesystem;
 
 // compile-time default. might be overwritten in main() or before any ev_server function is called.

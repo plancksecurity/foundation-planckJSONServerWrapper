@@ -172,9 +172,8 @@ JsonAdapter* from_json(const js::Value& /* not used */)
 }
 
 
-template<>
 In<JsonAdapter*, ParamFlag::NoInput>::In(const js::Value&, Context*, unsigned)
-: value{ &JsonAdapter::getInstance() }
+: Base{ &JsonAdapter::getInstance() }
 {
 	// nothing to do here. :-D
 }
