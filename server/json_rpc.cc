@@ -4,6 +4,12 @@
 #include "json-adapter.hh"
 #include "security-token.hh"
 #include "logger.hh"
+#include <atomic>
+
+namespace
+{
+	std::atomic<unsigned long long> request_nr{0};
+}
 
 
 Logger& Log()
@@ -22,6 +28,7 @@ Logger& Log()
 		ret.emplace_back( "jsonrpc", "2.0" );
 		ret.emplace_back( "id"     , id );
 		ret.emplace_back( "result" , result );
+		ret.emplace_back( "thread_id", Logger::thread_id() );
 		
 		DEBUG_OUT(Log(),  "make_result(): result: " + js::write(result) );
 		return ret;
@@ -44,6 +51,7 @@ Logger& Log()
 		ret.emplace_back( "jsonrpc", "2.0" );
 		ret.emplace_back( "error"  , err_obj );
 		ret.emplace_back( "id"     , id );
+		ret.emplace_back( "thread_id", Logger::thread_id() );
 		
 		return ret;
 	}
@@ -54,6 +62,8 @@ js::Object make_request(const std::string& functionName, const js::Array& parame
 	js::Object request;
 	request.emplace_back( "method", functionName );
 	request.emplace_back( "params", parameters );
+	request.emplace_back( "request_nr", ++request_nr );
+	request.emplace_back( "thread_id", Logger::thread_id() );
 	
 	return request;
 }
