@@ -421,7 +421,7 @@ static const unsigned thread_alph_len = thread_alphabet.size(); // shall be a pr
 static std::hash<std::thread::id> hash_tid;
 
 // create a three-digit base37 string of the current thread ID for easy grepping and filtering:
-std::string thread_id()
+std::string Logger::thread_id()
 {
 	char buf[8] = { ' ', '\302', '\266', '?', '?', '?', ' ' };
 	unsigned long long id = hash_tid(std::this_thread::get_id());
@@ -467,7 +467,7 @@ void LoggerS::log(Logger::Severity s, const std::string& logline)
 			timestamp = Logger::gmtime(time(0));
 		}
 		
-		timestamp.append( thread_id() );
+		timestamp.append( Logger::thread_id() );
 		timestamp.append(Levelname[s]);
 		timestamp.append(" :");
 		

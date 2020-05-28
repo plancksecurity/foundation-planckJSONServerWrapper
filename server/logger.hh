@@ -123,6 +123,9 @@ public:
 	// non-copyable:
 	Logger(const Logger&) = delete;
 	void operator=(const Logger&) = delete;
+	
+	static
+	std::string thread_id();
 
 
 	class Stream
