@@ -58,6 +58,13 @@ std::string getBinaryPath()
 }
 
 
+void connection_close_cb(evhttp_connection* conn, void* arg)
+{
+	JsonAdapter::getInstance().connection_close_cb();
+}
+
+
+
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 
@@ -301,6 +308,10 @@ void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 	
 	try
 	{
+	
+	evhttp_connection* conn = evhttp_request_get_connection(req);
+	L << Logger::Debug << "Request " << (void*)req << " is associated with connection " << (void*)conn;
+	evhttp_connection_set_closecb(conn, &connection_close_cb, nullptr);
 	
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	

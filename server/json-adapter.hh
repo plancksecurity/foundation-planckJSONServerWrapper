@@ -41,6 +41,9 @@ public:
 	// run the server in another thread and returns immediately. prepare_run() has to be called before!
 	void run();
 	
+	// non-static: does the real work. :-)
+	void connection_close_cb();
+	
 	// exits gracefully after the given number of seconds.
 	// if "tv" is NULL it means: exits immediately after _all_ currently processed events have been finished.
 	void shutdown(struct timeval* tv);

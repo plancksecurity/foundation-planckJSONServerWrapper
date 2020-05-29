@@ -397,6 +397,13 @@ catch (std::exception const &e)
 }
 
 
+void JsonAdapter::connection_close_cb()
+{
+	Lock L{_mtx};
+	i->eventListener.erase( std::this_thread::get_id() );
+}
+
+
 void JsonAdapter::shutdown(timeval* t)
 {
 	exit(0);  // HACK for JSON-41
