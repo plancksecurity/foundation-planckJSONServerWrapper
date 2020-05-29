@@ -72,6 +72,8 @@ struct EventListenerValue
 	utility::locked_queue<std::string> Q;
 };
 
+static std::hash<std::thread::id> hash_tid;
+
 } // end of anonymous namespace
 
 
@@ -145,8 +147,10 @@ struct JsonAdapter::Internal
 		const std::string request_r = js::write(request);
 		
 		Lock L(_mtx);
+		Log << Logger::Debug << "makeAndDeliverRequest to " << eventListener.size() << " listener(s).";
 		for(auto& e : eventListener)
 		{
+			Log << Logger::Debug << " ~~~ [" << e.first << Logger::thread_id(hash_tid(e.first)) << "] has " << e.second.Q.size() << " old events waiting.";
 			e.second.Q.push_back(request_r);
 		}
 	}
@@ -461,7 +465,7 @@ js::Array JsonAdapter::pollForEvents(unsigned timeout_seconds)
 	}else{
 		// block until there is at least one element or timeout
 		std::string event;
-		const bool success = el.Q.try_pop_front( event, std::chrono::steady_clock::now() + std::chrono::seconds(timeout_seconds) );
+		const bool success = el.Q.try_pop_front( event, std::chrono::seconds(timeout_seconds) );
 		if(success)
 		{
 			arr.emplace_back( std::move(event) );
