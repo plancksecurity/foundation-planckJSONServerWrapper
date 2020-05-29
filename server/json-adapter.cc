@@ -400,7 +400,12 @@ catch (std::exception const &e)
 void JsonAdapter::connection_close_cb()
 {
 	Lock L{_mtx};
-	i->eventListener.erase( std::this_thread::get_id() );
+	auto q = i->eventListener.find( std::this_thread::get_id() );
+	Log() << "Connection Close Callback: " << (q==i->eventListener.end() ? "NO" : "1") << " entry in eventListener map";
+	if(q != i->eventListener.end())
+	{
+		i->eventListener.erase(q);
+	}
 }
 
 
