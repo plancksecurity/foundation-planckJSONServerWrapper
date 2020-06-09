@@ -121,6 +121,7 @@
     <ClInclude Include="..\..\server\registry.hh" />
     <ClInclude Include="..\..\server\security-token.hh" />
     <ClInclude Include="..\..\server\server_version.hh" />
+    <ClInclude Include="..\..\server\session_registry.hh" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -146,6 +147,7 @@
     <ClCompile Include="..\..\server\registry.cc" />
     <ClCompile Include="..\..\server\security-token.cc" />
     <ClCompile Include="..\..\server\server_version.cc" />
+    <ClCompile Include="..\..\server\session_registry.cc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -27,6 +27,7 @@ SIMPLE_TYPE( long )
 SIMPLE_TYPE( long long )
 
 SIMPLE_TYPE( std::string )
+SIMPLE_TYPE( js::Array )
 
 
 template<>
@@ -150,6 +151,13 @@ template<>
 js::Value to_json<char*>(char* const & s)
 {
 	return to_json<const char*>( const_cast<const char*>(s) );
+}
+
+
+template<>
+js::Value to_json<js::Array>(const js::Array& a)
+{
+    return a;
 }
 
 

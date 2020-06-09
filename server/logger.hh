@@ -123,8 +123,16 @@ public:
 	// non-copyable:
 	Logger(const Logger&) = delete;
 	void operator=(const Logger&) = delete;
-
-
+	
+	// returns the thread_id hash for the current thread
+	static
+	std::string thread_id();
+	
+	// returns the thread_id hash for the given thread id
+	static
+	std::string thread_id(unsigned long long id);
+	
+	
 	class Stream
 	{
 	public:

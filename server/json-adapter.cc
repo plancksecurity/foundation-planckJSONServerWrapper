@@ -22,6 +22,7 @@
 #include "ev_server.hh"
 #include "logger.hh"
 #include "server_version.hh"
+#include "session_registry.hh"
 
 #include <pEp/keymanagement.h>
 #include <pEp/call_with_lock.hh>
@@ -42,7 +43,7 @@ namespace {
 
 
 std::string BaseUrl    = "/ja/0.1/";
-int SrvThreadCount     = 1;
+int SrvThreadCount     = 3;
 
 const std::string CreateSessionUrl = BaseUrl + "createSession";
 const std::string GetAllSessionsUrl = BaseUrl + "getAllSessions";
@@ -51,52 +52,43 @@ const std::string ApiRequestUrl = BaseUrl + "callFunction";
 const uint64_t Guard_0 = 123456789;
 const uint64_t Guard_1 = 987654321;
 
-typedef std::map<std::thread::id, JsonAdapter*> SessionRegistry;
-
-SessionRegistry session_registry;
-std::string to_string(const SessionRegistry& reg);
-
-
 auto ThreadDeleter = [](std::thread* t)
 {
-	const auto id = t->get_id();
-	const auto q = session_registry.find( id );
-	if(q != session_registry.end())
-	{
-		delete q->second;
-	}
-	
-	delete t;
+	auto& session_registry = JsonAdapter::getSessionRegistry();
+	session_registry.remove(t->get_id());
 };
 
 
 typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
 typedef std::vector<ThreadPtr> ThreadPool;
 
+typedef std::recursive_mutex     Mutex;
+typedef std::unique_lock<Mutex>  Lock;
+Mutex  _mtx;
 
-// *sigh* necessary because messageToSend() has no obj pointer anymore. :-(
-JsonAdapter* ja_singleton = nullptr;
+
+struct EventListenerValue
+{
+	utility::locked_queue<std::string> Q;
+};
+
+static std::hash<std::thread::id> hash_tid;
 
 } // end of anonymous namespace
 
 
-typedef std::pair<std::string, unsigned> EventListenerKey;
-
-struct EventListenerValue
-{
-	std::string securityContext;
-	std::unique_ptr<evhttp_connection, decltype(&evhttp_connection_free)> connection = { nullptr, &evhttp_connection_free};
-};
-
+// *sigh* necessary because messageToSend() has no obj pointer anymore. :-(
+JsonAdapter* JsonAdapter::singleton = nullptr;
 
 
 struct JsonAdapter::Internal
 {
 	std::unique_ptr<event_base, decltype(&event_base_free)> eventBase = {nullptr, &event_base_free};
 	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
+	std::unique_ptr<SessionRegistry> session_registry{};
 	std::string address;
 	std::string token;
-	std::map<EventListenerKey, EventListenerValue> eventListener;
+	std::map<std::thread::id, EventListenerValue> eventListener;
 	
 	Logger      Log;
 	unsigned    start_port    = 0;
@@ -111,7 +103,7 @@ struct JsonAdapter::Internal
 	bool        ignore_session_error = false;
 	bool        deliver_html = true;
 	ThreadPool  threads;
-	PEP_SESSION session = nullptr;
+//	PEP_SESSION session = nullptr;
 	
 	explicit Internal()
 	: Log("JAI")
@@ -122,9 +114,9 @@ struct JsonAdapter::Internal
 	
 	~Internal()
 	{
-		if(session)
-			pEp::call_with_lock(&release, session);
-		session=nullptr;
+//		if(session)
+//			pEp::call_with_lock(&release, session);
+//		session=nullptr;
 	}
 	
 	static
@@ -133,6 +125,7 @@ struct JsonAdapter::Internal
 		// Hum, what is to do here?
 	}
 
+/*
 	static
 	PEP_STATUS deliverRequest(const std::string& uri, evhttp_connection* connection, const js::Object& request)
 	{
@@ -146,81 +139,28 @@ struct JsonAdapter::Internal
 		
 		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
 	}
+*/
 	
-	PEP_STATUS makeAndDeliverRequest(const char* function_name, const js::Array& params)
+	void makeAndDeliverRequest(const char* function_name, const js::Array& params)
 	{
-		PEP_STATUS status = PEP_STATUS_OK;
+		const js::Object request = make_request( function_name, params);
+		const std::string request_r = js::write(request);
+		
+		Lock L(_mtx);
+		Log << Logger::Debug << "makeAndDeliverRequest to " << eventListener.size() << " listener(s).";
 		for(auto& e : eventListener)
 		{
-			const js::Object request = make_request( function_name, params, e.second.securityContext );
-			const std::string uri = "http://" + e.first.first + ":" + std::to_string(e.first.second) + "/";
-			const PEP_STATUS s2 = deliverRequest( uri, e.second.connection.get(), request );
-			if(s2!=PEP_STATUS_OK)
-			{
-				status = s2;
-			}
+			Log << Logger::Debug << " ~~~ [" << e.first << Logger::thread_id(hash_tid(e.first)) << "] has " << e.second.Q.size() << " old events waiting.";
+			e.second.Q.push_back(request_r);
 		}
-		return status;
 	}
-	
-	
-	static void addToArray(js::Array&) { /* do nothing */ }
-	
-	template<class T, class... Rest>
-	static void addToArray(js::Array& a, const InOut<T>& in, Rest&&... rest)
-	{
-		a.push_back( in.to_json() );
-		addToArray( a, rest... );
-	}
-	
-	template<class... Params>
-	PEP_STATUS makeAndDeliverRequest2(const char* msg_name, Params&&... params)
-	{
-		js::Array param_array;
-		addToArray( param_array, params...);
-		return makeAndDeliverRequest(msg_name, param_array);
-	}
-
 };
-
-
-std::string getSessions()
-{
-	js::Array a;
-	a.reserve(session_registry.size());
-	for(const auto& s : session_registry)
-	{
-		std::stringstream ss;
-		js::Object o;
-		ss << s.first;
-		o.emplace_back("tid", ss.str() );
-		ss.str("");
-		ss << static_cast<void*>(s.second);
-		o.emplace_back("session", ss.str() );
-		if(s.first == std::this_thread::get_id())
-		{
-			o.emplace_back("mine", true);
-		}
-		a.push_back( std::move(o) );
-	}
-	
-	return js::write( a, js::pretty_print | js::raw_utf8 | js::single_line_arrays );
-}
 
 
 PEP_SESSION JsonAdapter::getSessionForThread()
 {
 	const auto id = std::this_thread::get_id();
-	const auto q = session_registry.find( id );
-	if(q == session_registry.end())
-	{
-		std::stringstream ss;
-		ss << "There is no SESSION for this thread (" << id << ")!"; 
-		throw std::logic_error( ss.str() );
-	}else{
-//		std::cerr << "from_json<PEP_SESSION> for thread " << id << " got " << (void*)q->second->i->session << ".\n";
-	}
-	return q->second->i->session;
+	return JsonAdapter::getInstance().i->session_registry->get(id);
 }
 
 
@@ -232,35 +172,18 @@ In_Pep_Session::In_Pep_Session(const js::Value& v, Context*, unsigned)
 template<>
 JsonAdapter* from_json(const js::Value& /* not used */)
 {
-	const auto id = std::this_thread::get_id();
-	const auto q = session_registry.find( id );
-	if(q == session_registry.end())
-	{
-		std::stringstream ss;
-		ss << "There is no JsonAdapter registered for this thread (" << id << ")!"; 
-		throw std::logic_error( ss.str() );
-	}
-	return q->second;
+	return &JsonAdapter::getInstance();
 }
 
 
-template<>
-In<JsonAdapter*, ParamFlag::NoInput>::~In()
+In<JsonAdapter*, ParamFlag::NoInput>::In(const js::Value&, Context*, unsigned)
+: Base{ &JsonAdapter::getInstance() }
 {
 	// nothing to do here. :-D
 }
 
 template<>
-struct Type2String<In<JsonAdapter*, ParamFlag::NoInput>>
-{
-	static js::Value get() { throw "Make MSVC happy again. m("; }
-};
-
-template<>
-struct Type2String<In_Pep_Session>
-{
-	static js::Value get() { throw "Make MSVC happy again. m("; }
-};
+js::Value Type2String<In_Pep_Session>::get() { throw "Make MSVC happy again. m("; }
 
 
 ServerVersion JsonAdapter::version()
@@ -273,14 +196,21 @@ ServerVersion JsonAdapter::version()
 PEP_STATUS JsonAdapter::messageToSend(message* msg)
 {
 //	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja_singleton->i->makeAndDeliverRequest2("messageToSend", InOut<message*>(msg) );
+	js::Value v{to_json(msg)};
+	getInstance().i->makeAndDeliverRequest("messageToSend", js::Array{ std::move(v) } );
+	return PEP_STATUS_OK;
 }
 
 
 PEP_STATUS JsonAdapter::notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal sig)
 {
 //	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	return ja_singleton->i->makeAndDeliverRequest2("notifyHandshake", InOut<pEp_identity*>(self), InOut<pEp_identity*>(partner), InOut<sync_handshake_signal>(sig) );
+	js::Array param_array;
+	param_array.emplace_back( to_json(self) );
+	param_array.emplace_back( to_json(partner) );
+	param_array.emplace_back( to_json(sig) );
+	getInstance().i->makeAndDeliverRequest("notifyHandshake", param_array );
+	return PEP_STATUS_OK;
 }
 
 
@@ -302,9 +232,9 @@ JsonAdapter::JsonAdapter()
 JsonAdapter::~JsonAdapter()
 {
 	check_guard();
-	Log() << "~JsonAdapter(): " << session_registry.size() << " sessions registered.";
+	Log() << "~JsonAdapter(): " << i->session_registry->size() << " sessions registered.";
 	this->shutdown(nullptr);
-	Log() << "\t After stopSync() and shutdown() there are " << session_registry.size() << " sessions registered.";
+	Log() << "\t After stopSync() and shutdown() there are " << i->session_registry->size() << " sessions registered.";
 	delete i;
 	i=nullptr;
 }
@@ -326,15 +256,16 @@ JsonAdapter& JsonAdapter::deliver_html(bool dh)
 }
 
 
-void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port, inject_sync_event_t se)
+void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port)
 {
 	check_guard();
+	// delayed after constructor, so virtual functions are working:
+	i->session_registry.reset(new SessionRegistry(this->getMessageToSend(), this->getInjectSyncEvent()));
 	i->address    = address;
 	i->start_port = start_port;
 	i->end_port   = end_port;
-	i->inject_sync_event = se;
 	
-	Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
+//	Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
 	
 	unsigned port_ofs = 0;
 try_next_port:
@@ -357,7 +288,7 @@ try_next_port:
 	i->port = i->start_port + port_ofs;
 	i->token = create_security_token(i->address, i->port, BaseUrl);
 	
-	Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\"";
+	Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\", sock=" << i->sock << ".";
 }
 
 
@@ -368,26 +299,8 @@ void JsonAdapter::threadFunc()
 	{
 		const auto id = std::this_thread::get_id();
 		L << Logger::Info << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++";
-		const auto q=session_registry.find(id);
-		if(q==session_registry.end())
-		{
-			i->session = nullptr;
-			PEP_STATUS status = pEp::call_with_lock(&init, &i->session, &JsonAdapter::messageToSend, i->inject_sync_event); // release(session) in ThreadDeleter
-			if(status != PEP_STATUS_OK || i->session==nullptr)
-			{
-				const std::string error_msg = "Cannot create session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
-				L << Logger::Error << error_msg;
-				if( ! i->ignore_session_error)
-				{
-					throw std::runtime_error(error_msg);
-				}
-			}
-			
-			session_registry.emplace(id, this);
-			L << Logger::Info << "\tcreated new session for this thread: " << static_cast<void*>(i->session) << ".";
-		}else{
-			L << Logger::Info << "\tsession for this thread: "  << static_cast<void*>(q->second) << ".";
-		}
+		PEP_SESSION session = i->session_registry->get(id);
+		(void)session; // not used, yet.
 		
 		std::unique_ptr<event_base, decltype(&event_base_free)> eventBase(event_base_new(), &event_base_free);
 		if (!eventBase)
@@ -426,16 +339,23 @@ void JsonAdapter::threadFunc()
 			event_base_loop(eventBase.get(), 0);
 #endif
 		}
+		
+		Lock L{_mtx};
+		i->eventListener.erase( std::this_thread::get_id() );
 	}
 	catch (const std::exception& e)
 	{
 		L << Logger::Error << " +++ std::exception in ThreadFunc: " << e.what();
 		initExcept = std::current_exception();
+		Lock L{_mtx};
+		i->eventListener.erase( std::this_thread::get_id() );
 	}
 	catch (...)
 	{
 		L << Logger::Crit << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ ";
 		initExcept = std::current_exception();
+		Lock L{_mtx};
+		i->eventListener.erase( std::this_thread::get_id() );
 	}
 	L << Logger::Info << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++";
 }
@@ -448,7 +368,7 @@ try
 	Logger L("JA:run");
 	
 	L << Logger::Info << "This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".";
-	L << Logger::Debug << to_string( session_registry);
+	L << Logger::Debug << "Registry:\n" << i->session_registry->to_string();
 	
 	i->running = true;
 	for(int t=0; t<SrvThreadCount; ++t)
@@ -474,6 +394,18 @@ catch (std::exception const &e)
 {
 	Log(Logger::Error) << "Exception in JsonAdapter::run(): \"" << e.what() << "\"";
 	throw;
+}
+
+
+void JsonAdapter::connection_close_cb()
+{
+	Lock L{_mtx};
+	auto q = i->eventListener.find( std::this_thread::get_id() );
+	Log() << "Connection Close Callback: " << (q==i->eventListener.end() ? "NO" : "1") << " entry in eventListener map";
+	if(q != i->eventListener.end())
+	{
+		i->eventListener.erase(q);
+	}
 }
 
 
@@ -517,42 +449,41 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 void JsonAdapter::augment(json_spirit::Object& returnObject)
 {
 	check_guard();
+	/*
 	PEP_SESSION session = this->i->session;
 	auto errorstack = get_errorstack(session);
 	returnObject.emplace_back( "errorstack", to_json(errorstack) );
 	clear_errorstack(session);
+	*/
 }
 
 
-void JsonAdapter::registerEventListener(const std::string& address, unsigned port, const std::string& securityContext)
+js::Array JsonAdapter::pollForEvents(unsigned timeout_seconds)
 {
-	check_guard();
-	const auto key = std::make_pair(address, port);
-	const auto q = i->eventListener.find(key);
-	if( q != i->eventListener.end() && q->second.securityContext != securityContext)
-	{
-		throw std::runtime_error("EventListener at host \"" + address + "\":" + std::to_string(port) + " is already registered with different securityContext." );
-	}
+	js::Array arr{};
 	
-	EventListenerValue v;
-	v.securityContext = securityContext;
-// FIXME: one event_base per thread!
-//	v.connection.reset( evhttp_connection_base_new( i->eventBase.get(), nullptr, address.c_str(), port ) );
-	i->eventListener[key] = std::move(v);
-}
-
-
-void JsonAdapter::unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext)
-{
-	check_guard();
-	const auto key = std::make_pair(address, port);
-	const auto q = i->eventListener.find(key);
-	if( q == i->eventListener.end() || q->second.securityContext != securityContext)
-	{
-		throw std::runtime_error("Cannot unregister EventListener at host \"" + address + "\":" + std::to_string(port) + ". Not registered or wrong securityContext." );
-	}
+	Lock L{_mtx};
+	EventListenerValue& el = i->eventListener[ std::this_thread::get_id() ];  // adds an entry, if not already there. :-)
+	L.unlock();
 	
-	i->eventListener.erase(q);
+	const size_t size = el.Q.size();
+	if(size)
+	{
+		// fetch all elements from queue
+		for(size_t i=0; i<size; ++i)
+		{
+			arr.emplace_back( el.Q.pop_front() );
+		}
+	}else{
+		// block until there is at least one element or timeout
+		std::string event;
+		const bool success = el.Q.try_pop_front( event, std::chrono::seconds(timeout_seconds) );
+		if(success)
+		{
+			arr.emplace_back( std::move(event) );
+		}
+	}
+	return arr;
 }
 
 
@@ -585,47 +516,41 @@ void JsonAdapter::check_guard() const
 
 std::recursive_mutex get_instance_mutex;
 
-JsonAdapter& JsonAdapter::getInstance()
+JsonAdapter& JsonAdapter::createInstance(JsonAdapter* instance)
 {
 	std::lock_guard<std::recursive_mutex> L(get_instance_mutex);
 	
-	if(!ja_singleton)
+	if(!singleton)
 	{
-		ja_singleton = new JsonAdapter();
+		singleton = instance;
 	}
 	
-	return *ja_singleton;
+	return *singleton;
 }
 
-JsonAdapter& JsonAdapter::startup(inject_sync_event_t se)
+
+JsonAdapter& JsonAdapter::getInstance()
+{
+	if(!singleton)
+	{
+		throw std::logic_error("You forgot to call JsonAdapter::createInstance() before!");
+	}
+	
+	return *singleton;
+}
+
+
+SessionRegistry& JsonAdapter::getSessionRegistry()
+{
+	return *(singleton->i->session_registry.get());
+}
+
+
+JsonAdapter& JsonAdapter::startup()
 {
 	JsonAdapter& ja = getInstance();
-	ja.prepare_run("127.0.0.1", 4223, 9999, se);
+	ja.prepare_run("127.0.0.1", 4223, 9999);
 	ja.run();
 	return ja;
 }
 
-
-namespace {
-
-std::string to_string(const SessionRegistry& reg)
-{
-	std::stringstream ss;
-	ss << "There are " << reg.size() << " sessions registered" << (reg.empty() ? '.' : ':' ) << std::endl;
-	for(const auto s : reg)
-	{
-		ss << "\t thread id " << s.first << " : JA=" << (void*)s.second << ". ";
-		if(s.second)
-		{
-			ss << " js.i=" << (void*)(s.second->i) << ". ";
-			if(s.second->i)
-			{
-				ss << "  session=" << (void*)(s.second->i->session) << ".";
-			}
-		}
-		ss << std::endl;
-	}
-	return ss.str();
-}
-
-}

@@ -9,6 +9,9 @@
 #include "server_version.hh"
 
 
+class SessionRegistry;
+
+
 class JsonAdapter : public Context
 {
 public:
@@ -20,8 +23,8 @@ public:
 	JsonAdapter(const JsonAdapter&) = delete;
 	void operator=(const JsonAdapter&) = delete;
 	
-	void   registerEventListener(const std::string& address, unsigned port, const std::string& securityContext);
-	void unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext);
+	// returns all events in queue, if any. Blocks for given number of seconds and returns empty array on timeout
+	json_spirit::Array pollForEvents(unsigned timeout_seconds);
 	
 	// set some internal variables and return itself for chaining.
 	// these functions shall be called before prepare_run()!
@@ -33,10 +36,13 @@ public:
 	JsonAdapter& deliver_html(bool _deliver_html);
 	
 	// look for a free port to listen on and set the given configuration
-	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port, inject_sync_event_t se);
+	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port);
 	
 	// run the server in another thread and returns immediately. prepare_run() has to be called before!
 	void run();
+	
+	// non-static: does the real work. :-)
+	void connection_close_cb();
 	
 	// exits gracefully after the given number of seconds.
 	// if "tv" is NULL it means: exits immediately after _all_ currently processed events have been finished.
@@ -77,19 +83,37 @@ public:
 	
 	static JsonAdapter& getInstance();
 	
-	// Very ugly: that function ptr has to be known to the JA before any instance is created. -.-
-	static JsonAdapter& startup(inject_sync_event_t inject_fn);
+	static JsonAdapter& startup();
+	
+	static SessionRegistry& getSessionRegistry();
+
+protected:
+
+	// might be overridden for multi-protocol adapters to dispatch to different client types.
+	virtual messageToSend_t getMessageToSend() const { return &JsonAdapter::messageToSend; }
+	
+	// MUST be overridden, because the sync event queue is _not_ part of the Json Adapter
+	virtual inject_sync_event_t getInjectSyncEvent() const = 0;
+	
+	static
+	JsonAdapter& createInstance(JsonAdapter* instance);
+	
+	static
+	JsonAdapter* singleton;
+
+	// creates the one and only instance of the JSON adapter.
+	JsonAdapter();
 
 //private:
 	struct Internal;
+	friend struct Internal;
+	
 	unsigned long long guard_0;
 	Internal* i; // pimpl for stable interface.
 	unsigned long long guard_1;
 
 private:
 
-	// creates the one and only instance of the JSON adapter.
-	JsonAdapter();
 
 	static
 	void staticThreadFunc(JsonAdapter* that) { that->threadFunc(); }

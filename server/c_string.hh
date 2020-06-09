@@ -88,9 +88,9 @@ struct InOutP<c_string, PF>;
 
 // Holds the length of the string in the previous c_string parameter
 template<ParamFlag PF = ParamFlag::Default>
-struct InLength : In<size_t, PF>
+struct InLength : public InBase<size_t, PF>
 {
-	typedef In<size_t, PF> Base;
+	typedef InBase<size_t, PF> Base;
 	
 	InLength(const js::Value& v, Context* ctx, unsigned param_nr)
 	: Base( ctx->retrieve(param_nr-1) )

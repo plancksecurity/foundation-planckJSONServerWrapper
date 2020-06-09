@@ -29,20 +29,6 @@
 #include "mini-adapter-impl.hh"
 
 
-template<>
-In<Context*, ParamFlag::Default>::~In()
-{
-	// do nothing
-}
-
-template<>
-In<Context*, ParamFlag::Default>::In(const js::Value&, Context* ctx, unsigned)
-: value( ctx )
-{
-
-}
-
-
 namespace fs = boost::filesystem;
 
 // compile-time default. might be overwritten in main() or before any ev_server function is called.
@@ -70,6 +56,13 @@ std::string getBinaryPath()
 	
 	throw std::runtime_error("getBinaryPath returns error: " + ::pEp::status_to_string(status) );
 }
+
+
+void connection_close_cb(evhttp_connection* conn, void* arg)
+{
+	JsonAdapter::getInstance().connection_close_cb();
+}
+
 
 
 // these are the pEp functions that are callable by the client
@@ -149,9 +142,8 @@ const FunctionMap functions = {
 		FP( "OpenPGP_list_keyinfo", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, Out<stringpair_list_t*>> ( &OpenPGP_list_keyinfo) ),
 		
 		FP( "Event Listener & Results", new Separator ),
-		FP( "registerEventListener"  , new Func<void, In<JsonAdapter*,ParamFlag::NoInput>, In<std::string>, In<unsigned>, In<std::string>> ( &JsonAdapter::registerEventListener) ),
-		FP( "unregisterEventListener", new Func<void, In<JsonAdapter*,ParamFlag::NoInput>, In<std::string>, In<unsigned>, In<std::string>> ( &JsonAdapter::unregisterEventListener) ),
 		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In_Pep_Session, In<sync_handshake_result>, In<const identity_list*> > (&deliverHandshakeResult) ),
+		FP( "pollForEvents"          , new Func<js::Array, In<JsonAdapter*,ParamFlag::NoInput>, In<unsigned>> (&JsonAdapter::pollForEvents) ),
 		
 		FP( "Sync", new Separator ),
 		FP( "leave_device_group"       , new Func<PEP_STATUS, In_Pep_Session> (&leave_device_group) ),
@@ -165,6 +157,7 @@ const FunctionMap functions = {
 		FP( "serverVersion", new Func<ServerVersion>( &server_version ) ),
 		FP( "version",       new Func<std::string>( &version_as_a_string ) ),
 		FP( "getBinaryPath", new Func<std::string>( &getBinaryPath ) ),
+		FP( "testMessageToSend", new Func<PEP_STATUS, In<message*>> (&JsonAdapter::messageToSend) ),
 
 		FP( "shutdown",  new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::shutdown_now ) ),
 	};
@@ -315,6 +308,10 @@ void ev_server::OnApiRequest(evhttp_request* req, void* obj)
 	
 	try
 	{
+	
+	evhttp_connection* conn = evhttp_request_get_connection(req);
+	L << Logger::Debug << "Request " << (void*)req << " is associated with connection " << (void*)conn;
+	evhttp_connection_set_closecb(conn, &connection_close_cb, nullptr);
 	
 	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	
