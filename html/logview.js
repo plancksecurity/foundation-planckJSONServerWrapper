@@ -61,13 +61,13 @@ function handleFileSelect(evt)
 				threads[thread.substr(1)] = 1;
 				
 			}else{
-				document.getElementById('tbl').innerHTML += '<tr><td colspan="4">' + l + '</td></tr>';
+				document.getElementById('tbl').innerHTML += '<tr class="th0"><td colspan="4">' + l + '</td></tr>';
 			}
 		}
 		
 		// create CSS colors for threads
 		var colnum = 0;
-		var buttons = '<blockquote>Toggle threads:';
+		var buttons = '<blockquote>Toggle threads:&nbsp;&nbsp;<button id="btn0" class="enabled" onclick="toggle(\'th0\')"> ∅ </button>';
 		for(var t in threads)
 		{
 			var style = document.createElement('style');
@@ -76,8 +76,10 @@ function handleFileSelect(evt)
 			var rule = '.thd_' + t + ' { background-color: #' + colors[colnum] + '; }'
 			style.sheet.insertRule(rule);
 			colnum = (colnum+1) % colors.length;
-			buttons += '&nbsp;&nbsp;<button id="btn_' + t + '" class="enabled">' + t + '</button>';
+			buttons += '&nbsp;&nbsp;<button id="btn_' + t + '" class="enabled" onclick="toggle(\'thd_' + t +'\')" >¶' + t + '</button>';
 		}
+		
+		threads["th0"] = 1;
 		document.getElementById('list').innerHTML += buttons + '</blockquote>';
 	}
 
