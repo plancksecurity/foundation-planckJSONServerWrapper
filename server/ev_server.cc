@@ -163,7 +163,7 @@ const FunctionMap functions = {
 
 pEp::Webserver::response ev_server::sendReplyString(const pEp::Webserver::request& req, const char* contentType, std::string&& outputText)
 {
-	Log() << Logger::Debug << "sendReplyString(): req=" << req
+	Log() << Logger::Debug << "sendReplyString(): "
 		<< ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL")
 		<< ", output.size()=«" << outputText.size() << "».";
 	
@@ -204,7 +204,7 @@ pEp::Webserver::response ev_server::OnOtherRequest(boost::cmatch match, const pE
 	
 	const std::string path = req.target().to_string(); // NB: is percent-encoded! does not relevant for the supported paths above.
 	
-	Log() << Logger::Debug << "** Request: [" << req.method_string() << "] " << "Path: [" + path + "]";
+	Log() << Logger::Debug << "** Request: [" << req.method_string().to_string() << "] " << "Path: [" + path + "]";
 	
 	try{
 		const auto q = files.find(path);
