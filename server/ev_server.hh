@@ -14,10 +14,10 @@ class ev_server
 {
 public:
 	static
-	void sendReplyString(pEp::Webserver::request& req, const char* contentType, const std::string& outputText);
+	pEp::Webserver::response sendReplyString(const pEp::Webserver::request& req, const char* contentType, std::string&& outputText);
 	
 	static
-	void sendFile( pEp::Webserver::request& req, const std::string& mimeType, const boost::filesystem::path& fileName);
+	pEp::Webserver::response sendFile(const pEp::Webserver::request& req, const char* mimeType, const boost::filesystem::path& fileName);
 
 	// catch-all callback. Used by demo html & JavaScript client to deliver static HTML & JS files
 	static

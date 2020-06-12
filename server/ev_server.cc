@@ -161,47 +161,33 @@ const FunctionMap functions = {
 } // end of anonymous namespace
 
 
-void ev_server::sendReplyString(pEp::Webserver::request& req, const char* contentType, const std::string& outputText)
+pEp::Webserver::response ev_server::sendReplyString(const pEp::Webserver::request& req, const char* contentType, std::string&& outputText)
 {
-	auto* outBuf = evhttp_request_get_output_buffer(req);
-	if (!outBuf)
-		return;
-	
-	if(contentType)
-	{
-		evhttp_add_header(evhttp_request_get_output_headers(req), "Content-Type", contentType);
-	}
-	const int ret = evbuffer_add(outBuf, outputText.data(), outputText.size());
-	if(ret==0)
-	{
-		evhttp_send_reply(req, HTTP_OK, "", outBuf);
-	}else{
-		evhttp_send_reply(req, 500, "evbuffer_add() failed.", outBuf);
-	}
-	
-	Log() << Logger::Debug << "sendReplyString(): ret=" << ret
+	Log() << Logger::Debug << "sendReplyString(): req=" << req
 		<< ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL")
-		<< ", output=«" << outputText << "».";
+		<< ", output.size()=«" << outputText.size() << "».";
+	
+	pEp::Webserver::response res{pEp::http::status::ok, req.version()};
+	res.set(pEp::http::field::content_type, contentType);
+	res.keep_alive(req.keep_alive());
+	res.content_length(outputText.size());
+	res.body() = std::move(outputText);
+
+	return res;
 }
 
 
-void ev_server::sendFile(pEp::Webserver::request& req, const std::string& mimeType, const fs::path& fileName)
+pEp::Webserver::response ev_server::sendFile(const pEp::Webserver::request& req, const char* mimeType, const fs::path& fileName)
 {
-	auto* outBuf = evhttp_request_get_output_buffer(req);
-	if (!outBuf)
-		return;
-	
 	// not the best for big files, but this server does not send big files. :-)
-	const std::string fileContent = pEp::slurp(fileName.string());
-	evbuffer_add(outBuf, fileContent.data(), fileContent.size());
-	evhttp_add_header(evhttp_request_get_output_headers(req), "Content-Type", mimeType.c_str());
-	evhttp_send_reply(req, HTTP_OK, "", outBuf);
+	std::string fileContent = pEp::slurp(fileName.string());
+	return sendReplyString(req, mimeType, std::move(fileContent));
 }
 
 
 struct FileRequest
 {
-	std::string mimeType;
+	const char* mimeType;
 	fs::path    fileName;
 };
 
@@ -216,30 +202,27 @@ pEp::Webserver::response ev_server::OnOtherRequest(boost::cmatch match, const pE
 			{ "/favicon.ico"     , {"image/vnd.microsoft.icon", path_to_html / "json-test.ico"} },
 		};
 	
-	const sv path = req.target(); // NB: is percent-encoded! does not relevant for the supported paths above.
+	const std::string path = req.target().to_string(); // NB: is percent-encoded! does not relevant for the supported paths above.
 	
-	Log() << Logger::Debug << "** Request: [" << request.method_string() << "] " << "Path: [" + path + "]";
+	Log() << Logger::Debug << "** Request: [" << req.method_string() << "] " << "Path: [" + path + "]";
 	
 	try{
 		const auto q = files.find(path);
 		if(q != files.end()) // found in "files" map
 		{
 			Log() << Logger::Debug << "\t found file \"" << q->second.fileName.string() << "\", type=" << q->second.mimeType << ".\n";
-			sendFile( req, q->second.mimeType, q->second.fileName);
-			return;
+			return sendFile( req, q->second.mimeType, q->second.fileName);
 		}
 		
-		const std::string reply = std::string("URI \"") + uri_string + "\" not found! "
-			+ (!path ? "NULL Path" : "Path: \"" + std::string(path) + "\"");
-		evhttp_send_error(req, HTTP_NOTFOUND, reply.c_str());
+		return pEp::Webserver::create_status_response(req, pEp::http::status::not_found);
 	}
 	catch(const std::runtime_error& e)
 	{
-		const std::string error_msg = "Internal error caused by URI \"" + std::string(uri_string) + "\"";
+		const std::string error_msg = "Internal error caused by path \"" + path + "\"";
 		// Log e.what() to log file, but DON'T send it in HTTP error message
 		// because it might contain sensitive information, e.g. local file paths etc.!
 		Log() << Logger::Error << "OnOtherRequest: " << error_msg << ".  what:" << e.what();
-		evhttp_send_error(req, HTTP_INTERNAL, error_msg.c_str() );
+		return pEp::Webserver::create_status_response(req, pEp::http::status::internal_server_error );
 	}
 };
 
@@ -276,20 +259,18 @@ pEp::Webserver::response ev_server::OnGetFunctions(boost::cmatch match, const pE
 		jsonfunctions.push_back( o );
 	}
 	
-	const std::string output = preamble + js::write( jsonfunctions, js::pretty_print | js::raw_utf8 | js::single_line_arrays )
+	std::string output = preamble + js::write( jsonfunctions, js::pretty_print | js::raw_utf8 | js::single_line_arrays )
 		+ ";\n"
 		"\n"
 		"// End of generated file.\n";
 		
-	sendReplyString(req, "text/javascript", output.c_str());
+	return sendReplyString(req, "text/javascript", std::move(output));
 }
 
 
 pEp::Webserver::response ev_server::OnApiRequest(boost::cmatch match, const pEp::Webserver::request& req)
 {
 	Logger L( Log(), "OnApiReq");
-	evbuffer* inbuf = evhttp_request_get_input_buffer(req);
-	const size_t length = evbuffer_get_length(inbuf);
 
 	int request_id = -42;
 	js::Object answer;
@@ -298,31 +279,24 @@ pEp::Webserver::response ev_server::OnApiRequest(boost::cmatch match, const pEp:
 	try
 	{
 	
-	evhttp_connection* conn = evhttp_request_get_connection(req);
-	L << Logger::Debug << "Request " << (void*)req << " is associated with connection " << (void*)conn;
-	evhttp_connection_set_closecb(conn, &connection_close_cb, nullptr);
+	JsonAdapter& ja = JsonAdapter::getInstance();
 	
-	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
-	
-	std::vector<char> data(length);
-	const ev_ssize_t nr = evbuffer_copyout(inbuf, data.data(), data.size());
-	const std::string data_string(data.data(), data.data() + nr );
-	if(nr>0)
+	const std::string data_string = req.body();
+	if(!data_string.empty())
 	{
 		L << Logger::Debug << "Data: «" << data_string  << "»";
 		bool b = js::read( data_string, p);
 		if(p.type() == js::obj_type)
 		{
 			const js::Object& request = p.get_obj();
-			answer = call( functions, request, ja );
+			answer = call( functions, request, &ja );
 		}else{
 			const std::string error_msg = "evbuffer_copyout does not return a JSON string. b=" + std::to_string(b);
 			L << Logger::Error << error_msg;
 			answer = make_error( JSON_RPC::PARSE_ERROR, error_msg, js::Value{data_string}, 42 );
 		}
 	}else{
-		L << Logger::Error << "Error: " << nr << ".\n";
-		answer = make_error( JSON_RPC::INTERNAL_ERROR, "evbuffer_copyout returns negative value", p, request_id );
+		answer = make_error( JSON_RPC::INTERNAL_ERROR, "ZERO size request", p, request_id );
 	}
 	
 	}
@@ -332,7 +306,7 @@ pEp::Webserver::response ev_server::OnApiRequest(boost::cmatch match, const pEp:
 		answer = make_error( JSON_RPC::INTERNAL_ERROR, "Got a std::exception: \"" + std::string(e.what()) + "\"", p, request_id );
 	}
 
-	sendReplyString(req, "text/plain", js::write(answer, js::raw_utf8));
+	return sendReplyString(req, "text/plain", js::write(answer, js::raw_utf8));
 };
 
 
