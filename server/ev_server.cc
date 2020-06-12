@@ -1,4 +1,4 @@
-#include <evhttp.h>
+#include <pEp/webserver.hh>
 
 #include "ev_server.hh"
 #include "c_string.hh"
@@ -56,13 +56,6 @@ std::string getBinaryPath()
 	
 	throw std::runtime_error("getBinaryPath returns error: " + ::pEp::status_to_string(status) );
 }
-
-
-void connection_close_cb(evhttp_connection* conn, void* arg)
-{
-	JsonAdapter::getInstance().connection_close_cb();
-}
-
 
 
 // these are the pEp functions that are callable by the client
@@ -168,7 +161,7 @@ const FunctionMap functions = {
 } // end of anonymous namespace
 
 
-void ev_server::sendReplyString(evhttp_request* req, const char* contentType, const std::string& outputText)
+void ev_server::sendReplyString(pEp::Webserver::request& req, const char* contentType, const std::string& outputText)
 {
 	auto* outBuf = evhttp_request_get_output_buffer(req);
 	if (!outBuf)
@@ -192,7 +185,7 @@ void ev_server::sendReplyString(evhttp_request* req, const char* contentType, co
 }
 
 
-void ev_server::sendFile( evhttp_request* req, const std::string& mimeType, const fs::path& fileName)
+void ev_server::sendFile(pEp::Webserver::request& req, const std::string& mimeType, const fs::path& fileName)
 {
 	auto* outBuf = evhttp_request_get_output_buffer(req);
 	if (!outBuf)
@@ -213,7 +206,7 @@ struct FileRequest
 };
 
 // catch-all callback
-void ev_server::OnOtherRequest(evhttp_request* req, void*)
+pEp::Webserver::response ev_server::OnOtherRequest(boost::cmatch match, const pEp::Webserver::request& req)
 {
 	static const std::map<std::string, FileRequest > files =
 		{
@@ -223,23 +216,19 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 			{ "/favicon.ico"     , {"image/vnd.microsoft.icon", path_to_html / "json-test.ico"} },
 		};
 	
-	const evhttp_uri* uri = evhttp_request_get_evhttp_uri(req);
-	const char* path = evhttp_uri_get_path(uri);
-	const char* uri_string = evhttp_request_get_uri(req);
-	Log() << Logger::Debug << "** Request: [" << uri_string << "] " << (path? " Path: [" + std::string(path) + "]" : "null path") << "\n";
+	const sv path = req.target(); // NB: is percent-encoded! does not relevant for the supported paths above.
+	
+	Log() << Logger::Debug << "** Request: [" << request.method_string() << "] " << "Path: [" + path + "]";
 	
 	try{
-		if(path)
+		const auto q = files.find(path);
+		if(q != files.end()) // found in "files" map
 		{
-			const auto q = files.find(path);
-			if(q != files.end()) // found in "files" map
-			{
 			Log() << Logger::Debug << "\t found file \"" << q->second.fileName.string() << "\", type=" << q->second.mimeType << ".\n";
-				sendFile( req, q->second.mimeType, q->second.fileName);
-				return;
-			}
+			sendFile( req, q->second.mimeType, q->second.fileName);
+			return;
 		}
-	
+		
 		const std::string reply = std::string("URI \"") + uri_string + "\" not found! "
 			+ (!path ? "NULL Path" : "Path: \"" + std::string(path) + "\"");
 		evhttp_send_error(req, HTTP_NOTFOUND, reply.c_str());
@@ -256,7 +245,7 @@ void ev_server::OnOtherRequest(evhttp_request* req, void*)
 
 
 // generate a JavaScript file containing the definition of all registered callable functions, see above.
-void ev_server::OnGetFunctions(evhttp_request* req, void*)
+pEp::Webserver::response ev_server::OnGetFunctions(boost::cmatch match, const pEp::Webserver::request& req)
 {
 	static const auto& version = server_version();
 	static const std::string preamble =
@@ -296,7 +285,7 @@ void ev_server::OnGetFunctions(evhttp_request* req, void*)
 }
 
 
-void ev_server::OnApiRequest(evhttp_request* req, void* obj)
+pEp::Webserver::response ev_server::OnApiRequest(boost::cmatch match, const pEp::Webserver::request& req)
 {
 	Logger L( Log(), "OnApiReq");
 	evbuffer* inbuf = evhttp_request_get_input_buffer(req);
