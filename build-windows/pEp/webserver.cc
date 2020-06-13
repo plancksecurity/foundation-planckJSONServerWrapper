@@ -161,7 +161,7 @@ void Webserver::do_session(tcp::socket *socket)
     {
         http::request<http::string_body> req;
         http::read(*socket, buffer, req, ec);
-        if (ec == http::error::end_of_stream)
+        if (ec == http::error::end_of_stream || ec == net::error::connection_reset)
             break;
         if (ec) {
             delete socket;
