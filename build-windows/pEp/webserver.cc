@@ -108,13 +108,12 @@ void Webserver::deliver_file(tcp::socket *socket, const request& req)
     boost::cmatch m;
     std::string d{req.target().data(), req.target().length()};
     if (boost::regex_match(d.c_str(), m, file)) {
-        std::string p{_doc_root};
-        p.append("/");  // Is this OK for Windows?
-        p.append(m[1]);
+        fs::path p{_doc_root};
+        p /= std::string(m[1]);
 
         beast::error_code ec;
         http::file_body::value_type body;
-        body.open(p.c_str(), beast::file_mode::scan, ec);
+        body.open(p.string().c_str(), beast::file_mode::scan, ec);
         if (ec == beast::errc::no_such_file_or_directory) {
             deliver_status(socket, req, http::status::not_found);
         }
@@ -127,7 +126,7 @@ void Webserver::deliver_file(tcp::socket *socket, const request& req)
                     std::piecewise_construct,
                     std::make_tuple(std::move(body)),
                     std::make_tuple(http::status::ok, req.version())};
-            res.set(http::field::content_type, mime_type(p));
+            res.set(http::field::content_type, mime_type(p.string().c_str()));
             res.content_length(size);
             res.keep_alive(req.keep_alive());
             http::write(*socket, res, ec);
