@@ -65,6 +65,8 @@ typedef std::unique_lock<Mutex>  Lock;
 Mutex  _mtx;
 
 
+typedef variant<std::thread::id, std::string> EventListenerKey;
+
 struct EventListenerValue
 {
 	utility::locked_queue<std::string> Q;
@@ -83,7 +85,7 @@ struct JsonAdapter::Internal
 {
 	std::unique_ptr<SessionRegistry> session_registry{};
 	std::string token;
-	std::map< variant<std::thread::id, std::string>, EventListenerValue> eventListener;
+	std::map<EventListenerKey, EventListenerValue> eventListener;
 	
 	Logger      Log;
 	std::unique_ptr<pEp::Webserver> webserver;
@@ -108,7 +110,7 @@ struct JsonAdapter::Internal
 	}
 	
 	
-	std::string to_log(const variant<std::thread::id, std::string>& v)
+	std::string to_log(const EventListenerKey& v)
 	{
 		const std::thread::id* tid = get<const std::thread::id>(&v);
 		if(tid)
@@ -138,6 +140,9 @@ struct JsonAdapter::Internal
 			e.second.Q.push_back(request_r);
 		}
 	}
+	
+	js::Array pollForEvents(const EventListenerKey& key, unsigned timeout_seconds);
+
 };
 
 
@@ -323,10 +328,22 @@ void JsonAdapter::augment(json_spirit::Object& returnObject)
 
 js::Array JsonAdapter::pollForEvents(unsigned timeout_seconds)
 {
+	return i->pollForEvents( std::this_thread::get_id(), timeout_seconds);
+}
+
+
+js::Array JsonAdapter::pollForEvents2(const std::string& session_id, unsigned timeout_seconds)
+{
+	return i->pollForEvents( session_id, timeout_seconds);
+}
+
+
+js::Array JsonAdapter::Internal::pollForEvents(const EventListenerKey& key, unsigned timeout_seconds)
+{
 	js::Array arr{};
 	
 	Lock L{_mtx};
-	EventListenerValue& el = i->eventListener[ std::this_thread::get_id() ];  // adds an entry, if not already there. :-)
+	EventListenerValue& el = eventListener[key];  // adds an entry, if not already there. :-)
 	L.unlock();
 	
 	const size_t size = el.Q.size();

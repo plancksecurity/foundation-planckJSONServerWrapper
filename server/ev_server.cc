@@ -138,6 +138,7 @@ const FunctionMap functions = {
 		FP( "Event Listener & Results", new Separator ),
 		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In_Pep_Session, In<sync_handshake_result>, In<const identity_list*> > (&deliverHandshakeResult) ),
 		FP( "pollForEvents"          , new Func<js::Array, In<JsonAdapter*,ParamFlag::NoInput>, In<unsigned>> (&JsonAdapter::pollForEvents) ),
+		FP( "pollForEvents2"         , new Func<js::Array, In<JsonAdapter*,ParamFlag::NoInput>, In<std::string>, In<unsigned>> (&JsonAdapter::pollForEvents2) ),
 		
 		FP( "Sync", new Separator ),
 		FP( "leave_device_group"       , new Func<PEP_STATUS, In_Pep_Session> (&leave_device_group) ),

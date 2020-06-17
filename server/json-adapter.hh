@@ -26,6 +26,9 @@ public:
 	// returns all events in queue, if any. Blocks for given number of seconds and returns empty array on timeout
 	json_spirit::Array pollForEvents(unsigned timeout_seconds);
 	
+	// same as above, but with explicit session_id. JUST FOR DEBUG!!!
+	json_spirit::Array pollForEvents2(const std::string& session_id, unsigned timeout_seconds);
+	
 	// set some internal variables and return itself for chaining.
 	// these functions shall be called before prepare_run()!
 	
