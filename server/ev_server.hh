@@ -15,6 +15,7 @@ class ev_server : public pEp::Webserver
 public:
 	ev_server(const std::string& address, unsigned short start_port, unsigned short end_port, bool deliver_html, const std::string& base_url);
 
+protected:
 	static
 	pEp::Webserver::response sendReplyString(const pEp::Webserver::request& req, const char* contentType, std::string&& outputText);
 	
@@ -32,7 +33,12 @@ public:
 	// handles calls to the JSON-RPC API
 	static
 	pEp::Webserver::response OnApiRequest(boost::cmatch match, const pEp::Webserver::request& req);
+	
+	void thread_init() override;
+	
+	void thread_done() override;
 
+public:
 	// should be set before any of the methods above is called, due to static initializers use that value,
 	// so changing it later might be useless.
 	static boost::filesystem::path path_to_html;
