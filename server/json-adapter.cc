@@ -35,6 +35,18 @@
 #include "json_spirit/json_spirit_utils.h"
 
 
+#if (__cplusplus >= 201606)  // std::variant is C++17.
+#   include <variant>
+    using std::variant;
+    using std::get;
+
+#else // in C++11 / C++14 use boost::variant instead.
+#   include <boost/variant.hpp>
+    using boost::variant;
+    using boost::get;
+#endif
+
+
 namespace fs = boost::filesystem;
 
 
@@ -71,7 +83,7 @@ struct JsonAdapter::Internal
 {
 	std::unique_ptr<SessionRegistry> session_registry{};
 	std::string token;
-	std::map<std::thread::id, EventListenerValue> eventListener;
+	std::map< variant<std::thread::id, std::string>, EventListenerValue> eventListener;
 	
 	Logger      Log;
 	std::unique_ptr<pEp::Webserver> webserver;
@@ -95,6 +107,24 @@ struct JsonAdapter::Internal
 		Log << Logger::Debug << "~JAI";
 	}
 	
+	
+	std::string to_log(const variant<std::thread::id, std::string>& v)
+	{
+		const std::thread::id* tid = get<const std::thread::id>(&v);
+		if(tid)
+		{
+			return Logger::thread_id(hash_tid(*tid));
+		}else{
+			const std::string* s = get<const std::string>(&v);
+			if(s)
+			{
+				return "<<" + *s + ">>";
+			}
+		}
+		
+		return "(?)";
+	}
+	
 	void makeAndDeliverRequest(const char* function_name, const js::Array& params)
 	{
 		const js::Object request = make_request( function_name, params);
@@ -104,7 +134,7 @@ struct JsonAdapter::Internal
 		Log << Logger::Debug << "makeAndDeliverRequest to " << eventListener.size() << " listener(s).";
 		for(auto& e : eventListener)
 		{
-			Log << Logger::Debug << " ~~~ [" << e.first << Logger::thread_id(hash_tid(e.first)) << "] has " << e.second.Q.size() << " old events waiting.";
+			Log << Logger::Debug << " ~~~ " << to_log(e.first)  << " has " << e.second.Q.size() << " old events waiting.";
 			e.second.Q.push_back(request_r);
 		}
 	}
