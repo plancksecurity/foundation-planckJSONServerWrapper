@@ -13,7 +13,7 @@ class Logger;
 class ev_server : public pEp::Webserver
 {
 public:
-	ev_server(const std::string& address, unsigned short start_port, unsigned short end_port, bool deliver_html, const std::string& base_url);
+	ev_server(const std::string& address, unsigned short start_port, bool deliver_html, const std::string& base_url);
 
 protected:
 	static
