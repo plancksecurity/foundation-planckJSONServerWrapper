@@ -297,6 +297,24 @@ void JsonAdapter::connection_close_cb()
 }
 
 
+void JsonAdapter::close_session(const std::string& session_id)
+{
+	Lock L{_mtx};
+	auto q = i->eventListener.find( session_id );
+	Log() << "Close session \"" << session_id << "\": " << (q==i->eventListener.end() ? "NO" : "1") << " entry in eventListener map";
+	if(q != i->eventListener.end())
+	{
+		i->eventListener.erase(q);
+	}
+}
+
+
+std::string JsonAdapter::create_session()
+{
+	return create_random_token(12);
+}
+
+
 void JsonAdapter::shutdown(timeval* t)
 {
 	exit(0);  // HACK for JSON-41

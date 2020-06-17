@@ -139,6 +139,8 @@ const FunctionMap functions = {
 		FP( "deliverHandshakeResult" , new Func<PEP_STATUS, In_Pep_Session, In<sync_handshake_result>, In<const identity_list*> > (&deliverHandshakeResult) ),
 		FP( "pollForEvents"          , new Func<js::Array, In<JsonAdapter*,ParamFlag::NoInput>, In<unsigned>> (&JsonAdapter::pollForEvents) ),
 		FP( "pollForEvents2"         , new Func<js::Array, In<JsonAdapter*,ParamFlag::NoInput>, In<std::string>, In<unsigned>> (&JsonAdapter::pollForEvents2) ),
+		FP( "create_session"         , new Func<std::string>(&JsonAdapter::create_session)),
+		FP( "close_session"          , new Func<void, In<JsonAdapter*,ParamFlag::NoInput>, In<std::string>> (&JsonAdapter::close_session) ),
 		
 		FP( "Sync", new Separator ),
 		FP( "leave_device_group"       , new Func<PEP_STATUS, In_Pep_Session> (&leave_device_group) ),

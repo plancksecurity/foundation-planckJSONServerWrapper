@@ -47,6 +47,11 @@ public:
 	// non-static: does the real work. :-)
 	void connection_close_cb();
 	
+	void close_session(const std::string& session_id);
+	
+	static
+	std::string create_session();
+	
 	// exits gracefully after the given number of seconds.
 	// if "tv" is NULL it means: exits immediately after _all_ currently processed events have been finished.
 	void shutdown(struct timeval* tv);
