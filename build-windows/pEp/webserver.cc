@@ -18,9 +18,9 @@ namespace pEp {
     , _acceptor{_ioc, {addr, port}}
     , _doc_root{doc_root}
     , _generic_handler{}
+    , _port{port}
     , _running{false}
     { }
-
 
 beast::string_view Webserver::mime_type(beast::string_view path)
 {
@@ -93,6 +93,23 @@ Webserver::response Webserver::create_status_response(const request& req, http::
     return res;
 }
 
+Webserver* Webserver::probing_port_range(net::ip::address addr, unsigned short
+        start, unsigned short end, unsigned short& port, const std::string&
+        doc_root)
+{
+    pEp::Webserver *web = nullptr;
+
+    for (port = start; port <= end; ++port) {
+        try {
+            web = new pEp::Webserver{addr, port, doc_root};
+            break;
+        }
+        catch (boost::system::system_error& err) {
+        }
+    }
+
+    return web;
+}
 
 void Webserver::deliver_status(tcp::socket *socket, const request& req, http::status status)
 {
