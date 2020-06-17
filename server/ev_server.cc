@@ -19,6 +19,7 @@
 #include <pEp/mime.h>
 
 // libpEpAdapter:
+#include <pEp/Adapter.hh>
 #include <pEp/status_to_string.hh>
 #include <pEp/slurp.hh>
 
@@ -154,7 +155,6 @@ const FunctionMap functions = {
 
 		FP( "shutdown",  new Func<void, In<JsonAdapter*,ParamFlag::NoInput>>( &JsonAdapter::shutdown_now ) ),
 	};
- 
 
 	bool add_sharks = false;
 
@@ -332,4 +332,17 @@ Logger& ev_server::Log()
 void ev_server::addSharks()
 {
 	add_sharks = true;
+}
+
+
+void ev_server::thread_init()
+{
+	// nothing to do, yet.
+}
+
+
+void ev_server::thread_done()
+{
+	JsonAdapter::getInstance().connection_close_cb();
+	pEp::Adapter::session(pEp::Adapter::release);
 }
