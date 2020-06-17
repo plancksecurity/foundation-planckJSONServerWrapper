@@ -161,8 +161,8 @@ const FunctionMap functions = {
 } // end of anonymous namespace
 
 
-ev_server::ev_server(const std::string& address, unsigned short start_port, unsigned short end_port, bool deliver_html, const std::string& base_url)
-: pEp::Webserver(pEp::net::ip::address::from_string(address), start_port, end_port)
+ev_server::ev_server(const std::string& address, unsigned short port, bool deliver_html, const std::string& base_url)
+: pEp::Webserver(pEp::net::ip::address::from_string(address), port)
 {
 	this->add_url_handler(base_url + "callFunction", ev_server::OnApiRequest);
 	if(deliver_html)

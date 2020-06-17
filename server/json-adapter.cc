@@ -208,7 +208,23 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 	// delayed after constructor, so virtual functions are working:
 	i->session_registry.reset(new SessionRegistry(this->getMessageToSend(), this->getInjectSyncEvent()));
 	
-	i->webserver  = std::make_unique<ev_server>(address, start_port, end_port, i->deliver_html, BaseUrl);
+	for(unsigned short port = start_port; port<=end_port; ++port)
+	{
+		try{
+			i->webserver = std::make_unique<ev_server>(address, port, i->deliver_html, BaseUrl);
+			break;
+		}catch(...)
+		{
+			// okay, next port!
+		}
+	}
+	
+	if(!i->webserver)
+	{
+		throw std::runtime_error("Cannot bind to a port between " + std::to_string(start_port)
+			+ " and " + std::to_string(end_port) + "." );
+	}
+	
 	i->token = create_security_token(address, i->webserver->port(), BaseUrl);
 	
 	Log() << "Bound to port " << i->webserver->port() << ", sec_token=\"" << i->token << "\".";
