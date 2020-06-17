@@ -43,6 +43,7 @@ namespace pEp {
             std::string _doc_root;
             std::unordered_map< std::string, Handling > _urls;
             handler_t _generic_handler;
+            unsigned short _port;
             bool _running;
             std::mutex _mtx;
 
@@ -54,6 +55,9 @@ namespace pEp {
             Webserver(const Webserver&) = delete;
             Webserver& operator=(const Webserver&) = delete;
             virtual ~Webserver() = default;
+            
+            constexpr
+            int port() const noexcept { return _port; }
 
             void add_url_handler   (const std::string& url_regex, handler_t handler);
             void remove_url_handler(const std::string& url_regex);
@@ -69,6 +73,10 @@ namespace pEp {
 
             static
             response create_status_response(const request& req, http::status status);
+
+            static Webserver* probing_port_range(net::ip::address addr,
+                    unsigned short start, unsigned short end, unsigned short&
+                    port, const std::string& doc_root = "");
 
         protected:
             void deliver_status(tcp::socket *socket, const request& req, http::status status);
