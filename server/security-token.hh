@@ -3,6 +3,9 @@
 
 #include <string>
 
+
+std::string create_random_token(unsigned length=38);
+
 // deletes the token file, if it exists
 void remove_token_file();
 

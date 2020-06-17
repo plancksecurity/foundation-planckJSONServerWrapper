@@ -15,8 +15,10 @@ namespace
 {
 	// 36 alphanumeric characters
 	static const char token_alphabet[] = "qaywsxedcrfvtgbzhnujmikolp1234567890POIUZTREWQASDFGHJKLMNBVCXY";
-	
-	std::string create_random_token(unsigned length=38)
+
+}
+
+	std::string create_random_token(unsigned length)
 	{
 		static std::random_device rd;
 		static std::mt19937 gen(rd());
@@ -102,7 +104,6 @@ void write_security_file(const std::string& content)
 
 #endif // ! _WIN32
 
-} // end of anonymous namespace
 
 
 namespace js = json_spirit;
@@ -110,7 +111,7 @@ namespace js = json_spirit;
 // creates a file with restrictive access rights that contains a security token.
 std::string create_security_token(const std::string& server_address, unsigned port_nr, const std::string& path)
 {
-	const std::string sec_token = create_random_token();
+	const std::string sec_token = create_random_token(38);
 	
 	js::Object o;
 	o.emplace_back("address", server_address);
