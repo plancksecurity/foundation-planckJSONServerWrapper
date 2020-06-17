@@ -1,4 +1,3 @@
-#include <stdexcept>
 #include <iostream>
 #include <memory>
 #include <chrono>
@@ -22,10 +21,9 @@
 #include "ev_server.hh"
 #include "logger.hh"
 #include "server_version.hh"
-#include "session_registry.hh"
 
 #include <pEp/keymanagement.h>
-#include <pEp/call_with_lock.hh>
+#include <pEp/Adapter.hh>
 #include <pEp/status_to_string.hh>  // from libpEpAdapter.
 #include <pEp/locked_queue.hh>
 
@@ -69,7 +67,6 @@ JsonAdapter* JsonAdapter::singleton = nullptr;
 
 struct JsonAdapter::Internal
 {
-	std::unique_ptr<SessionRegistry> session_registry{};
 	std::string token;
 	std::map<std::thread::id, EventListenerValue> eventListener;
 	
@@ -113,8 +110,7 @@ struct JsonAdapter::Internal
 
 PEP_SESSION JsonAdapter::getSessionForThread()
 {
-	const auto id = std::this_thread::get_id();
-	return JsonAdapter::getInstance().i->session_registry->get(id);
+	return pEp::Adapter::session(Adapter::init);
 }
 
 
@@ -178,9 +174,8 @@ JsonAdapter::JsonAdapter()
 JsonAdapter::~JsonAdapter()
 {
 	check_guard();
-	Log() << "~JsonAdapter(): " << i->session_registry->size() << " sessions registered.";
+	Log() << "~JsonAdapter().";
 	this->shutdown(nullptr);
-	Log() << "\t After stopSync() and shutdown() there are " << i->session_registry->size() << " sessions registered.";
 	delete i;
 	i=nullptr;
 }
@@ -206,7 +201,7 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 {
 	check_guard();
 	// delayed after constructor, so virtual functions are working:
-	i->session_registry.reset(new SessionRegistry(this->getMessageToSend(), this->getInjectSyncEvent()));
+	pEp::Adapter::startup(this->getMessageToSend(), &JsonAdapter::notifyHandshake);
 	
 	i->webserver  = std::make_unique<ev_server>(address, start_port, end_port, i->deliver_html, BaseUrl);
 	i->token = create_security_token(address, i->webserver->port(), BaseUrl);
@@ -222,7 +217,6 @@ try
 	Logger L("JA:run");
 	
 	L << Logger::Info << "This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".";
-	L << Logger::Debug << "Registry:\n" << i->session_registry->to_string();
 	
 	i->running = true;
 	i->webserver->run();
@@ -354,12 +348,6 @@ JsonAdapter& JsonAdapter::getInstance()
 	}
 	
 	return *singleton;
-}
-
-
-SessionRegistry& JsonAdapter::getSessionRegistry()
-{
-	return *(singleton->i->session_registry.get());
 }
 
 

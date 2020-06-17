@@ -92,9 +92,6 @@ protected:
 	// might be overridden for multi-protocol adapters to dispatch to different client types.
 	virtual messageToSend_t getMessageToSend() const { return &JsonAdapter::messageToSend; }
 	
-	// MUST be overridden, because the sync event queue is _not_ part of the Json Adapter
-	virtual inject_sync_event_t getInjectSyncEvent() const = 0;
-	
 	static
 	JsonAdapter& createInstance(JsonAdapter* instance);
 	
@@ -121,10 +118,6 @@ private:
 	void threadFunc();
 	std::exception_ptr initExcept;
 };
-
-// just for debug:
-// returns a string with a pretty-printed JSON array containing the session registry
-std::string getSessions();
 
 
 #endif // JSON_ADAPTER_HH
