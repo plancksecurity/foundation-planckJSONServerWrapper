@@ -8,7 +8,7 @@
 namespace pEp{
 namespace mini {
 
-	int injectSyncMsg(Sync_event* msg, void* /*management*/ );
+//	int injectSyncMsg(Sync_event* msg, void* /*management*/ );
 	
 	int injectIdentity(pEp_identity* idy);
 	
@@ -32,12 +32,6 @@ namespace mini {
 	{
 	public:
 		static Adapter& createInstance();
-		
-	protected:
-		virtual inject_sync_event_t getInjectSyncEvent() const override
-		{
-			return &::pEp::mini::injectSyncMsg;
-		}
 	};
 
 } // end of namespace pEp::mini

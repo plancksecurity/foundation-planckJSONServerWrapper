@@ -18,16 +18,9 @@ namespace mini {
 	PEP_SESSION keyserver_lookup_session = nullptr; // FIXME: what if another adapter started it already?
 	ThreadPtr   keyserver_lookup_thread;
 
-	utility::locked_queue< Sync_event*, &free_Sync_event>  sync_queue;
 	PEP_SESSION sync_session = nullptr;
 	ThreadPtr   sync_thread;
 	
-	
-	int injectSyncMsg(Sync_event* msg, void* /* management */)
-	{
-		sync_queue.push_back(msg);
-		return 0;
-	}
 	
 	int injectIdentity(pEp_identity* idy)
 	{
