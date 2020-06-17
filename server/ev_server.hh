@@ -10,9 +10,11 @@
 
 class Logger;
 
-class ev_server
+class ev_server : public pEp::Webserver
 {
 public:
+	ev_server(const std::string& address, unsigned short start_port, unsigned short end_port, bool deliver_html, const std::string& base_url);
+
 	static
 	pEp::Webserver::response sendReplyString(const pEp::Webserver::request& req, const char* contentType, std::string&& outputText);
 	

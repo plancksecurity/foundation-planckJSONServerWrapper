@@ -42,11 +42,7 @@ namespace {
     using namespace pEp::utility;
 
 
-std::string BaseUrl    = "/ja/0.1/";
-
-const std::string CreateSessionUrl = BaseUrl + "createSession";
-const std::string GetAllSessionsUrl = BaseUrl + "getAllSessions";
-const std::string ApiRequestUrl = BaseUrl + "callFunction";
+const std::string BaseUrl    = "/ja/0.1/";
 
 const uint64_t Guard_0 = 123456789;
 const uint64_t Guard_1 = 987654321;
@@ -74,14 +70,10 @@ JsonAdapter* JsonAdapter::singleton = nullptr;
 struct JsonAdapter::Internal
 {
 	std::unique_ptr<SessionRegistry> session_registry{};
-	std::string address;
 	std::string token;
 	std::map<std::thread::id, EventListenerValue> eventListener;
 	
 	Logger      Log;
-	unsigned    start_port    = 0;
-	unsigned    end_port      = 0;
-	unsigned    port          = 0;
 	std::unique_ptr<pEp::Webserver> webserver;
 	inject_sync_event_t inject_sync_event = nullptr;
 	
@@ -100,6 +92,7 @@ struct JsonAdapter::Internal
 	
 	~Internal()
 	{
+		Log << Logger::Debug << "~JAI";
 	}
 	
 	void makeAndDeliverRequest(const char* function_name, const js::Array& params)
@@ -214,24 +207,11 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 	check_guard();
 	// delayed after constructor, so virtual functions are working:
 	i->session_registry.reset(new SessionRegistry(this->getMessageToSend(), this->getInjectSyncEvent()));
-	i->address    = address;
-	i->start_port = start_port;
-	i->end_port   = end_port;
 	
-	// pEp::Webserver does not support port probing, yet.
-	i->webserver  = std::make_unique<pEp::Webserver>(pEp::net::ip::address::from_string(address), start_port, "");
-
-	i->webserver->add_url_handler(ApiRequestUrl, ev_server::OnApiRequest);
-	if(i->deliver_html)
-	{
-		i->webserver->add_url_handler("/pEp_functions.js", ev_server::OnGetFunctions);
-		i->webserver->add_generic_url_handler(ev_server::OnOtherRequest);
-	}
+	i->webserver  = std::make_unique<ev_server>(address, start_port, end_port, i->deliver_html, BaseUrl);
+	i->token = create_security_token(address, i->webserver->port(), BaseUrl);
 	
-	i->port = i->start_port;
-	i->token = create_security_token(i->address, i->port, BaseUrl);
-	
-	Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\".";
+	Log() << "Bound to port " << i->webserver->port() << ", sec_token=\"" << i->token << "\".";
 }
 
 
