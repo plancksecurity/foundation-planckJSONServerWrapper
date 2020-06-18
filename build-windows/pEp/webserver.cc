@@ -178,12 +178,8 @@ void Webserver::do_session(tcp::socket *socket)
     {
         http::request<http::string_body> req;
         http::read(*socket, buffer, req, ec);
-        if (ec == http::error::end_of_stream || ec == net::error::connection_reset)
+        if (ec)
             break;
-        if (ec) {
-            delete socket;
-            throw std::ios_base::failure(ec.message());
-        }
 
         const auto method = req.method();
         switch (method)
@@ -218,10 +214,8 @@ void Webserver::do_session(tcp::socket *socket)
                 deliver_status(socket, req, http::status::method_not_allowed);
         };
 
-        if (ec) {
-            delete socket;
-            throw std::ios_base::failure(ec.message());
-        }
+        if (ec)
+            break;
     }
 
     socket->shutdown(tcp::socket::shutdown_send, ec);
