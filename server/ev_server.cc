@@ -180,7 +180,9 @@ pEp::Webserver::response ev_server::sendReplyString(const pEp::Webserver::reques
 {
 	Log() << Logger::Debug << "sendReplyString(): "
 		<< ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL")
-		<< ", output.size()=«" << outputText.size() << "».";
+		<< ", output.size()=«" << outputText.size() << "»"
+		<< ", keep_alive=" << req.keep_alive() << ",\n"
+		<< "outputText=«" << outputText << "»";
 	
 	pEp::Webserver::response res{pEp::http::status::ok, req.version()};
 	res.set(pEp::http::field::content_type, contentType);
