@@ -130,9 +130,13 @@ struct JsonAdapter::Internal
 	void makeAndDeliverRequest(const char* function_name, const js::Array& params)
 	{
 		const js::Object request = make_request( function_name, params);
+		const std::string request_r = js::write(request);
 		
 		Lock L(_mtx);
-		Log << Logger::Debug << "makeAndDeliverRequest to " << eventListener.size() << " listener(s).";
+		Log << Logger::Debug << "makeAndDeliverRequest: \n"
+			"Request: " << request_r << "\n"
+			"Goes to " << eventListener.size() << " listener(s).";
+		
 		for(auto& e : eventListener)
 		{
 			Log << Logger::Debug << " ~~~ " << to_log(e.first)  << " has " << e.second.Q.size() << " old events waiting.";
