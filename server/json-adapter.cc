@@ -69,7 +69,7 @@ typedef variant<std::thread::id, std::string> EventListenerKey;
 
 struct EventListenerValue
 {
-	utility::locked_queue<std::string> Q;
+	utility::locked_queue<js::Object> Q;
 };
 
 static std::hash<std::thread::id> hash_tid;
@@ -130,14 +130,13 @@ struct JsonAdapter::Internal
 	void makeAndDeliverRequest(const char* function_name, const js::Array& params)
 	{
 		const js::Object request = make_request( function_name, params);
-		const std::string request_r = js::write(request);
 		
 		Lock L(_mtx);
 		Log << Logger::Debug << "makeAndDeliverRequest to " << eventListener.size() << " listener(s).";
 		for(auto& e : eventListener)
 		{
 			Log << Logger::Debug << " ~~~ " << to_log(e.first)  << " has " << e.second.Q.size() << " old events waiting.";
-			e.second.Q.push_back(request_r);
+			e.second.Q.push_back(request);
 		}
 	}
 	
@@ -374,7 +373,7 @@ js::Array JsonAdapter::Internal::pollForEvents(const EventListenerKey& key, unsi
 		}
 	}else{
 		// block until there is at least one element or timeout
-		std::string event;
+		js::Object event;
 		const bool success = el.Q.try_pop_front( event, std::chrono::seconds(timeout_seconds) );
 		if(success)
 		{
