@@ -362,28 +362,41 @@ js::Array JsonAdapter::pollForEvents2(const std::string& session_id, unsigned ti
 js::Array JsonAdapter::Internal::pollForEvents(const EventListenerKey& key, unsigned timeout_seconds)
 {
 	js::Array arr{};
-	
-	Lock L{_mtx};
+	Logger L("JAI:poll");
+
+	Lock LCK{_mtx};
 	EventListenerValue& el = eventListener[key];  // adds an entry, if not already there. :-)
-	L.unlock();
+	LCK.unlock();
 	
 	const size_t size = el.Q.size();
 	if(size)
 	{
+		L << Logger::Debug << size << " events in queue for key " << to_log(key) << ":";
 		// fetch all elements from queue
 		for(size_t i=0; i<size; ++i)
 		{
-			arr.emplace_back( el.Q.pop_front() );
+			js::Object obj{ el.Q.pop_front() };
+			const std::string obj_s = js::write( obj );
+			L << Logger::Debug << "\t#" << i << ": " << obj_s;
+			
+			arr.emplace_back( std::move(obj) );
 		}
 	}else{
 		// block until there is at least one element or timeout
+		L << Logger::Debug << "Queue for key " << to_log(key) << " is empty. I'll block for " << timeout_seconds << " seconds.";
 		js::Object event;
 		const bool success = el.Q.try_pop_front( event, std::chrono::seconds(timeout_seconds) );
 		if(success)
 		{
+			const std::string event_s = js::write(event);
+			L << Logger::Debug << "Success! Got this event: " << event_s ;
 			arr.emplace_back( std::move(event) );
+		}else{
+			L << Logger::Debug << "Timeout. No event after " << timeout_seconds << " seconds arreived. So sad.";
 		}
 	}
+	
+	L << Logger::Debug << "Return array with " << arr.size() << " elements.";
 	return arr;
 }
 
