@@ -6,7 +6,6 @@
 #include "json-adapter.hh"
 #include "daemonize.hh"
 #include "logger.hh"
-#include "nulllogger.hh"
 
 #include <thread>
 #include <fstream>
