@@ -183,8 +183,9 @@ pEp::Webserver::response ev_server::sendReplyString(const pEp::Webserver::reques
 	Log() << Logger::Debug << "sendReplyString(): "
 		<< ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL")
 		<< ", output.size()=«" << outputText.size() << "»"
-		<< ", keep_alive=" << req.keep_alive() << ",\n"
-		<< "outputText=«" << outputText << "»";
+		<< ", keep_alive=" << req.keep_alive() << ".";
+	
+	DEBUG_LOG(Log()) << "outputText=«" << outputText << "»";
 	
 	pEp::Webserver::response res{pEp::http::status::ok, req.version()};
 	res.set(pEp::http::field::content_type, contentType);
@@ -303,14 +304,18 @@ pEp::Webserver::response ev_server::OnApiRequest(boost::cmatch match, const pEp:
 	const std::string data_string = req.body();
 	if(!data_string.empty())
 	{
-		L << Logger::Debug << "Data: «" << data_string  << "»";
+#ifdef DEBUG_ENABLED
+		L << Logger::Debug << "Data: «" << data_string  << "» (" << data_string.size() << " bytes).";
+#else
+		L << Logger::Debug << "Data.size=" << data_string.size() << ".";
+#endif
 		bool b = js::read( data_string, p);
 		if(p.type() == js::obj_type)
 		{
 			const js::Object& request = p.get_obj();
 			answer = call( functions, request, &ja );
 		}else{
-			const std::string error_msg = "evbuffer_copyout does not return a JSON string. b=" + std::to_string(b);
+			const std::string error_msg = "request body is not a JSON object. js::read() returned" + std::to_string(b);
 			L << Logger::Error << error_msg;
 			answer = make_error( JSON_RPC::PARSE_ERROR, error_msg, js::Value{data_string}, 42 );
 		}
