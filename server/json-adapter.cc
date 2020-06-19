@@ -5,7 +5,7 @@
 #include <thread>
 #include <cstdint>
 #include <vector>
-#include <evhttp.h>
+#include <pEp/webserver.hh>
 
 #include <string>
 #include <set>
@@ -35,6 +35,18 @@
 #include "json_spirit/json_spirit_utils.h"
 
 
+#if (__cplusplus >= 201606)  // std::variant is C++17.
+#   include <variant>
+    using std::variant;
+    using std::get;
+
+#else // in C++11 / C++14 use boost::variant instead.
+#   include <boost/variant.hpp>
+    using boost::variant;
+    using boost::get;
+#endif
+
+
 namespace fs = boost::filesystem;
 
 
@@ -42,34 +54,22 @@ namespace {
     using namespace pEp::utility;
 
 
-std::string BaseUrl    = "/ja/0.1/";
-int SrvThreadCount     = 3;
-
-const std::string CreateSessionUrl = BaseUrl + "createSession";
-const std::string GetAllSessionsUrl = BaseUrl + "getAllSessions";
-const std::string ApiRequestUrl = BaseUrl + "callFunction";
+const std::string BaseUrl    = "/ja/0.1/";
 
 const uint64_t Guard_0 = 123456789;
 const uint64_t Guard_1 = 987654321;
 
-auto ThreadDeleter = [](std::thread* t)
-{
-	auto& session_registry = JsonAdapter::getSessionRegistry();
-	session_registry.remove(t->get_id());
-};
-
-
-typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
-typedef std::vector<ThreadPtr> ThreadPool;
 
 typedef std::recursive_mutex     Mutex;
 typedef std::unique_lock<Mutex>  Lock;
 Mutex  _mtx;
 
 
+typedef variant<std::thread::id, std::string> EventListenerKey;
+
 struct EventListenerValue
 {
-	utility::locked_queue<std::string> Q;
+	utility::locked_queue<js::Object> Q;
 };
 
 static std::hash<std::thread::id> hash_tid;
@@ -83,27 +83,19 @@ JsonAdapter* JsonAdapter::singleton = nullptr;
 
 struct JsonAdapter::Internal
 {
-	std::unique_ptr<event_base, decltype(&event_base_free)> eventBase = {nullptr, &event_base_free};
-	std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp = {nullptr, &evhttp_free};
 	std::unique_ptr<SessionRegistry> session_registry{};
-	std::string address;
 	std::string token;
-	std::map<std::thread::id, EventListenerValue> eventListener;
+	std::map<EventListenerKey, EventListenerValue> eventListener;
 	
 	Logger      Log;
-	unsigned    start_port    = 0;
-	unsigned    end_port      = 0;
-	unsigned    port          = 0;
+	std::unique_ptr<pEp::Webserver> webserver;
 	inject_sync_event_t inject_sync_event = nullptr;
 	
 	unsigned    request_count = 0;
-	evutil_socket_t sock      = -1;
 	bool        running = false;
 	bool        silent  = false;
 	bool        ignore_session_error = false;
 	bool        deliver_html = true;
-	ThreadPool  threads;
-//	PEP_SESSION session = nullptr;
 	
 	explicit Internal()
 	: Log("JAI")
@@ -114,32 +106,26 @@ struct JsonAdapter::Internal
 	
 	~Internal()
 	{
-//		if(session)
-//			pEp::call_with_lock(&release, session);
-//		session=nullptr;
+		Log << Logger::Debug << "~JAI";
 	}
 	
-	static
-	void requestDone(evhttp_request* req, void* userdata)
+	
+	std::string to_log(const EventListenerKey& v)
 	{
-		// Hum, what is to do here?
-	}
-
-/*
-	static
-	PEP_STATUS deliverRequest(const std::string& uri, evhttp_connection* connection, const js::Object& request)
-	{
-		const std::string request_s = js::write(request, js::raw_utf8);
-		evhttp_request* ereq = evhttp_request_new( &requestDone, nullptr ); // ownership goes to the connection in evhttp_make_request() below.
-		evhttp_add_header(ereq->output_headers, "Content-Length", std::to_string(request_s.length()).c_str());
-		auto output_buffer = evhttp_request_get_output_buffer(ereq);
-		evbuffer_add(output_buffer, request_s.data(), request_s.size());
+		const std::thread::id* tid = get<const std::thread::id>(&v);
+		if(tid)
+		{
+			return Logger::thread_id(hash_tid(*tid));
+		}else{
+			const std::string* s = get<const std::string>(&v);
+			if(s)
+			{
+				return "<<" + *s + ">>";
+			}
+		}
 		
-		const int ret = evhttp_make_request(connection, ereq, EVHTTP_REQ_POST, uri.c_str() );
-		
-		return (ret == 0) ? PEP_STATUS_OK : PEP_UNKNOWN_ERROR;
+		return "(?)";
 	}
-*/
 	
 	void makeAndDeliverRequest(const char* function_name, const js::Array& params)
 	{
@@ -147,13 +133,19 @@ struct JsonAdapter::Internal
 		const std::string request_r = js::write(request);
 		
 		Lock L(_mtx);
-		Log << Logger::Debug << "makeAndDeliverRequest to " << eventListener.size() << " listener(s).";
+		Log << Logger::Debug << "makeAndDeliverRequest: \n"
+			"Request: " << request_r << "\n"
+			"Goes to " << eventListener.size() << " listener(s).";
+		
 		for(auto& e : eventListener)
 		{
-			Log << Logger::Debug << " ~~~ [" << e.first << Logger::thread_id(hash_tid(e.first)) << "] has " << e.second.Q.size() << " old events waiting.";
-			e.second.Q.push_back(request_r);
+			Log << Logger::Debug << " ~~~ " << to_log(e.first)  << " has " << e.second.Q.size() << " old events waiting.";
+			e.second.Q.push_back(request);
 		}
 	}
+	
+	js::Array pollForEvents(const EventListenerKey& key, unsigned timeout_seconds);
+
 };
 
 
@@ -195,7 +187,6 @@ ServerVersion JsonAdapter::version()
 
 PEP_STATUS JsonAdapter::messageToSend(message* msg)
 {
-//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	js::Value v{to_json(msg)};
 	getInstance().i->makeAndDeliverRequest("messageToSend", js::Array{ std::move(v) } );
 	return PEP_STATUS_OK;
@@ -204,7 +195,6 @@ PEP_STATUS JsonAdapter::messageToSend(message* msg)
 
 PEP_STATUS JsonAdapter::notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal sig)
 {
-//	JsonAdapter* ja = static_cast<JsonAdapter*>(obj);
 	js::Array param_array;
 	param_array.emplace_back( to_json(self) );
 	param_array.emplace_back( to_json(partner) );
@@ -219,13 +209,7 @@ JsonAdapter::JsonAdapter()
 , i(new Internal{})
 , guard_1(Guard_1)
 {
-	i->eventBase.reset(event_base_new());
-	if (!i->eventBase)
-		throw std::runtime_error("Failed to create new base_event.");
-	
-	i->evHttp.reset( evhttp_new(i->eventBase.get()) );
-	if (!i->evHttp)
-		throw std::runtime_error("Failed to create new evhttp.");
+	// nothing to do here.
 }
 
 
@@ -261,103 +245,27 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 	check_guard();
 	// delayed after constructor, so virtual functions are working:
 	i->session_registry.reset(new SessionRegistry(this->getMessageToSend(), this->getInjectSyncEvent()));
-	i->address    = address;
-	i->start_port = start_port;
-	i->end_port   = end_port;
 	
-//	Log() << "ThreadFunc: thread id " << std::this_thread::get_id() << ". \n Registry: " << to_string( session_registry );
-	
-	unsigned port_ofs = 0;
-try_next_port:
-	auto* boundSock = evhttp_bind_socket_with_handle(i->evHttp.get(), i->address.c_str(), i->start_port + port_ofs);
-	if (!boundSock)
+	for(unsigned short port = start_port; port<=end_port; ++port)
 	{
-		++port_ofs;
-		if(i->start_port + port_ofs > i->end_port)
+		try{
+			i->webserver = std::make_unique<ev_server>(address, port, i->deliver_html, BaseUrl);
+			break;
+		}catch(...)
 		{
-			throw std::runtime_error("Failed to bind server socket: "
-				"No free port between " + std::to_string(i->start_port) + " and " + std::to_string(i->end_port)
-				);
+			// okay, next port!
 		}
-		goto try_next_port;
 	}
 	
-	if ((i->sock = evhttp_bound_socket_get_fd(boundSock)) == -1)
-		throw std::runtime_error("Failed to get server socket for next instance.");
+	if(!i->webserver)
+	{
+		throw std::runtime_error("Cannot bind to a port between " + std::to_string(start_port)
+			+ " and " + std::to_string(end_port) + "." );
+	}
 	
-	i->port = i->start_port + port_ofs;
-	i->token = create_security_token(i->address, i->port, BaseUrl);
+	i->token = create_security_token(address, i->webserver->port(), BaseUrl);
 	
-	Log() << "Bound to port " << i->port << ", sec_token=\"" << i->token << "\", sock=" << i->sock << ".";
-}
-
-
-void JsonAdapter::threadFunc()
-{
-	Logger L("JA:tF");
-	try
-	{
-		const auto id = std::this_thread::get_id();
-		L << Logger::Info << " +++ Thread starts: isRun=" << i->running << ", id=" << id << ". +++";
-		PEP_SESSION session = i->session_registry->get(id);
-		(void)session; // not used, yet.
-		
-		std::unique_ptr<event_base, decltype(&event_base_free)> eventBase(event_base_new(), &event_base_free);
-		if (!eventBase)
-			throw std::runtime_error("Failed to create new base_event.");
-		
-		std::unique_ptr<evhttp, decltype(&evhttp_free)> evHttp(evhttp_new(eventBase.get()), &evhttp_free);
-		if (!evHttp)
-			throw std::runtime_error("Failed to create new evhttp.");
-		
-		evhttp_set_cb(evHttp.get(), ApiRequestUrl.c_str()    , ev_server::OnApiRequest    , this);
-		
-		if(i->deliver_html)
-		{
-			evhttp_set_cb(evHttp.get(), "/pEp_functions.js"      , ev_server::OnGetFunctions  , this);
-			evhttp_set_gencb(evHttp.get(), ev_server::OnOtherRequest, nullptr);
-		}
-		
-		if (i->sock == -1) // no port bound, yet
-		{
-			throw std::runtime_error("You have to call prepare_run() before run()!");
-		}
-		else
-		{
-			L << Logger::Info << "\tnow I call evhttp_accept_socket()...";
-			if (evhttp_accept_socket(evHttp.get(), i->sock) == -1)
-				throw std::runtime_error("Failed to accept() on server socket for new instance.");
-		}
-		
-		while(i->running)
-		{
-#ifdef EVLOOP_NO_EXIT_ON_EMPTY
-			// for libevent 2.1:
-			event_base_loop(eventBase.get(), EVLOOP_NO_EXIT_ON_EMPTY);
-#else
-			// for libevent 2.0:
-			event_base_loop(eventBase.get(), 0);
-#endif
-		}
-		
-		Lock L{_mtx};
-		i->eventListener.erase( std::this_thread::get_id() );
-	}
-	catch (const std::exception& e)
-	{
-		L << Logger::Error << " +++ std::exception in ThreadFunc: " << e.what();
-		initExcept = std::current_exception();
-		Lock L{_mtx};
-		i->eventListener.erase( std::this_thread::get_id() );
-	}
-	catch (...)
-	{
-		L << Logger::Crit << " +++ UNKNOWN EXCEPTION in ThreadFunc +++ ";
-		initExcept = std::current_exception();
-		Lock L{_mtx};
-		i->eventListener.erase( std::this_thread::get_id() );
-	}
-	L << Logger::Info << " +++ Thread exit? isRun=" << i->running << ", id=" << std::this_thread::get_id() << ". initExcept is " << (initExcept?"":"not ") << "set. +++";
+	Log() << "Bound to port " << i->webserver->port() << ", sec_token=\"" << i->token << "\".";
 }
 
 
@@ -371,24 +279,7 @@ try
 	L << Logger::Debug << "Registry:\n" << i->session_registry->to_string();
 	
 	i->running = true;
-	for(int t=0; t<SrvThreadCount; ++t)
-	{
-		L << Logger::Info << "Start Thread #" << t << "...";
-		ThreadPtr thread(new std::thread(staticThreadFunc, this), ThreadDeleter);
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		if (initExcept)
-		{
-			thread->join();
-			i->running = false;
-			std::rethrow_exception(initExcept);
-		}
-		i->threads.push_back(std::move(thread));
-	}
-	L << Logger::Debug << "All " << SrvThreadCount << " thread(s) started:";
-	for(const auto& t:i->threads)
-	{
-		L << Logger::Debug << "\tthread_id()=" << t->get_id() << ".";
-	}
+	i->webserver->run();
 }
 catch (std::exception const &e)
 {
@@ -409,28 +300,31 @@ void JsonAdapter::connection_close_cb()
 }
 
 
+void JsonAdapter::close_session(const std::string& session_id)
+{
+	Lock L{_mtx};
+	auto q = i->eventListener.find( session_id );
+	Log() << "Close session \"" << session_id << "\": " << (q==i->eventListener.end() ? "NO" : "1") << " entry in eventListener map";
+	if(q != i->eventListener.end())
+	{
+		i->eventListener.erase(q);
+	}
+}
+
+
+std::string JsonAdapter::create_session()
+{
+	return create_random_token(12);
+}
+
+
 void JsonAdapter::shutdown(timeval* t)
 {
 	exit(0);  // HACK for JSON-41
 	check_guard();
 	Log() << "JS::shutdown() was called.";
 	i->running = false;
-	
-	/**** FIXME: proper shutdown!
-	const int ret = event_base_loopexit(i->eventBase.get(), t);
-	if(ret!=0)
-	{
-		throw std::runtime_error("JsonAdapter::shutdown() failed.");
-	}
-	****/
-	Log() << "JS::shutdown(): event_base loop is finished.\n";
-	Log() << "\t there are " << i->threads.size() << " threads remaining in the threadpool.";
-	for(const auto& t : i->threads)
-	{
-		Log() << "\t\tjoin() on id=" << t->get_id() << "....";
-		t->join();
-	}
-	i->threads.clear();
+	i->webserver->shutdown();
 }
 
 
@@ -449,40 +343,60 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 void JsonAdapter::augment(json_spirit::Object& returnObject)
 {
 	check_guard();
-	/*
-	PEP_SESSION session = this->i->session;
-	auto errorstack = get_errorstack(session);
-	returnObject.emplace_back( "errorstack", to_json(errorstack) );
-	clear_errorstack(session);
-	*/
+	// nothing to do anymore.
 }
 
 
 js::Array JsonAdapter::pollForEvents(unsigned timeout_seconds)
 {
+	return i->pollForEvents( std::this_thread::get_id(), timeout_seconds);
+}
+
+
+js::Array JsonAdapter::pollForEvents2(const std::string& session_id, unsigned timeout_seconds)
+{
+	return i->pollForEvents( session_id, timeout_seconds);
+}
+
+
+js::Array JsonAdapter::Internal::pollForEvents(const EventListenerKey& key, unsigned timeout_seconds)
+{
 	js::Array arr{};
-	
-	Lock L{_mtx};
-	EventListenerValue& el = i->eventListener[ std::this_thread::get_id() ];  // adds an entry, if not already there. :-)
-	L.unlock();
+	Logger L("JAI:poll");
+
+	Lock LCK{_mtx};
+	EventListenerValue& el = eventListener[key];  // adds an entry, if not already there. :-)
+	LCK.unlock();
 	
 	const size_t size = el.Q.size();
 	if(size)
 	{
+		L << Logger::Debug << size << " events in queue for key " << to_log(key) << ":";
 		// fetch all elements from queue
 		for(size_t i=0; i<size; ++i)
 		{
-			arr.emplace_back( el.Q.pop_front() );
+			js::Object obj{ el.Q.pop_front() };
+			const std::string obj_s = js::write( obj );
+			L << Logger::Debug << "\t#" << i << ": " << obj_s;
+			
+			arr.emplace_back( std::move(obj) );
 		}
 	}else{
 		// block until there is at least one element or timeout
-		std::string event;
+		L << Logger::Debug << "Queue for key " << to_log(key) << " is empty. I'll block for " << timeout_seconds << " seconds.";
+		js::Object event;
 		const bool success = el.Q.try_pop_front( event, std::chrono::seconds(timeout_seconds) );
 		if(success)
 		{
+			const std::string event_s = js::write(event);
+			L << Logger::Debug << "Success! Got this event: " << event_s ;
 			arr.emplace_back( std::move(event) );
+		}else{
+			L << Logger::Debug << "Timeout. No event after " << timeout_seconds << " seconds arreived. So sad.";
 		}
 	}
+	
+	L << Logger::Debug << "Return array with " << arr.size() << " elements.";
 	return arr;
 }
 

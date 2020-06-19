@@ -70,7 +70,10 @@ static const std::string VersionName =
 //  So we got a new exit with the same number:
 //	"(39) Eisenach"; // JSON-118: fix to_json() for KeySync callbacks to avoid crashes. Add attachment support in interactive.js \o/
 //	"(40) Eisenach-Ost"; // remove all Enigmail leftovers. Bump API version to 0.17.0
-	"(40b) Sättelstädt"; // JSON-139: support for NULL pointers in "const char*" parameters: In<c_string, NullOkay>
+//	"(40b) Sättelstädt"; // JSON-139: support for NULL pointers in "const char*" parameters: In<c_string, NullOkay>
+
+// 41a,b were skipped, intentionally
+	"(42) Gotha"; // JSON-152: 2-parameter version of pollForEvents().
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
@@ -100,7 +103,10 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,18,1);  // JSON-130: some data members in pEp_identity added
 //static const ServerVersion sv(0,18,2);  // JSON-135: Add mime_encode_message() and mime_decode_message() to the JSON API
 //static const ServerVersion sv(0,18,3);  // JSON-137: Add outgoing_message_rating_preview() to the JSON API
-static const ServerVersion sv(0,18,4);  // JSON-141: fix handling of parameters of type PEP_rating
+//static const ServerVersion sv(0,18,4);  // JSON-141: fix handling of parameters of type PEP_rating
+
+// 0.19 was skipped intentionally.
+static const ServerVersion sv(0,20,0);  // JSON-152: 2-parameter version of pollForEvents().
 
 	return sv;
 }

@@ -64,9 +64,6 @@ endif
 ifdef ETPAN_LIB
     EXTRA_LIB_PATHS:=$(EXTRA_LIB_PATHS)$(patsubst -L%,%,$(ETPAN_LIB)):
 endif
-ifdef EVENT_LIB
-    EXTRA_LIB_PATHS:=$(EXTRA_LIB_PATHS)$(patsubst -L%,%,$(EVENT_LIB)):
-endif
 ifdef GPGME_LIB
     EXTRA_LIB_PATHS:=$(EXTRA_LIB_PATHS)$(patsubst -L%,%,$(GPGME_LIB)):
 endif

@@ -382,6 +382,8 @@ LOGGER_LAZY( debugInternal , DebugInternal )
 #else
 // intentionally left blank.
 // the methods are already defined as do-nothing inline functions in Logger.hh
+
+	const NullLogger nulllogger{}; // to make linker happy.
 #endif
 
 #undef LOGGER_LAZY

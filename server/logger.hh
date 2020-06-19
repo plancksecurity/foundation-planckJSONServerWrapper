@@ -8,9 +8,20 @@
 #ifdef DEBUG_ENABLED
 #define DEBUG_OUT( LL , ... )  LL.debug( __VA_ARGS__ )
 #define DEBUGI_OUT( LL , ... )  LL.debugInternal( __VA_ARGS__ )
+#define DEBUG_LOG( LL )  ( (LL) << Logger::Debug )
 #else
+
+	struct NullLogger {};
+	
+	template<class T>
+	const NullLogger& operator<<(const NullLogger& nl, const T&) { return nl; }
+	
+	extern const NullLogger nulllogger;
+
 #define DEBUG_OUT(...)  do{}while(0)
 #define DEBUGI_OUT(...)  do{}while(0)
+#define DEBUG_LOG( LL )  nulllogger
+
 #endif
 
 #ifdef __GNUC__
