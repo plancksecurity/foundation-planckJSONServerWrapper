@@ -113,7 +113,6 @@
     <ClInclude Include="..\..\server\mini-adapter-impl.hh" />
     <ClInclude Include="..\..\server\nfc.hh" />
     <ClInclude Include="..\..\server\nfc_sets.hh" />
-    <ClInclude Include="..\..\server\nulllogger.hh" />
     <ClInclude Include="..\..\server\pEp-types.hh" />
     <ClInclude Include="..\..\server\pEp-utils-json.hh" />
     <ClInclude Include="..\..\server\pEp-utils.hh" />
@@ -140,7 +139,6 @@
     <ClCompile Include="..\..\server\logger.cc" />
     <ClCompile Include="..\..\server\nfc.cc" />
     <ClCompile Include="..\..\server\nfc_sets.cc" />
-    <ClCompile Include="..\..\server\nulllogger.cc" />
     <ClCompile Include="..\..\server\pEp-types.cc" />
     <ClCompile Include="..\..\server\pEp-utils.cc" />
     <ClCompile Include="..\..\server\prefix-config.cc" />

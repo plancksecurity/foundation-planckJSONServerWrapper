@@ -39,9 +39,6 @@
     <ClInclude Include="..\..\server\pEp-types.hh">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\server\nulllogger.hh">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\server\nfc_sets.hh">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -129,9 +126,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\server\pEp-types.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\server\nulllogger.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\server\nfc_sets.cc">
