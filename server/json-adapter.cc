@@ -33,6 +33,18 @@
 #include "json_spirit/json_spirit_utils.h"
 
 
+#if (__cplusplus >= 201606)  // std::variant is C++17.
+#   include <variant>
+    using std::variant;
+    using std::get;
+
+#else // in C++11 / C++14 use boost::variant instead.
+#   include <boost/variant.hpp>
+    using boost::variant;
+    using boost::get;
+#endif
+
+
 namespace fs = boost::filesystem;
 
 
@@ -51,9 +63,11 @@ typedef std::unique_lock<Mutex>  Lock;
 Mutex  _mtx;
 
 
+typedef variant<std::thread::id, std::string> EventListenerKey;
+
 struct EventListenerValue
 {
-	utility::locked_queue<std::string> Q;
+	utility::locked_queue<js::Object> Q;
 };
 
 static std::hash<std::thread::id> hash_tid;
@@ -68,7 +82,7 @@ JsonAdapter* JsonAdapter::singleton = nullptr;
 struct JsonAdapter::Internal
 {
 	std::string token;
-	std::map<std::thread::id, EventListenerValue> eventListener;
+	std::map<EventListenerKey, EventListenerValue> eventListener;
 	
 	Logger      Log;
 	std::unique_ptr<pEp::Webserver> webserver;
@@ -92,19 +106,43 @@ struct JsonAdapter::Internal
 		Log << Logger::Debug << "~JAI";
 	}
 	
+	
+	std::string to_log(const EventListenerKey& v)
+	{
+		const std::thread::id* tid = get<const std::thread::id>(&v);
+		if(tid)
+		{
+			return Logger::thread_id(hash_tid(*tid));
+		}else{
+			const std::string* s = get<const std::string>(&v);
+			if(s)
+			{
+				return "<<" + *s + ">>";
+			}
+		}
+		
+		return "(?)";
+	}
+	
 	void makeAndDeliverRequest(const char* function_name, const js::Array& params)
 	{
 		const js::Object request = make_request( function_name, params);
 		const std::string request_r = js::write(request);
 		
 		Lock L(_mtx);
-		Log << Logger::Debug << "makeAndDeliverRequest to " << eventListener.size() << " listener(s).";
+		Log << Logger::Debug << "makeAndDeliverRequest: \n"
+			"Request: " << request_r << "\n"
+			"Goes to " << eventListener.size() << " listener(s).";
+		
 		for(auto& e : eventListener)
 		{
-			Log << Logger::Debug << " ~~~ [" << e.first << Logger::thread_id(hash_tid(e.first)) << "] has " << e.second.Q.size() << " old events waiting.";
-			e.second.Q.push_back(request_r);
+			Log << Logger::Debug << " ~~~ " << to_log(e.first)  << " has " << e.second.Q.size() << " old events waiting.";
+			e.second.Q.push_back(request);
 		}
 	}
+	
+	js::Array pollForEvents(const EventListenerKey& key, unsigned timeout_seconds);
+
 };
 
 
@@ -256,6 +294,24 @@ void JsonAdapter::connection_close_cb()
 }
 
 
+void JsonAdapter::close_session(const std::string& session_id)
+{
+	Lock L{_mtx};
+	auto q = i->eventListener.find( session_id );
+	Log() << "Close session \"" << session_id << "\": " << (q==i->eventListener.end() ? "NO" : "1") << " entry in eventListener map";
+	if(q != i->eventListener.end())
+	{
+		i->eventListener.erase(q);
+	}
+}
+
+
+std::string JsonAdapter::create_session()
+{
+	return create_random_token(12);
+}
+
+
 void JsonAdapter::shutdown(timeval* t)
 {
 	exit(0);  // HACK for JSON-41
@@ -287,29 +343,54 @@ void JsonAdapter::augment(json_spirit::Object& returnObject)
 
 js::Array JsonAdapter::pollForEvents(unsigned timeout_seconds)
 {
+	return i->pollForEvents( std::this_thread::get_id(), timeout_seconds);
+}
+
+
+js::Array JsonAdapter::pollForEvents2(const std::string& session_id, unsigned timeout_seconds)
+{
+	return i->pollForEvents( session_id, timeout_seconds);
+}
+
+
+js::Array JsonAdapter::Internal::pollForEvents(const EventListenerKey& key, unsigned timeout_seconds)
+{
 	js::Array arr{};
-	
-	Lock L{_mtx};
-	EventListenerValue& el = i->eventListener[ std::this_thread::get_id() ];  // adds an entry, if not already there. :-)
-	L.unlock();
+	Logger L("JAI:poll");
+
+	Lock LCK{_mtx};
+	EventListenerValue& el = eventListener[key];  // adds an entry, if not already there. :-)
+	LCK.unlock();
 	
 	const size_t size = el.Q.size();
 	if(size)
 	{
+		L << Logger::Debug << size << " events in queue for key " << to_log(key) << ":";
 		// fetch all elements from queue
 		for(size_t i=0; i<size; ++i)
 		{
-			arr.emplace_back( el.Q.pop_front() );
+			js::Object obj{ el.Q.pop_front() };
+			const std::string obj_s = js::write( obj );
+			L << Logger::Debug << "\t#" << i << ": " << obj_s;
+			
+			arr.emplace_back( std::move(obj) );
 		}
 	}else{
 		// block until there is at least one element or timeout
-		std::string event;
+		L << Logger::Debug << "Queue for key " << to_log(key) << " is empty. I'll block for " << timeout_seconds << " seconds.";
+		js::Object event;
 		const bool success = el.Q.try_pop_front( event, std::chrono::seconds(timeout_seconds) );
 		if(success)
 		{
+			const std::string event_s = js::write(event);
+			L << Logger::Debug << "Success! Got this event: " << event_s ;
 			arr.emplace_back( std::move(event) );
+		}else{
+			L << Logger::Debug << "Timeout. No event after " << timeout_seconds << " seconds arreived. So sad.";
 		}
 	}
+	
+	L << Logger::Debug << "Return array with " << arr.size() << " elements.";
 	return arr;
 }
 
