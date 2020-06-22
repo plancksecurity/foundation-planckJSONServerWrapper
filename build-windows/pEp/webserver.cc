@@ -6,7 +6,6 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <thread>
 
 namespace fs = boost::filesystem;
 
@@ -176,10 +175,16 @@ void Webserver::do_session(tcp::socket *socket)
 
     while (_running)
     {
-        http::request<http::string_body> req;
-        http::read(*socket, buffer, req, ec);
-        if (ec)
-            break;
+        http::request_parser<http::string_body> parser;
+        parser.body_limit((std::numeric_limits<std::int32_t>::max)());
+
+        http::read(*socket, buffer, parser, ec);
+        if (ec) {
+            std::cerr << ec.message() << "\n";
+            goto the_end;
+        }
+
+        http::request<http::string_body> req = parser.get();
 
         const auto method = req.method();
         switch (method)
@@ -218,28 +223,34 @@ void Webserver::do_session(tcp::socket *socket)
             break;
     }
 
+the_end:
     socket->shutdown(tcp::socket::shutdown_send, ec);
     delete socket;
 }
 
 
-void Webserver::run()
+void Webserver::runner(Webserver *me)
 {
-    _running = true;
-    while (_running)
+    while (me->_running)
     {
-        tcp::socket* socket = new tcp::socket{_ioc};
-        _acceptor.accept(*socket);
+        tcp::socket* socket = new tcp::socket{me->_ioc};
+        me->_acceptor.accept(*socket);
 
         std::function< void() > tf = [=]()
             {
-                thread_init();
-                do_session(socket);
-                thread_done();
+                me->thread_init();
+                me->do_session(socket);
+                me->thread_done();
             };
 
         std::thread{tf}.detach();
     }
+}
+
+void Webserver::run()
+{
+    _running = true;
+    _runner = std::thread(runner, this);
 }
 
 void Webserver::shutdown()

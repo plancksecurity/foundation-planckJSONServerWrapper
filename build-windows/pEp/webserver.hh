@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <thread>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/regex.hpp>
 #include <boost/beast/http.hpp>
@@ -46,6 +47,7 @@ namespace pEp {
             unsigned short _port;
             bool _running;
             std::mutex _mtx;
+            std::thread _runner;
 
         public:
 
@@ -79,6 +81,7 @@ namespace pEp {
                     port, const std::string& doc_root = "");
 
         protected:
+            static void runner(Webserver *me);
             void deliver_status(tcp::socket *socket, const request& req, http::status status);
             void deliver_file  (tcp::socket *socket, const request& req);
             handler_t find_handler(const request& req, boost::cmatch& m);
