@@ -21,6 +21,10 @@ public:
 	std::size_t  size() const { return m.size();  }
 	bool        empty() const { return m.empty(); }
 	
+	// calls the given function (which might be a lambda or std::function<> or std::bind thingy)
+	// on each stored session.
+	void for_each(void(*function)(PEP_SESSION));
+	
 	std::string to_string() const;
 	
 private:

@@ -2,6 +2,12 @@
 #include <sstream>
 #include <pEp/call_with_lock.hh>
 #include <pEp/status_to_string.hh>
+#include "logger.hh"
+
+namespace
+{
+	Logger Log("SR");
+}
 
 
 // creates a PEP_SESSION if none yet exists for the given thread
@@ -12,6 +18,7 @@ PEP_SESSION SessionRegistry::get(std::thread::id tid)
 	auto q = m.find(tid);
 	if(q != m.end())
 	{
+		Log.debug("get() returns %p.", (const void*)q->second);
 		return q->second;
 	}
 	
@@ -22,6 +29,7 @@ PEP_SESSION SessionRegistry::get(std::thread::id tid)
 		throw std::runtime_error("init() fails: " + pEp::status_to_string(status) );
 	}
 	m[tid] = session;
+	Log.debug("get() created new session at %p.", (const void*)session);
 	return session;
 }
 
@@ -32,8 +40,22 @@ void SessionRegistry::remove(std::thread::id tid)
 	const auto q = m.find(tid);
 	if(q != m.end())
 	{
+		Log.debug("remove() session at %p.", (const void*)q->second);
 		pEp::call_with_lock(&release, q->second);
 		m.erase(q);
+	}else{
+		Log.info("remove(): no session for this thread!");
+	}
+}
+
+
+void SessionRegistry::for_each(void(*function)(PEP_SESSION))
+{
+	Lock L(_mtx);
+	Log.debug("for_each() on %zu session.", m.size());
+	for(const auto& e : m)
+	{
+		function(e.second);
 	}
 }
 
