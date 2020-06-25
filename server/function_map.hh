@@ -147,16 +147,13 @@ public:
 	typedef typename Return<R>::return_type ReturnType;
 	
 	virtual ~Func() = default;
-	virtual bool isSeparator() const noexcept override
-	{
-		return false;
-	}
+	virtual bool isSeparator() const noexcept override { return false; }
 	
-	Func() : fn() {}
-
 	Func( const std::function<ReturnType(typename Args::c_type ...)>& _f )
 	: fn(_f)
 	{}
+	
+	Func(const Func<R, Args...>&) = delete;
 
 	std::function<ReturnType(typename Args::c_type ...)> fn;
 	
@@ -237,6 +234,7 @@ public:
     const_iterator find(const std::string&) const noexcept;
 
     FunctionMap(std::initializer_list<value_type> il);
+    ~FunctionMap();
 
 private:
     FunctionMapBase v;

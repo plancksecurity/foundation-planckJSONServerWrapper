@@ -23,6 +23,17 @@ FunctionMap::FunctionMap(std::initializer_list<FunctionMap::value_type> il)
 	}
 }
 
+
+FunctionMap::~FunctionMap()
+{
+	for(auto& elem : v)
+	{
+		delete elem.second;
+		elem.second = nullptr;
+	}
+}
+
+
 template<>
 js::Value Type2String<std::string>::get()  { return "String"; }
 
