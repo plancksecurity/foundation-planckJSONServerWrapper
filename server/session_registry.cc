@@ -29,6 +29,13 @@ PEP_SESSION SessionRegistry::get(std::thread::id tid)
 		throw std::runtime_error("init() fails: " + pEp::status_to_string(status) );
 	}
 	m[tid] = session;
+	Log.debug("Apply %zu cached config values to new session.", cache.size());
+	for(const auto& e : cache)
+	{
+		Log.debug("\t %s", e.first.c_str());
+		e.second(session);
+	}
+	
 	Log.debug("get() created new session at %p.", (const void*)session);
 	return session;
 }

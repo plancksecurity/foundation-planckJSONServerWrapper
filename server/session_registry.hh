@@ -4,6 +4,7 @@
 #include <map>
 #include <mutex>
 #include <thread>
+#include <functional>
 #include <pEp/pEpEngine.h>
 
 class SessionRegistry
@@ -31,6 +32,7 @@ private:
 	std::map<std::thread::id, PEP_SESSION> m;
 	messageToSend_t      mts;
 	inject_sync_event_t  ise;
+	std::map<std::string, std::function<void(PEP_SESSION)>> cache;
 	
 	typedef std::recursive_mutex     Mutex;
 	typedef std::unique_lock<Mutex>  Lock;
