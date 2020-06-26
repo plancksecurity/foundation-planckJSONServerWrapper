@@ -223,10 +223,13 @@ public:
 
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
-//		typename Helper::Tuple param_tuple;
-		std::tuple<typename Args::c_type...> param_tuple;
+		typedef std::tuple<typename Args::c_type...> param_tuple_t;
+		param_tuple_t param_tuple;
 		
-		context->cache(func_name, parameters);
+		// FIXME: Does only work with functions with type: void(PEP_SESSION, T):
+		const auto p0 = from_json< typename std::tuple_element<1, param_tuple_t>::type >(parameters[0]);
+		std::function<void(PEP_SESSION)> func = std::bind(Base::fn, std::placeholders::_1, p0);
+		context->cache(func_name, func);
 		return Base::call(parameters, context);
 	}
 
