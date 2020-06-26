@@ -149,18 +149,18 @@ public:
 	virtual ~Func() = default;
 	virtual bool isSeparator() const noexcept override { return false; }
 	
-	Func( const std::function<ReturnType(typename Args::c_type ...)>& _f )
+	explicit Func( const std::function<ReturnType(typename Args::c_type ...)>& _f )
 	: fn(_f)
 	{}
 	
 	Func(const Func<R, Args...>&) = delete;
-
+	void operator=(const Func<R, Args...>&) = delete;
+	
 	std::function<ReturnType(typename Args::c_type ...)> fn;
 	
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
 		typedef helper<R, 0, sizeof...(Args), Args...> Helper;
-		
 		if(parameters.size() != Helper::nr_of_input_params)
 			throw std::runtime_error("Size mismatch: "
 				"Array has "    + std::to_string( parameters.size() ) + " element(s), "
@@ -205,6 +205,33 @@ public:
 		o.emplace_back( "params", std::move(params) );
 		o.emplace_back( "separator", false );
 	}
+};
+
+
+template<class R, class... Args>
+class FuncCache : public Func<R, Args...>
+{
+public:
+	typedef Func<R, Args...> Base;
+	typedef typename Return<R>::return_type ReturnType;
+	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
+	
+	FuncCache(const std::string& _func_name, const std::function<ReturnType(typename Args::c_type ...)>& _f )
+	: Base(_f)
+	, func_name(_func_name)
+	{}
+
+	js::Value call(const js::Array& parameters, Context* context) const override
+	{
+//		typename Helper::Tuple param_tuple;
+		std::tuple<typename Args::c_type...> param_tuple;
+		
+		context->cache(func_name, parameters);
+		return Base::call(parameters, context);
+	}
+
+private:
+	const std::string func_name;
 };
 
 
