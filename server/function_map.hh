@@ -7,6 +7,7 @@
 #include "json_spirit/json_spirit_writer.h"
 
 #include "context.hh"
+#include "logger.hh"
 #include <type_traits>
 
 // Just for debugging:
@@ -223,11 +224,15 @@ public:
 
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
+		Logger Log("FuncCache::call");
 		typedef std::tuple<typename Args::c_type...> param_tuple_t;
 		param_tuple_t param_tuple;
 		
 		// FIXME: Does only work with functions with type: void(PEP_SESSION, T):
 		const auto p0 = from_json< typename std::tuple_element<1, param_tuple_t>::type >(parameters[0]);
+		
+		Log << Logger::Debug << "func_name=\"" << func_name << "\", value=" << p0 << ".";
+		
 		std::function<void(PEP_SESSION)> func = std::bind(Base::fn, std::placeholders::_1, p0);
 		context->cache(func_name, func);
 		return Base::call(parameters, context);

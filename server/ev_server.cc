@@ -87,8 +87,8 @@ const FunctionMap functions = {
 //		FP( "get_phrase"      , new Func<PEP_STATUS, In_Pep_Session, In<Language>, In<int>, Out<char*>> ( &get_phrase) ),
 //		FP( "get_engine_version", new Func<const char*> ( &get_engine_version) ),
 		FP( "is_pEp_user"     , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<bool>>( &is_pEp_user) ),
-		FP( "config_passive_mode", new FuncCache<void, In_Pep_Session, In<bool>>( "..", &config_passive_mode) ),
-		FP( "config_unencrypted_subject", new FuncCache<void, In_Pep_Session, In<bool>>( "..", &config_unencrypted_subject) ),
+		FP( "config_passive_mode", new FuncCache<void, In_Pep_Session, In<bool>>( "conf_p_m", &config_passive_mode) ),
+		FP( "config_unencrypted_subject", new FuncCache<void, In_Pep_Session, In<bool>>( "conf_u_s", &config_unencrypted_subject) ),
 		
 		FP( "Identity Management API", new Separator),
 		FP( "get_identity"       , new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<pEp_identity*>>( &get_identity) ),
