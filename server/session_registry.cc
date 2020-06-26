@@ -2,12 +2,6 @@
 #include <sstream>
 #include <pEp/call_with_lock.hh>
 #include <pEp/status_to_string.hh>
-#include "logger.hh"
-
-namespace
-{
-	Logger Log("SR");
-}
 
 
 // creates a PEP_SESSION if none yet exists for the given thread

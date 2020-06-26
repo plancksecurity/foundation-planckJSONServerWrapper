@@ -6,6 +6,7 @@
 #include <thread>
 #include <functional>
 #include <pEp/pEpEngine.h>
+#include "logger.hh"
 
 class SessionRegistry
 {
@@ -13,6 +14,7 @@ public:
 	SessionRegistry(messageToSend_t _mts, inject_sync_event_t _ise)
 	: mts{_mts}
 	, ise{_ise}
+	, Log{"SR"}
 	{}
 	
 	// calls "init" for the given thread if no PEP_SESSION exists, yet for the given thread
@@ -34,6 +36,7 @@ private:
 	std::map<std::thread::id, PEP_SESSION> m;
 	messageToSend_t      mts;
 	inject_sync_event_t  ise;
+	Logger Log;
 	std::map<std::string, std::function<void(PEP_SESSION)>> cache;
 	
 	typedef std::recursive_mutex     Mutex;
