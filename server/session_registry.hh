@@ -26,6 +26,8 @@ public:
 	// on each stored session.
 	void for_each(void(*function)(PEP_SESSION));
 	
+	void add_to_cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func);
+	
 	std::string to_string() const;
 	
 private:

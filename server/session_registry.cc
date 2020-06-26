@@ -67,6 +67,13 @@ void SessionRegistry::for_each(void(*function)(PEP_SESSION))
 }
 
 
+void SessionRegistry::add_to_cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func)
+{
+	Lock L(_mtx);
+	cache[fn_name] = func;
+}
+
+
 std::string SessionRegistry::to_string() const
 {
 	Lock L(_mtx);
