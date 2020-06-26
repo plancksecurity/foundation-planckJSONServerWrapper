@@ -14,7 +14,7 @@ namespace fs = boost::filesystem;
 namespace pEp {
     Webserver::Webserver(net::ip::address addr, unsigned short port, const std::string& doc_root)
     : _ioc{1}
-    , _acceptor{_ioc, {addr, port}}
+    , _acceptor{_ioc, {addr, port}, false}
     , _doc_root{doc_root}
     , _generic_handler{}
     , _port{port}
