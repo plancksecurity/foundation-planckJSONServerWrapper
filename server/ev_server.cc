@@ -27,9 +27,9 @@
 #include "json_spirit/json_spirit_reader.h"
 
 // HACK:
-#ifndef ADAPTER_LIBRARY
+#ifndef JSON_ADAPTER_LIBRARY
 #include "mini-adapter-impl.hh"
-#else // ADAPTER_LIBRARY
+#else // JSON_ADAPTER_LIBRARY
 #include "adapter-library.hh"
 #endif
 
