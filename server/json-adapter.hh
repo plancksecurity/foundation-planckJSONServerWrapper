@@ -37,10 +37,10 @@ public:
 	
 	// if called with "false" the JSON Adpapter would no longer deliver HTML and JavaScript files, only handle JSON-RPC requests
 	JsonAdapter& deliver_html(bool _deliver_html);
-	
+
 	// look for a free port to listen on and set the given configuration
-	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port);
-	
+	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port, ::messageToSend_t messageToSend);
+
 	// run the server in another thread and returns immediately. prepare_run() has to be called before!
 	void run();
 	
@@ -93,9 +93,9 @@ public:
 	
 	static JsonAdapter& getInstance();
 	
-	static JsonAdapter& startup();
-	
 	static SessionRegistry& getSessionRegistry();
+
+	JsonAdapter& startup(::messageToSend_t messageToSend);
 
 protected:
 
