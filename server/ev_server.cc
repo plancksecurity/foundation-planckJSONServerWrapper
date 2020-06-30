@@ -30,8 +30,7 @@
 #ifndef ADAPTER_LIBRARY
 #include "mini-adapter-impl.hh"
 #else // ADAPTER_LIBRARY
-void startSync();
-void stopSync();
+#include "adapter-library.hh"
 #endif
 
 
