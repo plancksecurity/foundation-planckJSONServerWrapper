@@ -347,6 +347,12 @@ void JsonAdapter::augment(json_spirit::Object& returnObject)
 }
 
 
+void JsonAdapter::cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func)
+{
+	i->session_registry->add_to_cache(fn_name, func);
+}
+
+
 js::Array JsonAdapter::pollForEvents(unsigned timeout_seconds)
 {
 	return i->pollForEvents( std::this_thread::get_id(), timeout_seconds);

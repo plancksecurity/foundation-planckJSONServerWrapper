@@ -74,6 +74,8 @@ public:
 	
 	virtual void augment(json_spirit::Object& returnObject) override;
 	
+	virtual void cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) override;
+	
 	// returns the version of the JsonAdapter
 	static
 	ServerVersion version();

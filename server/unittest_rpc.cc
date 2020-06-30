@@ -29,6 +29,11 @@ class DummyContext : public Context
 public:
 	virtual bool verify_security_token(const std::string& token) const override { return true; }
 	virtual void augment(js::Object&) override { /* do nothing */ }
+	
+	virtual void cache(const std::string& func_name, const std::function<void(PEP_SESSION)>& fn) override
+	{
+		// do nothing
+	}
 };
 
 

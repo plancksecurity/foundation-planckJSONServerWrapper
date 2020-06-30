@@ -4,6 +4,7 @@
 #include <string>
 #include "json_spirit/json_spirit_value.h"
 #include <map>
+#include <pEp/pEpEngine.h>
 
 class Context
 {
@@ -12,6 +13,9 @@ public:
 	
 	virtual bool verify_security_token(const std::string& token) const = 0;
 	virtual void augment(json_spirit::Object& returnObject) = 0;
+	
+	// Cache a certain function call. See JSON-155.
+	virtual void cache(const std::string& func_name, const std::function<void(PEP_SESSION)>& fn) = 0;
 	
 	// store and retrieve other parameters into the context.
 	// that allows semantic actions based on other function parameters
