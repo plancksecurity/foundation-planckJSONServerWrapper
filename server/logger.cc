@@ -54,7 +54,7 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 #ifndef WIN32
 			LoggerS::filename = filename.empty() ? "/tmp/log-" + program_name + ".log" : filename;
 #else // WIN23
-            LoggerS::filename = filename.empty() ? std::string(_getenv("TEMP"))
+            LoggerS::filename = filename.empty() ? std::string(getenv("TEMP"))
                 + "\\log-" + program_name + ".log" : filename;
 #endif
 			openfile();
