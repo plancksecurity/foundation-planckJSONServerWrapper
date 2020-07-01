@@ -320,9 +320,6 @@ std::string JsonAdapter::create_session()
 
 void JsonAdapter::shutdown(timeval* t)
 {
-#ifndef JSON_ADAPTER_LIBRARY
-	exit(0);  // HACK for JSON-41
-#endif
 	check_guard();
 	Log() << "JS::shutdown() was called.";
 	i->running = false;
