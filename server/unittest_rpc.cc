@@ -164,5 +164,8 @@ TEST_P( RpcTest, Meh )
 	auto r = request;
 	
 	const js::Value actual_result = call( test_functions, request.get_obj(), &dummyContext);
-	EXPECT_EQ( expected_result, actual_result );
+	js::Object result_obj = actual_result.get_obj();
+	js::Object::iterator q = std::find_if(result_obj.begin(), result_obj.end(), [](const js::Pair& v){ return js::Config::get_name(v) == "thread_id"; } );
+	result_obj.erase( q );
+	EXPECT_EQ( expected_result, result_obj );
 }
