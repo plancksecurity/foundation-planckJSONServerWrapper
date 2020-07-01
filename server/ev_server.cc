@@ -30,7 +30,7 @@
 #ifndef JSON_ADAPTER_LIBRARY
 #include "mini-adapter-impl.hh"
 #else // JSON_ADAPTER_LIBRARY
-#include "adapter-library.hh"
+#include <pEp/callback_dispatcher.hh>
 #endif
 
 
@@ -156,8 +156,8 @@ const FunctionMap functions = {
 		FP( "startSync", new Func<void> (&pEp::mini::startSync) ),
 		FP( "stopSync" , new Func<void> (&pEp::mini::stopSync) ),
 #else
-		FP( "startSync", new Func<void> (&startSync) ),
-		FP( "stopSync" , new Func<void> (&stopSync) ),
+		FP( "startSync", new Func<void> (&pEp::CallbackDispatcher::start_sync) ),
+		FP( "stopSync" , new Func<void> (&pEp::CallbackDispatcher::stop_sync) ),
 #endif
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),

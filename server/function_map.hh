@@ -226,7 +226,7 @@ public:
 	{
 		Logger Log("FuncCache::call");
 		typedef std::tuple<typename Args::c_type...> param_tuple_t;
-		param_tuple_t param_tuple;
+		//param_tuple_t param_tuple;
 		
 		// FIXME: Does only work with functions with type: void(PEP_SESSION, T):
 		const auto p0 = from_json< typename std::tuple_element<1, param_tuple_t>::type >(parameters[0]);
