@@ -136,6 +136,18 @@ In<sync_handshake_result>::~In()
 	// nothing to do here. :-)
 }
 
+template<>
+In<PEP_CIPHER_SUITE>::~In()
+{
+	// nothing to do here. :-)
+}
+
+template<>
+const Logger::Stream& operator<<(const Logger::Stream& stream, const PEP_CIPHER_SUITE& cs)
+{
+	stream.s.append( std::to_string( static_cast<int>(cs) ) );
+	return stream;
+}
 
 
 template<>
@@ -714,6 +726,12 @@ PEP_comm_type from_json<PEP_comm_type>(const js::Value& v)
 }
 
 template<>
+PEP_CIPHER_SUITE from_json<PEP_CIPHER_SUITE>(const js::Value& v)
+{
+	return  PEP_CIPHER_SUITE(v.get_int());
+}
+
+template<>
 sync_handshake_result from_json<sync_handshake_result>(const js::Value& v)
 {
 	return  sync_handshake_result(v.get_int());
@@ -721,6 +739,12 @@ sync_handshake_result from_json<sync_handshake_result>(const js::Value& v)
 
 template<>
 js::Value to_json<PEP_comm_type>(const PEP_comm_type& v)
+{
+	return js::Value( int(v) );
+}
+
+template<>
+js::Value to_json<PEP_CIPHER_SUITE>(const PEP_CIPHER_SUITE& v)
 {
 	return js::Value( int(v) );
 }
@@ -764,6 +788,9 @@ js::Value Type2String<sync_handshake_result>::get()  { return "PEP_sync_handshak
 
 template<>
 js::Value Type2String<_PEP_comm_type>::get()  { return "PEP_comm_type"; }
+
+template<>
+js::Value Type2String<PEP_CIPHER_SUITE>::get()  { return "PEP_CIPHER_SUITE"; }
 
 template<>
 js::Value Type2String<PEP_STATUS>::get()  { return "PEP_STATUS"; }
