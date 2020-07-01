@@ -147,7 +147,7 @@ try
 
 	try
 	{
-		ja.prepare_run(address, start_port, end_port);
+		ja.prepare_run(address, start_port, end_port, JsonAdapter::messageToSend);
 		
 		if( debug_mode )
 		{
