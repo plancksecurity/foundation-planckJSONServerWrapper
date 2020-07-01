@@ -27,7 +27,11 @@
 #include "json_spirit/json_spirit_reader.h"
 
 // HACK:
+#ifndef JSON_ADAPTER_LIBRARY
 #include "mini-adapter-impl.hh"
+#else // JSON_ADAPTER_LIBRARY
+#include <pEp/callback_dispatcher.hh>
+#endif
 
 
 namespace fs = boost::filesystem;
@@ -148,9 +152,13 @@ const FunctionMap functions = {
 		FP( "leave_device_group"       , new Func<PEP_STATUS, In_Pep_Session> (&leave_device_group) ),
 		FP( "enable_identity_for_sync" , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&enable_identity_for_sync)),
 		FP( "disable_identity_for_sync", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&disable_identity_for_sync)),
+#ifndef JSON_ADAPTER_LIBRARY
 		FP( "startSync", new Func<void> (&pEp::mini::startSync) ),
 		FP( "stopSync" , new Func<void> (&pEp::mini::stopSync) ),
-		
+#else
+		FP( "startSync", new Func<void> (&pEp::CallbackDispatcher::start_sync) ),
+		FP( "stopSync" , new Func<void> (&pEp::CallbackDispatcher::stop_sync) ),
+#endif
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
 		FP( "serverVersion", new Func<ServerVersion>( &server_version ) ),

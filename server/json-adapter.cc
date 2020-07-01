@@ -240,11 +240,11 @@ JsonAdapter& JsonAdapter::deliver_html(bool dh)
 }
 
 
-void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port)
+void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port, ::messageToSend_t messageToSend)
 {
 	check_guard();
 	// delayed after constructor, so virtual functions are working:
-	i->session_registry.reset(new SessionRegistry(this->getMessageToSend(), this->getInjectSyncEvent()));
+	i->session_registry.reset(new SessionRegistry(messageToSend ? messageToSend : this->getMessageToSend(), this->getInjectSyncEvent()));
 	
 	for(unsigned short port = start_port; port<=end_port; ++port)
 	{
@@ -320,7 +320,6 @@ std::string JsonAdapter::create_session()
 
 void JsonAdapter::shutdown(timeval* t)
 {
-	exit(0);  // HACK for JSON-41
 	check_guard();
 	Log() << "JS::shutdown() was called.";
 	i->running = false;
@@ -466,11 +465,10 @@ SessionRegistry& JsonAdapter::getSessionRegistry()
 }
 
 
-JsonAdapter& JsonAdapter::startup()
+JsonAdapter& JsonAdapter::startup(::messageToSend_t messageToSend = nullptr)
 {
 	JsonAdapter& ja = getInstance();
-	ja.prepare_run("127.0.0.1", 4223, 9999);
+	ja.prepare_run("127.0.0.1", 4223, 9999, messageToSend);
 	ja.run();
 	return ja;
 }
-
