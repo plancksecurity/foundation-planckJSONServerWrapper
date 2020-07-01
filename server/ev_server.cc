@@ -93,6 +93,10 @@ const FunctionMap functions = {
 		FP( "is_pEp_user"     , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<bool>>( &is_pEp_user) ),
 		FP( "config_passive_mode", new FuncCache<void, In_Pep_Session, In<bool>>( "conf_p_m", &config_passive_mode) ),
 		FP( "config_unencrypted_subject", new FuncCache<void, In_Pep_Session, In<bool>>( "conf_u_s", &config_unencrypted_subject) ),
+// not defined in pEpEngine, yet:
+//		FP( "config_use_only_own_private_keys", new FuncCache<void, In_Pep_Session, In<bool>>( "conf_uoopk", &config_use_only_own_private_keys) ),
+		FP( "config_service_log" , new FuncCache<void, In_Pep_Session, In<bool>>( "conf_service_log", &config_service_log) ),
+		FP( "config_cipher_suite", new FuncCache<void, In_Pep_Session, In<PEP_CIPHER_SUITE>>( "config_cipher_suite", &config_cipher_suite) ),
 		
 		FP( "Identity Management API", new Separator),
 		FP( "get_identity"       , new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<pEp_identity*>>( &get_identity) ),
