@@ -214,6 +214,23 @@ public:
 };
 
 
+// wrap the function with passphrase_cache.api()
+template<class R, class... Args>
+class FuncPC : public Func<R, Args...>
+{
+public:
+	typedef Func<R, Args...> Base;
+	typedef typename Return<R>::return_type ReturnType;
+	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
+	
+	FuncPC( ReturnType(*_f)(typename Args::c_type ...) )
+	: Base( std::bind(&pEp::PassphraseCache::api, passphrase_cache, _f) )
+	{}
+};
+
+
+// add the function & its parameters in the context->cache
+// (where they are cached and applied to all PEP_SESSIONs of the client)
 template<class R, class... Args>
 class FuncCache : public Func<R, Args...>
 {
