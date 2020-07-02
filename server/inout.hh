@@ -49,6 +49,39 @@ T from_json(const js::Value& v);
 template<class T>
 js::Value to_json(const T& t);
 
+
+template<size_t POS, class... Args> struct extract;
+
+template<class... Args>
+struct extract<sizeof...(Args), Args...>
+{
+	// do nothing. Just recursion end.
+	static
+	void get(std::tuple<Args...>& t, const js::Array& a, Context* ctx) {}
+};
+
+template<size_t POS, class... Args>
+struct extract
+{
+	typedef std::tuple<Args...> Tuple;
+	typedef typename std::tuple_element<POS, Tuple>::type Element;
+	
+	static 
+	void get(std::tuple<Args...>& t, const js::Array& a, Context* ctx)
+	{
+		std::get<POS>(t) = std::move( Element{ a.at(POS), ctx, POS } );
+		extract<POS+1, Args...>::get(t,a,ctx);
+	}
+};
+
+
+template<class... Args>
+void from_json_array(std::tuple<Args...>& t, const js::Array& a)
+{
+	extract<0, Args...>::get(t, a);
+}
+
+
 // common stuff in base class
 template<class T, ParamFlag PF>
 struct InBase
@@ -57,8 +90,13 @@ struct InBase
 	enum { is_output = false, need_input = !(PF & ParamFlag::NoInput) };
 	
 	InBase(const InBase<T,PF>& other) = delete;
-	InBase(InBase<T,PF>&& victim) = delete;
 	void operator=(const InBase<T,PF>&) = delete;
+	
+	InBase<T,PF>& operator=(InBase<T,PF>&& victim)
+	{
+		value = std::move(victim.value);
+		victim.value = T{};
+	}
 	
 	js::Value to_json() const
 	{
@@ -70,6 +108,7 @@ struct InBase
 	T value;
 	
 protected:
+	InBase(InBase<T,PF>&& victim) : value{ std::move(victim.value) } { victim.value=T{}; }
 	explicit InBase(T&& t) : value(t) {}
 };
 

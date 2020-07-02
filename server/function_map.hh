@@ -7,6 +7,7 @@
 #include "json_spirit/json_spirit_writer.h"
 
 #include "context.hh"
+#include "index_sequence.hh"
 #include "logger.hh"
 #include <type_traits>
 
@@ -28,6 +29,7 @@ struct Return< Out<R, PF> >
 	typedef R return_type;
 	typedef Out<R, PF> out_type;
 };
+
 
 // heloer class for generic calls:
 // R : return type of the called function
@@ -216,24 +218,35 @@ public:
 	typedef Func<R, Args...> Base;
 	typedef typename Return<R>::return_type ReturnType;
 	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
+	typedef std::tuple<Args...> Tuple;
 	
 	FuncCache(const std::string& _func_name, const std::function<ReturnType(typename Args::c_type ...)>& _f )
 	: Base(_f)
 	, func_name(_func_name)
 	{}
+	
+	template<std::size_t... Idx>
+	static
+	Tuple* array2tuple(const js::Array& parameters, Context* context, IndexSequence<Idx...>)
+	{
+		return new std::tuple<Args...>( Args(parameters[Idx], context, Idx)... );
+	}
 
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
 		Logger Log("FuncCache::call");
-		typedef std::tuple<typename Args::c_type...> param_tuple_t;
-		//param_tuple_t param_tuple;
+		using Indices = MakeIndexSequence< sizeof...(Args) >;
+		
+		std::share_ptr<Tuple> param_tuple = array2tuple(parameters, context, Indices()) ;
+//		from_json_array<Args...>(param_tuple, parameters);
 		
 		// FIXME: Does only work with functions with type: void(PEP_SESSION, T):
-		const auto p0 = from_json< typename std::tuple_element<1, param_tuple_t>::type >(parameters[0]);
+		//const auto p0 = from_json< typename std::tuple_element<1, Tuple>::type >(parameters[0]);
 		
-		Log << Logger::Debug << "func_name=\"" << func_name << "\", value=" << p0 << ".";
+		//Log << Logger::Debug << "func_name=\"" << func_name << "\", value=" << p0 << ".";
 		
-		std::function<void(PEP_SESSION)> func = std::bind(Base::fn, std::placeholders::_1, p0);
+		std::function<void(PEP_SESSION)> func = [Base::fn, param_tuple](PEP_SESSION session)
+			{ fn(session, param_tuple.get()); }
 		context->cache(func_name, func);
 		return Base::call(parameters, context);
 	}
