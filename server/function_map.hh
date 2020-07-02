@@ -209,15 +209,19 @@ public:
 };
 
 
-template<class R, class... Args>
-class FuncCache : public Func<R, Args...>
+//template<class R, class... Args>
+//class FuncCache;
+
+
+template<class R, class P0, class P1>
+class FuncCache : public Func<R, P0, P1>
 {
 public:
-	typedef Func<R, Args...> Base;
+	typedef Func<R, P0, P1> Base;
 	typedef typename Return<R>::return_type ReturnType;
-	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
+	typedef helper<R, 0, 2, P0, P1> Helper;
 	
-	FuncCache(const std::string& _func_name, const std::function<ReturnType(typename Args::c_type ...)>& _f )
+	FuncCache(const std::string& _func_name, const std::function<ReturnType(typename P0::c_type, typename P1::c_type)>& _f )
 	: Base(_f)
 	, func_name(_func_name)
 	{}
@@ -225,7 +229,7 @@ public:
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
 		Logger Log("FuncCache::call");
-		typedef std::tuple<typename Args::c_type...> param_tuple_t;
+		typedef std::tuple<typename P0::c_type, typename P1::c_type> param_tuple_t;
 		//param_tuple_t param_tuple;
 		
 		// FIXME: Does only work with functions with type: void(PEP_SESSION, T):
@@ -241,6 +245,7 @@ public:
 private:
 	const std::string func_name;
 };
+
 
 
 // Just a separating placeholder in the drop-down list. Does not calls anything.
