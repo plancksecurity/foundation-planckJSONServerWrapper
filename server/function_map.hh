@@ -209,35 +209,31 @@ public:
 };
 
 
-//template<class R, class... Args>
-//class FuncCache;
-
-
-template<class R, class P0, class P1>
-class FuncCache : public Func<R, P0, P1>
+template<class R, class... Args>
+class FuncCache : public Func<R, Args...>
 {
 public:
-	typedef Func<R, P0, P1> Base;
+	typedef Func<R, Args...> Base;
 	typedef typename Return<R>::return_type ReturnType;
-	typedef helper<R, 0, 2, P0, P1> Helper;
+	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
 	
-	FuncCache(const std::string& _func_name, const std::function<ReturnType(typename P0::c_type, typename P1::c_type)>& _f )
+	FuncCache(const std::string& _func_name, const std::function<ReturnType(typename Args::c_type ...)>& _f )
 	: Base(_f)
 	, func_name(_func_name)
 	{}
-
+	
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
-		Logger Log("FuncCache::call");
-		typedef std::tuple<typename P0::c_type, typename P1::c_type> param_tuple_t;
+		Logger Log("FuncCache::call<2>");
+		typedef std::tuple<typename Args::c_type...> param_tuple_t;
 		//param_tuple_t param_tuple;
 		
 		// FIXME: Does only work with functions with type: void(PEP_SESSION, T):
-		const auto p0 = from_json< typename std::tuple_element<1, param_tuple_t>::type >(parameters[0]);
+		const auto p1 = from_json< typename std::tuple_element<1, param_tuple_t>::type >(parameters[0]);
 		
-		Log << Logger::Debug << "func_name=\"" << func_name << "\", value=" << p0 << ".";
+		Log << Logger::Debug << "func_name=\"" << func_name << "\", value=" << p1 << ".";
 		
-		std::function<void(PEP_SESSION)> func = std::bind(Base::fn, std::placeholders::_1, p0);
+		std::function<void(PEP_SESSION)> func = std::bind(Base::fn, std::placeholders::_1, p1);
 		context->cache(func_name, func);
 		return Base::call(parameters, context);
 	}
