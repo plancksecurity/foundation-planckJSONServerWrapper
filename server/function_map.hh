@@ -224,7 +224,7 @@ public:
 	
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
-		Logger Log("FuncCache::call<2>");
+		Logger Log("FuncCache::call");
 		typedef std::tuple<typename Args::c_type...> param_tuple_t;
 		//param_tuple_t param_tuple;
 		
@@ -234,6 +234,66 @@ public:
 		Log << Logger::Debug << "func_name=\"" << func_name << "\", value=" << p1 << ".";
 		
 		std::function<void(PEP_SESSION)> func = std::bind(Base::fn, std::placeholders::_1, p1);
+		context->cache(func_name, func);
+		return Base::call(parameters, context);
+	}
+
+private:
+	const std::string func_name;
+};
+
+
+template<class R, class... Args>
+class FuncCachePassphrase : public Func<R, Args...>
+{
+public:
+	typedef Func<R, Args...> Base;
+	typedef typename Return<R>::return_type ReturnType;
+	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
+	
+	FuncCachePassphrase(const std::string& _func_name )
+	: Base( &config_passphrase )
+	, func_name(_func_name)
+	{}
+	
+	js::Value call(const js::Array& parameters, Context* context) const override
+	{
+		Logger Log("FuncCachePasswd::call");
+		const std::string& passphrase = parameters.at(0).get_str();
+		
+		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
+		
+		std::function<void(PEP_SESSION)> func = [passphrase](PEP_SESSION session) { config_passphrase(session, passphrase.c_str()); };
+		context->cache(func_name, func);
+		return Base::call(parameters, context);
+	}
+
+private:
+	const std::string func_name;
+};
+
+template<class R, class... Args>
+class FuncCachePassphrase4NewKeys : public Func<R, Args...>
+{
+public:
+	typedef Func<R, Args...> Base;
+	typedef typename Return<R>::return_type ReturnType;
+	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
+	
+	FuncCachePassphrase4NewKeys(const std::string& _func_name )
+	: Base( &config_passphrase_for_new_keys )
+	, func_name(_func_name)
+	{}
+	
+	js::Value call(const js::Array& parameters, Context* context) const override
+	{
+		Logger Log("FuncCachePasswd4NK::call");
+		bool enable = parameters.at(0).get_bool();
+		const std::string& passphrase = parameters.at(1).get_str();
+		
+		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
+		
+		std::function<void(PEP_SESSION)> func = [enable, passphrase](PEP_SESSION session) { config_passphrase_for_new_keys(session, enable, passphrase.c_str()); };
 		context->cache(func_name, func);
 		return Base::call(parameters, context);
 	}

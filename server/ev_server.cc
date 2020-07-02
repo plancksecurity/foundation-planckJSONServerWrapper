@@ -97,6 +97,8 @@ const FunctionMap functions = {
 //		FP( "config_use_only_own_private_keys", new FuncCache<void, In_Pep_Session, In<bool>>( "conf_uoopk", &config_use_only_own_private_keys) ),
 		FP( "config_service_log" , new FuncCache<void, In_Pep_Session, In<bool>>( "conf_service_log", &config_service_log) ),
 		FP( "config_cipher_suite", new FuncCache<void, In_Pep_Session, In<PEP_CIPHER_SUITE>>( "config_cipher_suite", &config_cipher_suite) ),
+		FP( "config_passphrase",   new FuncCachePassphrase<void, In_Pep_Session, In<c_string>>( "config_passphrase" ) ),
+		FP( "config_passphrase_for_new_keys",   new FuncCachePassphrase4NewKeys<void, In_Pep_Session, In<bool>, In<c_string>>( "config_passphrase4nk" ) ),
 		
 		FP( "Identity Management API", new Separator),
 		FP( "get_identity"       , new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<pEp_identity*>>( &get_identity) ),
