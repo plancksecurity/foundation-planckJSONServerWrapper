@@ -4,6 +4,11 @@
 #include <pEp/keymanagement.h>
 #include <pEp/sync_api.h>
 #include "json-adapter.hh"
+#include <pEp/passphrase_cache.hh>
+
+// FIXME: This should be provided by libpEpAdapter, so not every adapter is required to instantiate its own!
+extern pEp::PassphraseCache passphrase_cache;
+
 
 namespace pEp{
 namespace mini {
