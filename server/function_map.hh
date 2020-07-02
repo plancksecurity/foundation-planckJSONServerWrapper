@@ -220,6 +220,7 @@ public:
 	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
 	typedef std::tuple<Args...> Tuple;
 	
+	
 	FuncCache(const std::string& _func_name, const std::function<ReturnType(typename Args::c_type ...)>& _f )
 	: Base(_f)
 	, func_name(_func_name)
@@ -236,8 +237,12 @@ public:
 	{
 		Logger Log("FuncCache::call");
 		using Indices = MakeIndexSequence< sizeof...(Args) >;
+
+		js::Array param_copy;
+		param_copy.reserve( Helper::nr_of_input_params );
+		Helper::copyParam( param_copy, parameters, 0u );
 		
-		std::share_ptr<Tuple> param_tuple = array2tuple(parameters, context, Indices()) ;
+		std::shared_ptr<Tuple> param_tuple { array2tuple(param_copy, context, Indices()) };
 //		from_json_array<Args...>(param_tuple, parameters);
 		
 		// FIXME: Does only work with functions with type: void(PEP_SESSION, T):
@@ -245,8 +250,9 @@ public:
 		
 		//Log << Logger::Debug << "func_name=\"" << func_name << "\", value=" << p0 << ".";
 		
-		std::function<void(PEP_SESSION)> func = [Base::fn, param_tuple](PEP_SESSION session)
-			{ fn(session, param_tuple.get()); }
+		auto f = this->fn;
+		std::function<void(PEP_SESSION)> func = [f, param_tuple](PEP_SESSION session)
+			{ /*f(session, param_tuple.get());*/ };
 		context->cache(func_name, func);
 		return Base::call(parameters, context);
 	}
