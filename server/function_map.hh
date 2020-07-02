@@ -13,6 +13,11 @@
 // Just for debugging:
 #include <iostream>
 #include <pEp/message_api.h>
+#include <pEp/passphrase_cache.hh>
+
+
+// FIXME: This should be provided by libpEpAdapter, so not every adapter is required to instantiate its own!
+extern pEp::PassphraseCache passphrase_cache;
 
 
 template<class R>
@@ -263,7 +268,11 @@ public:
 		
 		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
 		
-		std::function<void(PEP_SESSION)> func = [passphrase](PEP_SESSION session) { config_passphrase(session, passphrase.c_str()); };
+		std::function<void(PEP_SESSION)> func = [passphrase](PEP_SESSION session)
+			{
+				config_passphrase(session, passphrase_cache.add(passphrase));
+			};
+		
 		context->cache(func_name, func);
 		return Base::call(parameters, context);
 	}
@@ -293,7 +302,11 @@ public:
 		
 		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
 		
-		std::function<void(PEP_SESSION)> func = [enable, passphrase](PEP_SESSION session) { config_passphrase_for_new_keys(session, enable, passphrase.c_str()); };
+		std::function<void(PEP_SESSION)> func = [enable, passphrase](PEP_SESSION session)
+			{
+				config_passphrase_for_new_keys(session, enable, passphrase_cache.add_stored(passphrase));
+			};
+		
 		context->cache(func_name, func);
 		return Base::call(parameters, context);
 	}
