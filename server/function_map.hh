@@ -224,7 +224,7 @@ public:
 	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
 	
 	FuncPC( ReturnType(*_f)(typename Args::c_type ...) )
-	: Base( std::bind(&pEp::PassphraseCache::api, passphrase_cache, _f) )
+	: Base( [_f](typename Args::c_type... args) { return passphrase_cache.api( _f, args...); } )
 	{}
 };
 
