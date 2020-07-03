@@ -397,7 +397,7 @@ js::Array JsonAdapter::Internal::pollForEvents(const EventListenerKey& key, unsi
 			L << Logger::Debug << "Success! Got this event: " << event_s ;
 			arr.emplace_back( std::move(event) );
 		}else{
-			L << Logger::Debug << "Timeout. No event after " << timeout_seconds << " seconds arreived. So sad.";
+			L << Logger::Debug << "Timeout. No event after " << timeout_seconds << " seconds arrived. So sad.";
 		}
 	}
 	
