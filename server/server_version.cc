@@ -73,7 +73,8 @@ static const std::string VersionName =
 //	"(40b) Sättelstädt"; // JSON-139: support for NULL pointers in "const char*" parameters: In<c_string, NullOkay>
 
 // 41a,b were skipped, intentionally
-	"(42) Gotha"; // JSON-152: 2-parameter version of pollForEvents().
+//	"(42) Gotha"; // JSON-152: 2-parameter version of pollForEvents().
+	"(43) Wandersleben"; // JSON-153 passphrase support. *sigh*
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
@@ -106,7 +107,8 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,18,4);  // JSON-141: fix handling of parameters of type PEP_rating
 
 // 0.19 was skipped intentionally.
-static const ServerVersion sv(0,20,0);  // JSON-152: 2-parameter version of pollForEvents().
+//static const ServerVersion sv(0,20,0);  // JSON-152: 2-parameter version of pollForEvents().
+static const ServerVersion sv(0,20,1);  // JSON-153: passphrase support
 
 	return sv;
 }

@@ -68,13 +68,13 @@ const FunctionMap functions = {
 
 		// from message_api.h
 		FP( "Message API", new Separator ),
-		FP( "encrypt_message", new Func<PEP_STATUS, In_Pep_Session, InOut<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
-		FP( "encrypt_message_and_add_priv_key", new Func<PEP_STATUS, In_Pep_Session,
+		FP( "encrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
+		FP( "encrypt_message_and_add_priv_key", new FuncPC<PEP_STATUS, In_Pep_Session,
 			In<message*>, Out<message*>, In<c_string>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_and_add_priv_key) ),
-		FP( "encrypt_message_for_self", new Func<PEP_STATUS, In_Pep_Session,
+		FP( "encrypt_message_for_self", new FuncPC<PEP_STATUS, In_Pep_Session,
 			In<pEp_identity*>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_for_self ) ),
 
-		FP( "decrypt_message", new Func<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
+		FP( "decrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
 		FP( "get_key_rating_for_user", new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<PEP_rating>>( &get_key_rating_for_user) ),
 		
 		// from mime.h
@@ -91,8 +91,15 @@ const FunctionMap functions = {
 //		FP( "get_phrase"      , new Func<PEP_STATUS, In_Pep_Session, In<Language>, In<int>, Out<char*>> ( &get_phrase) ),
 //		FP( "get_engine_version", new Func<const char*> ( &get_engine_version) ),
 		FP( "is_pEp_user"     , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<bool>>( &is_pEp_user) ),
+
 		FP( "config_passive_mode", new FuncCache<void, In_Pep_Session, In<bool>>( "conf_p_m", &config_passive_mode) ),
 		FP( "config_unencrypted_subject", new FuncCache<void, In_Pep_Session, In<bool>>( "conf_u_s", &config_unencrypted_subject) ),
+// not defined in pEpEngine, yet:
+//		FP( "config_use_only_own_private_keys", new FuncCache<void, In_Pep_Session, In<bool>>( "conf_uoopk", &config_use_only_own_private_keys) ),
+		FP( "config_service_log" , new FuncCache<void, In_Pep_Session, In<bool>>( "conf_service_log", &config_service_log) ),
+		FP( "config_cipher_suite", new FuncCache<void, In_Pep_Session, In<PEP_CIPHER_SUITE>>( "config_cipher_suite", &config_cipher_suite) ),
+		FP( "config_passphrase",   new FuncCachePassphrase<void, In_Pep_Session, In<c_string>>( "config_passphrase" ) ),
+		FP( "config_passphrase_for_new_keys",   new FuncCachePassphrase4NewKeys<void, In_Pep_Session, In<bool>, In<c_string>>( "config_passphrase4nk" ) ),
 		
 		FP( "Identity Management API", new Separator),
 		FP( "get_identity"       , new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<pEp_identity*>>( &get_identity) ),
@@ -115,7 +122,7 @@ const FunctionMap functions = {
 		FP( "own_identities_retrieve", new Func<PEP_STATUS, In_Pep_Session, Out<identity_list*>>( &own_identities_retrieve ) ),
 		FP( "set_own_key", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<c_string>>( &set_own_key ) ),
 		FP( "key_reset_identity", new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, In<c_string>>( &key_reset_identity) ),
-		FP( "key_reset_user",     new Func<PEP_STATUS, In_Pep_Session, In<c_string>     , In<c_string, ParamFlag::NullOkay>>( &key_reset_user) ),
+		FP( "key_reset_user",     new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>     , In<c_string, ParamFlag::NullOkay>>( &key_reset_user) ),
 		FP( "key_reset_all_own_keys",  new Func<PEP_STATUS, In_Pep_Session>( &key_reset_all_own_keys) ),
 		
 		FP( "myself"        , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &myself) ),
@@ -151,7 +158,8 @@ const FunctionMap functions = {
 		FP( "Sync", new Separator ),
 		FP( "leave_device_group"       , new Func<PEP_STATUS, In_Pep_Session> (&leave_device_group) ),
 		FP( "enable_identity_for_sync" , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&enable_identity_for_sync)),
-		FP( "disable_identity_for_sync", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&disable_identity_for_sync)),
+		FP( "disable_identity_for_sync", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&disable_identity_for_sync)),
+
 #ifndef JSON_ADAPTER_LIBRARY
 		FP( "startSync", new Func<void> (&pEp::mini::startSync) ),
 		FP( "stopSync" , new Func<void> (&pEp::mini::stopSync) ),

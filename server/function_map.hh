@@ -13,6 +13,11 @@
 // Just for debugging:
 #include <iostream>
 #include <pEp/message_api.h>
+#include <pEp/passphrase_cache.hh>
+
+
+// FIXME: This should be provided by libpEpAdapter, so not every adapter is required to instantiate its own!
+extern pEp::PassphraseCache passphrase_cache;
 
 
 template<class R>
@@ -209,6 +214,23 @@ public:
 };
 
 
+// wrap the function with passphrase_cache.api()
+template<class R, class... Args>
+class FuncPC : public Func<R, Args...>
+{
+public:
+	typedef Func<R, Args...> Base;
+	typedef typename Return<R>::return_type ReturnType;
+	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
+	
+	FuncPC( ReturnType(*_f)(typename Args::c_type ...) )
+	: Base( [_f](typename Args::c_type... args) { return passphrase_cache.api( _f, args...); } )
+	{}
+};
+
+
+// add the function & its parameters in the context->cache
+// (where they are cached and applied to all PEP_SESSIONs of the client)
 template<class R, class... Args>
 class FuncCache : public Func<R, Args...>
 {
@@ -221,7 +243,7 @@ public:
 	: Base(_f)
 	, func_name(_func_name)
 	{}
-
+	
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
 		Logger Log("FuncCache::call");
@@ -229,11 +251,11 @@ public:
 		//param_tuple_t param_tuple;
 		
 		// FIXME: Does only work with functions with type: void(PEP_SESSION, T):
-		const auto p0 = from_json< typename std::tuple_element<1, param_tuple_t>::type >(parameters[0]);
+		const auto p1 = from_json< typename std::tuple_element<1, param_tuple_t>::type >(parameters[0]);
 		
-		Log << Logger::Debug << "func_name=\"" << func_name << "\", value=" << p0 << ".";
+		Log << Logger::Debug << "func_name=\"" << func_name << "\", value=" << p1 << ".";
 		
-		std::function<void(PEP_SESSION)> func = std::bind(Base::fn, std::placeholders::_1, p0);
+		std::function<void(PEP_SESSION)> func = std::bind(Base::fn, std::placeholders::_1, p1);
 		context->cache(func_name, func);
 		return Base::call(parameters, context);
 	}
@@ -241,6 +263,75 @@ public:
 private:
 	const std::string func_name;
 };
+
+
+template<class R, class... Args>
+class FuncCachePassphrase : public Func<R, Args...>
+{
+public:
+	typedef Func<R, Args...> Base;
+	typedef typename Return<R>::return_type ReturnType;
+	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
+	
+	FuncCachePassphrase(const std::string& _func_name )
+	: Base( &config_passphrase )
+	, func_name(_func_name)
+	{}
+	
+	js::Value call(const js::Array& parameters, Context* context) const override
+	{
+		Logger Log("FuncCachePasswd::call");
+		const std::string& passphrase = parameters.at(0).get_str();
+		
+		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
+		
+		std::function<void(PEP_SESSION)> func = [passphrase](PEP_SESSION session)
+			{
+				config_passphrase(session, passphrase_cache.add(passphrase));
+			};
+		
+		context->cache(func_name, func);
+		return Base::call(parameters, context);
+	}
+
+private:
+	const std::string func_name;
+};
+
+template<class R, class... Args>
+class FuncCachePassphrase4NewKeys : public Func<R, Args...>
+{
+public:
+	typedef Func<R, Args...> Base;
+	typedef typename Return<R>::return_type ReturnType;
+	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
+	
+	FuncCachePassphrase4NewKeys(const std::string& _func_name )
+	: Base( &config_passphrase_for_new_keys )
+	, func_name(_func_name)
+	{}
+	
+	js::Value call(const js::Array& parameters, Context* context) const override
+	{
+		Logger Log("FuncCachePasswd4NK::call");
+		bool enable = parameters.at(0).get_bool();
+		const std::string& passphrase = parameters.at(1).get_str();
+		
+		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
+		
+		std::function<void(PEP_SESSION)> func = [enable, passphrase](PEP_SESSION session)
+			{
+				config_passphrase_for_new_keys(session, enable, passphrase_cache.add_stored(passphrase));
+			};
+		
+		context->cache(func_name, func);
+		return Base::call(parameters, context);
+	}
+
+private:
+	const std::string func_name;
+};
+
 
 
 // Just a separating placeholder in the drop-down list. Does not calls anything.
