@@ -7,10 +7,6 @@
 #include <pEp/status_to_string.hh>  // from libpEpAdapter.
 #include <pEp/locked_queue.hh>
 
-// FIXME: This should be provided by libpEpAdapter, so not every adapter is required to instantiate its own!
-pEp::PassphraseCache passphrase_cache;
-
-
 namespace pEp {
 namespace mini {
 

@@ -16,10 +16,6 @@
 #include <pEp/passphrase_cache.hh>
 
 
-// FIXME: This should be provided by libpEpAdapter, so not every adapter is required to instantiate its own!
-extern pEp::PassphraseCache passphrase_cache;
-
-
 template<class R>
 struct Return
 {
@@ -224,7 +220,7 @@ public:
 	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
 	
 	FuncPC( ReturnType(*_f)(typename Args::c_type ...) )
-	: Base( [_f](typename Args::c_type... args) { return passphrase_cache.api( _f, args...); } )
+	: Base( [_f](typename Args::c_type... args) { return pEp::passphrase_cache.api( _f, args...); } )
 	{}
 };
 
@@ -287,7 +283,7 @@ public:
 		
 		std::function<void(PEP_SESSION)> func = [passphrase](PEP_SESSION session)
 			{
-				config_passphrase(session, passphrase_cache.add(passphrase));
+				config_passphrase(session, pEp::passphrase_cache.add(passphrase));
 			};
 		
 		context->cache(func_name, func);
@@ -321,7 +317,7 @@ public:
 		
 		std::function<void(PEP_SESSION)> func = [enable, passphrase](PEP_SESSION session)
 			{
-				config_passphrase_for_new_keys(session, enable, passphrase_cache.add_stored(passphrase));
+				config_passphrase_for_new_keys(session, enable, pEp::passphrase_cache.add_stored(passphrase));
 			};
 		
 		context->cache(func_name, func);
