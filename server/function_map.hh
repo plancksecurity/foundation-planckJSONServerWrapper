@@ -281,9 +281,10 @@ public:
 		
 		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
 		
+		pEp::passphrase_cache.add(passphrase); // for the current PEP_SESSION
 		std::function<void(PEP_SESSION)> func = [passphrase](PEP_SESSION session)
 			{
-				config_passphrase(session, pEp::passphrase_cache.add(passphrase));
+				config_passphrase(session, pEp::passphrase_cache.add(passphrase)); // for all other existing and future PEP_SESSIONs
 			};
 		
 		context->cache(func_name, func);
@@ -315,8 +316,10 @@ public:
 		
 		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
 		
+		pEp::passphrase_cache.add_stored(passphrase); // for the current PEP_SESSION
 		std::function<void(PEP_SESSION)> func = [enable, passphrase](PEP_SESSION session)
 			{
+				// for all other existing and future PEP_SESSIONs
 				config_passphrase_for_new_keys(session, enable, pEp::passphrase_cache.add_stored(passphrase));
 			};
 		
