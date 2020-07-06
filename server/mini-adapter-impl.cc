@@ -167,5 +167,12 @@ Adapter& Adapter::createInstance()
 	return dynamic_cast<Adapter&>(JsonAdapter::createInstance( new Adapter() ));
 }
 
+
+std::thread::id  Adapter::get_sync_thread_id() const
+{
+	return sync_thread ? sync_thread->get_id() : std::thread::id{} ;
+}
+
+
 } // end of namespace pEp::mini
 } // end of namespace pEp

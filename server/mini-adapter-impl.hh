@@ -33,7 +33,8 @@ namespace mini {
 	class Adapter : public JsonAdapter
 	{
 	public:
-		static Adapter& createInstance();
+		static Adapter&  createInstance();
+		std::thread::id  get_sync_thread_id() const override;
 		
 	protected:
 		virtual inject_sync_event_t getInjectSyncEvent() const override
