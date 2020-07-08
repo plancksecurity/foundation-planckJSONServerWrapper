@@ -187,17 +187,7 @@ ServerVersion JsonAdapter::version()
 
 PEP_STATUS JsonAdapter::messageToSend(message* msg)
 {
-	JsonAdapter& ja = getInstance();
-	if( std::this_thread::get_id() == ja.get_sync_thread_id() )
-	{
-		if(msg == nullptr)
-		{
-			return pEp::PassphraseCache::config_next_passphrase();
-		}else{
-			return pEp::PassphraseCache::config_next_passphrase(true);
-		}
-	}
-	
+	JsonAdapter& ja = getInstance();	
 	js::Value v{to_json(msg)};
 	ja.i->makeAndDeliverRequest("messageToSend", js::Array{ std::move(v) } );
 	return PEP_STATUS_OK;
