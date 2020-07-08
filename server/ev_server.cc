@@ -114,7 +114,7 @@ const FunctionMap functions = {
 		FP( "Low level Key Management API", new Separator),
 		FP( "generate_keypair", new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &generate_keypair) ),
 		FP( "delete_keypair", new Func<PEP_STATUS, In_Pep_Session, In<c_string>> ( &delete_keypair) ),
-		FP( "import_key"    , new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<std::size_t>, Out<identity_list*>> ( &import_key) ),
+		FP( "import_key"    , new Func<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<identity_list*>> ( &import_key) ),
 		FP( "export_key"    , new Func<PEP_STATUS, In_Pep_Session, In<c_string>, Out<char*>, Out<std::size_t>> ( &export_key) ),
 		FP( "find_keys"     , new Func<PEP_STATUS, In_Pep_Session, In<c_string>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &get_trust) ),

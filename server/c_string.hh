@@ -10,9 +10,15 @@
 
 #include <string>
 #include "inout.hh"
+#include "base64.hh"
 
-// just an empty tag type
+// just empty tag types:
+// UTF-8 NFC strings:
 struct c_string
+{ };
+
+// "binary" strings. Always base64-encoded at JSON-RPC side
+struct binary_string
 { };
 
 
@@ -47,6 +53,40 @@ struct In<c_string, PF>
 	const bool is_null;
 	const std::string value;
 };
+
+template<ParamFlag PF>
+struct In<binary_string, PF>
+{
+	typedef In<binary_string, PF> Self;
+	
+	typedef const char* c_type;
+	enum { is_output = false, need_input = !(PF & ParamFlag::NoInput) };
+	
+	~In() = default;
+	
+	In(const Self& other) = delete;
+	In(Self&& victim) = delete;
+	Self& operator=(const Self&) = delete;
+	
+	In(const js::Value& v, Context* ctx, unsigned param_nr)
+	: is_null ( v.is_null() )
+	, value( bool(PF & ParamFlag::NullOkay) && is_null ? "" : base64_decode(from_json<std::string>(v)) )
+	{
+		ctx->store(param_nr, value.length());
+	}
+	
+	js::Value to_json() const
+	{
+		return is_null ? js::Value{} : ::to_json<std::string>(base64_encode(value));
+	}
+	
+	c_type get_value() const { return is_null ? nullptr : value.data(); }
+	
+	const bool is_null;
+	const std::string value;
+};
+
+
 
 
 template<ParamFlag PF>

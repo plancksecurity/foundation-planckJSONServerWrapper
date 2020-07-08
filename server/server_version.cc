@@ -108,7 +108,8 @@ const ServerVersion& server_version()
 
 // 0.19 was skipped intentionally.
 //static const ServerVersion sv(0,20,0);  // JSON-152: 2-parameter version of pollForEvents().
-static const ServerVersion sv(0,20,1);  // JSON-153: passphrase support
+//static const ServerVersion sv(0,20,1);  // JSON-153: passphrase support
+static const ServerVersion sv(0,21,0);  // import_key() expects binary data, so they are always base64-encoded!
 
 	return sv;
 }
