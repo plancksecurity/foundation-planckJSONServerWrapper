@@ -120,7 +120,7 @@ try
 		ev_server::addSharks();
 	}
 	
-	if( debug_mode == false )
+	if( debug_mode == false && !foreground )
 		daemonize (!debug_mode, (const uintptr_t) status_handle);
 	
 	// create a dummy session just to see whether the Engine is functional.
