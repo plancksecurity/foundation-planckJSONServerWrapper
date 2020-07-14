@@ -14,8 +14,8 @@ PEP_ENGINE?=../../pEpEngine
 LIBETPAN_FDIK?=../../libetpan
 SEQOUIA_PGP?=../../sequoia
 NETTLE?=../../nettle
-BOOST_INCLUDE_PATH=../../boost_1_72_0
-BOOST_LIBRARY_PATH=../../boost_1_72_0/stage/lib
+BOOST_INCLUDE_PATH?=../../boost_1_72_0
+BOOST_LIBRARY_PATH?=../../boost_1_72_0/stage/lib
 
 # path to installed libraries
 
@@ -42,8 +42,8 @@ ifdef NDEBUG
 	CFLAGS+=-O3 -DNDEBUG -fvisibility=hidden
 	CXXFLAGS+=-O3 -DNDEBUG -fvisibility=hidden
 else
-	CFLAGS+=-O0 -g -fvisibility=hidden
-	CXXFLAGS+=-O0 -g -fvisibility=hidden
+	CFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden
+	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden
 endif
 
 TARGET=pEp-mini-json-adapter
@@ -83,11 +83,11 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) -liconv \
 		-lobjc -framework Foundation -framework Security \
 		$(PEP_WEBSERVER)/libpEpwebserver.a \
-		$(BOOST_LIBRARY_PATH)/libboost_filesystem.a \
-		$(BOOST_LIBRARY_PATH)/libboost_program_options.a \
-		$(BOOST_LIBRARY_PATH)/libboost_system.a \
-		$(BOOST_LIBRARY_PATH)/libboost_thread.a \
-		$(BOOST_LIBRARY_PATH)/libboost_regex.a \
+		$(BOOST_LIBRARY_PATH)/libboost_filesystem$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_program_options$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_system$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_thread$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_regex$(BOOST_MT).a \
 		$(ICONV_LIBRARY_PATH)/libiconv.a \
 		$(LIBZ_LIBRARY_PATH)/libz.a \
 		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
@@ -152,7 +152,7 @@ local.conf:
 	@echo >> local.conf
 	@echo "# path where to find boost" >> local.conf
 	@echo >> local.conf
-	@echo "BOOST_INCLUDE=$(BOOST_INCLUDE_PATH)" >> local.conf
+	@echo "BOOST_INCLUDE_PATH=$(BOOST_INCLUDE_PATH)" >> local.conf
 	@echo "BOOST_LIBRARY_PATH=$(BOOST_LIBRARY_PATH)" >> local.conf
 	@echo >> local.conf
 	@echo >> local.conf
