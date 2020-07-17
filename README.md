@@ -263,6 +263,87 @@ Currently there are no range checks for numerical parameter types (e.g. a
 JSON decimal number can hold a bigger value than the `int` parameter type of
 a certain C function).
 
+### JSON RPC Requests
+
+The JSON Server Adapter offers its services via HTTP on the address and port
+specified on command line. It offers a simple test HTML page on the root
+URL.
+
+The JSON RPC functions are POST requests to the path /ja/0.1/callFunction
+and have a format like this:
+
+```
+{
+  "id": 1001,
+  "jsonrpc": "2.0",
+  "security_token": "YSxxkNga0YUlkmdpUL6_qJuioicGK1wOC5sjGVG",
+  "method": "import_key",
+  "params": [
+    "4oW5PKhgY8XdvIYQiu+KaKnZYyP5UseHD1Sfjb8HpO75m/QT/FxFI………",
+    4444,
+    [
+      "OP"
+    ]
+  ]
+}
+```
+
+another example:
+
+```
+{
+  "id": 1002,
+  "jsonrpc": "2.0",
+  "security_token": "YSxxkNga0YUlkmdpUL6_qJuioicGK1wOC5sjGVG",
+  "method": "myself",
+  "params": [
+    {
+      "user_id": "alice",
+      "username": "Alice in pEp land",
+      "address": "alice@pEp.lol",
+      "fpr": "4ABE3AAF59AC32CFE4F86500A9411D176FF00E97"
+    }
+  ]
+}
+```
+
+Output parameters must be given, but their value is not relevant. The
+JavaScript example test client fills the output values with a dummy array,
+containing one string element "OP", just to ease debugging.
+
+The result contains the return value and the values of the output parameters,
+in reverse order:
+
+Request:
+
+```
+{
+  "id": 1003,
+  "jsonrpc": "2.0",
+  "security_token": "YSxxkNga0YUlkmdpUL6_qJuioicGK1wOC5sjGVG",
+  "method": "get_languagelist",
+  "params": [
+    [
+      "OP"
+    ]
+  ]
+}
+```
+
+Result:
+
+```
+{
+  "outParams": [
+    "\"en\",\"English\",\"I want to display the trustwords in English language\"……"
+  ],
+  "return": {
+    "status": 0,
+    "hex": "0 \"PEP_STATUS_OK\""
+  }
+}
+```
+
 ### API Reference
 
 An complete overview with all functions that are callable from the client
