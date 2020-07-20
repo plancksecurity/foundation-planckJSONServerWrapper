@@ -15,6 +15,8 @@
 
 #include <pEp/call_with_lock.hh>
 #include <pEp/status_to_string.hh>
+#include <pEp/Adapter.hh>
+
 
 namespace po = boost::program_options;
 
@@ -125,7 +127,7 @@ try
 	
 	// create a dummy session just to see whether the Engine is functional.
 	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
-	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, &JsonAdapter::messageToSend, &pEp::mini::injectSyncMsg);
+	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, &JsonAdapter::messageToSend, &pEp::Adapter::_inject_sync_event);
 	if(status != PEP_STATUS_OK || first_session==nullptr)
 	{
 		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
