@@ -15,6 +15,9 @@
 
 #include <pEp/call_with_lock.hh>
 #include <pEp/status_to_string.hh>
+#include <pEp/Adapter.hh>
+#include <pEp/callback_dispatcher.hh>
+
 
 namespace po = boost::program_options;
 
@@ -123,9 +126,11 @@ try
 	if( debug_mode == false && !foreground )
 		daemonize (!debug_mode, (const uintptr_t) status_handle);
 	
+    pEp::callback_dispatcher.add(JsonAdapter::messageToSend, JsonAdapter::notifyHandshake);
+
 	// create a dummy session just to see whether the Engine is functional.
 	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
-	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, &JsonAdapter::messageToSend, &pEp::mini::injectSyncMsg);
+	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, pEp::CallbackDispatcher::messageToSend, pEp::Adapter::_inject_sync_event);
 	if(status != PEP_STATUS_OK || first_session==nullptr)
 	{
 		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
@@ -147,7 +152,7 @@ try
 
 	try
 	{
-		ja.prepare_run(address, start_port, end_port, JsonAdapter::messageToSend);
+		ja.prepare_run(address, start_port, end_port, pEp::CallbackDispatcher::messageToSend);
 		
 		if( debug_mode )
 		{
@@ -170,6 +175,7 @@ try
 		ja.shutdown(nullptr);
 		ja.Log() << "Good bye. :-)";
 		pEp::call_with_lock(&release, first_session);
+        pEp::callback_dispatcher.remove(JsonAdapter::messageToSend);
 	}
 	catch(std::exception const& e)
 	{
