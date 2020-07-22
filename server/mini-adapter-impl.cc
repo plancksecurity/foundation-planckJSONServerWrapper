@@ -7,6 +7,7 @@
 #include <pEp/status_to_string.hh>  // from libpEpAdapter.
 #include <pEp/locked_queue.hh>
 #include <pEp/Adapter.hh>
+#include <pEp/callback_dispatcher.hh>
 
 namespace pEp {
 namespace mini {
@@ -35,17 +36,13 @@ namespace mini {
 
 void startSync()
 {
-	::pEp::Adapter::startup<dummy_t>(
-		&JsonAdapter::messageToSend,
-		&JsonAdapter::notifyHandshake,
-		&dummy
-		);
+    pEp::callback_dispatcher.start_sync();
 }
 
 
 void stopSync()
 {
-	::pEp::Adapter::shutdown();
+	pEp::callback_dispatcher.stop_sync();
 }
 
 
@@ -54,7 +51,7 @@ void startKeyserverLookup()
 	if(keyserver_lookup_session)
 		throw std::runtime_error("KeyserverLookup already started.");
 
-	PEP_STATUS status = pEp::call_with_lock(&init, &keyserver_lookup_session, &JsonAdapter::messageToSend, &::pEp::Adapter::_inject_sync_event);
+	PEP_STATUS status = pEp::call_with_lock(&init, &keyserver_lookup_session, pEp::CallbackDispatcher::messageToSend, ::pEp::Adapter::_inject_sync_event);
 	if(status != PEP_STATUS_OK || keyserver_lookup_session==nullptr)
 	{
 		throw std::runtime_error("Cannot create keyserver lookup session! status: " + ::pEp::status_to_string(status));
