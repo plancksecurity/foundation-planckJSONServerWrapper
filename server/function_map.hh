@@ -128,8 +128,9 @@ public:
 			//			std::cerr << "|$ Param #" << U << " is not for output.\n";
 		}
 #ifdef _MSC_BUILD
-		if (ret.type() == js::array_type) {
+		if (ret.type() == js::array_type && !ret.get_array().empty()) {
 			try {
+
 				const js::Array ret_ = ret.get_array()[0].get_array();
 #ifndef NDEBUG
 				std::string _ret_ = js::write(ret_);
