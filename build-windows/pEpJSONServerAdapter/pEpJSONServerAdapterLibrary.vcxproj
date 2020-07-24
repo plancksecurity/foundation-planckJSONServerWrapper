@@ -111,7 +111,6 @@
     <ClInclude Include="..\..\server\json_spirit\json_spirit_writer_template.h" />
     <ClInclude Include="..\..\server\logger.hh" />
     <ClInclude Include="..\..\server\logger_config.hh" />
-    <ClInclude Include="..\..\server\mini-adapter-impl.hh" />
     <ClInclude Include="..\..\server\nfc.hh" />
     <ClInclude Include="..\..\server\nfc_sets.hh" />
     <ClInclude Include="..\..\server\pEp-types.hh" />

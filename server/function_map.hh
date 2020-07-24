@@ -116,16 +116,32 @@ public:
 	{
 		// extract the U'th element of the parameter list
 		const Element element(parameters[U], ctx, U);
-		
+
 		const js::Value ret = NextHelper::call(fn, ctx, out_parameters, parameters, a2..., element );
 		if(Element::is_output)
 		{
 			js::Value out = element.to_json();
-//			std::cerr << "|$ Out #" << U << " : " << js::write(out) << "\n";
-			out_parameters.push_back( std::move(out) );
-		}else{
-//			std::cerr << "|$ Param #" << U << " is not for output.\n";
+			//			std::cerr << "|$ Out #" << U << " : " << js::write(out) << "\n";
+			out_parameters.push_back(std::move(out));
 		}
+		else {
+			//			std::cerr << "|$ Param #" << U << " is not for output.\n";
+		}
+#ifdef _MSC_BUILD
+		if (ret.type() == js::array_type) {
+			try {
+				const js::Array ret_ = ret.get_array()[0].get_array();
+#ifndef NDEBUG
+				std::string _ret_ = js::write(ret_);
+#endif
+				return ret_;
+			}
+			catch (std::runtime_error&) {
+				return ret;
+			}
+		}
+		else
+#endif
 		return ret;
 	}
 };
@@ -187,7 +203,7 @@ public:
 		out_params.reserve( Helper::nr_of_output_params );
 		
 		js::Value ret = Helper::call(fn, context, out_params, *p_params);
-		
+		std::string _ret = js::value_type_to_string(ret.type());
 		js::Object rs;
 		rs.emplace_back("outParams", std::move(out_params));
 		rs.emplace_back("return", std::move(ret));
