@@ -70,6 +70,7 @@ const FunctionMap functions = {
 		// from message_api.h
 		FP( "Message API", new Separator ),
 		FP( "encrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message ) ),
+		FP( "cache_encrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &pEp::MessageCache::cache_encrypt_message ) ),
 		FP( "encrypt_message_and_add_priv_key", new FuncPC<PEP_STATUS, In_Pep_Session,
 			In<message*>, Out<message*>, In<c_string>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_and_add_priv_key) ),
 		FP( "encrypt_message_for_self", new FuncPC<PEP_STATUS, In_Pep_Session,
@@ -85,6 +86,7 @@ const FunctionMap functions = {
 		FP( "cache_mime_encode_message", new Func<PEP_STATUS, In<int>, In<const message*>, In<bool>, Out<char*>, In<bool, ParamFlag::NoInput>>( &pEp::MessageCache::cache_mime_encode_message)),
         FP( "cache_release", new Func<PEP_STATUS, In<c_string>>( &pEp::MessageCache::cache_release )),
 		FP( "mime_decode_message", new Func<PEP_STATUS, In<c_string>, InLength<>, Out<message*>, In<bool*, ParamFlag::NoInput>>( &mime_decode_message )),
+		FP( "cache_mime_decode_message", new Func<PEP_STATUS, In<c_string>, InLength<>, Out<message*>, In<bool*, ParamFlag::NoInput>>( &pEp::MessageCache::cache_mime_decode_message )),
 		
 		// from pEpEngine.h
 		FP( "pEp Engine Core API", new Separator),
