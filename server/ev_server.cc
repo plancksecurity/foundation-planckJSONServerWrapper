@@ -22,6 +22,7 @@
 #include <pEp/Adapter.hh>
 #include <pEp/status_to_string.hh>
 #include <pEp/slurp.hh>
+#include <pEp/message_cache.hh>
 
 #include <boost/filesystem.hpp>
 #include "json_spirit/json_spirit_reader.h"
@@ -75,11 +76,14 @@ const FunctionMap functions = {
 			In<pEp_identity*>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &encrypt_message_for_self ) ),
 
 		FP( "decrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
+		FP( "cache_decrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &pEp::MessageCache::cache_decrypt_message) ),
 		FP( "get_key_rating_for_user", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<PEP_rating>>( &get_key_rating_for_user) ),
 		
 		// from mime.h
 		FP( "MIME handling API", new Separator),
 		FP( "mime_encode_message", new Func<PEP_STATUS, In<const message*>, In<bool>, Out<char*>, In<bool, ParamFlag::NoInput>>( &mime_encode_message )),
+		FP( "cache_mime_encode_message", new Func<PEP_STATUS, In<int>, In<const message*>, In<bool>, Out<char*>, In<bool, ParamFlag::NoInput>>( &pEp::MessageCache::cache_mime_encode_message)),
+        FP( "cache_release", new Func<PEP_STATUS, In<c_string>>( &pEp::MessageCache::cache_release )),
 		FP( "mime_decode_message", new Func<PEP_STATUS, In<c_string>, InLength<>, Out<message*>, In<bool*, ParamFlag::NoInput>>( &mime_decode_message )),
 		
 		// from pEpEngine.h
