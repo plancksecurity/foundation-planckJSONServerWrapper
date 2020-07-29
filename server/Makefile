@@ -39,11 +39,11 @@ CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14
 LDFLAGS+=-std=c++14
 
 ifdef NDEBUG
-	CFLAGS+=-O3 -DNDEBUG -fvisibility=hidden
-	CXXFLAGS+=-O3 -DNDEBUG -fvisibility=hidden
+	CFLAGS+=-O3 -DNDEBUG -fvisibility=hidden -fno-stack-check
+	CXXFLAGS+=-O3 -DNDEBUG -fvisibility=hidden -fno-stack-check
 else
-	CFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden
-	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden
+	CFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden -fno-stack-check
+	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden -fno-stack-check
 endif
 
 TARGET=pEp-mini-json-adapter
