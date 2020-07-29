@@ -169,10 +169,7 @@ js::Value to_json<timestamp *>(timestamp * const& t)
 		return js::Value{};
 	}
 	
-	// neither timegm() nor mktime() respect t->tm_gmtoff for their conversions. What a mess!
-	// But t->tm_gmtoff is non-standard, though, and doesn't exist on MS Windows. In ENGINE-735
-	// we switched to `timestamp` to cater for Windows and now convert to UTC in Windows' `timegm`.
-	const int64_t u = timegm(t);
+	const int64_t u = timegm_with_gmtoff(t);
 	return js::Value{u};
 }
 
