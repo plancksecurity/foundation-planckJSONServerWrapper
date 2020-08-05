@@ -51,7 +51,7 @@ void startKeyserverLookup()
 	if(keyserver_lookup_session)
 		throw std::runtime_error("KeyserverLookup already started.");
 
-	PEP_STATUS status = pEp::call_with_lock(&init, &keyserver_lookup_session, pEp::CallbackDispatcher::messageToSend, ::pEp::Adapter::_inject_sync_event);
+	PEP_STATUS status = pEp::call_with_lock(&init, &keyserver_lookup_session, pEp::CallbackDispatcher::messageToSend, ::pEp::Adapter::_inject_sync_event, pEp::Adapter::_ensure_passphrase);
 	if(status != PEP_STATUS_OK || keyserver_lookup_session==nullptr)
 	{
 		throw std::runtime_error("Cannot create keyserver lookup session! status: " + ::pEp::status_to_string(status));

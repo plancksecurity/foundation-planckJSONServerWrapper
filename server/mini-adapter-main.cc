@@ -130,7 +130,7 @@ try
 
 	// create a dummy session just to see whether the Engine is functional.
 	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
-	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, pEp::CallbackDispatcher::messageToSend, pEp::Adapter::_inject_sync_event);
+	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, pEp::CallbackDispatcher::messageToSend, pEp::Adapter::_inject_sync_event, pEp::Adapter::_ensure_passphrase);
 	if(status != PEP_STATUS_OK || first_session==nullptr)
 	{
 		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
