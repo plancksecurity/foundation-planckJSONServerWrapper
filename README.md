@@ -165,19 +165,19 @@ the `Debug` or `Release` directory of the solution.
 ## Running the pEp JSON Adapter
 You can use `make run` to start the server.
 
-1. Run ./pep-json-server.  This creates a file that is readable only by the
-   current user (~/.pEp/json-token-${USER}) and contains the address and
+1. Run `./pEp-mini-json-adapter`.  This creates a file that is readable only by the
+   current user (`~/.pEp/json-token`) and contains the address and
    port the JSON adapter is listening on, normally 127.0.0.1:4223 and a
    "security-token" that must be given in each function call to authenticate
    you as the valid user.
 
    ```
-   ./pep-json-server
+   ./pEp-mini-json-adapter
    ```
 
-2. Visit that address (normally http://127.0.0.1:4223/) in your
+2. Visit that address (normally `http://127.0.0.1:4223/`) in your
    JavaScript-enabled web browser to see the "JavaScript test client".
-3. Call any function ("version()" or "get_gpg_path()" should work just
+3. Call any function (`version()` or `get_gpg_path()` should work just
    fine) with the correct security token.
 
 ## Using the p≡p JSON Adapter
@@ -270,7 +270,10 @@ specified on command line. It offers a simple test HTML page on the root
 URL.
 
 The JSON RPC functions are POST requests to the path /ja/0.1/callFunction
-and have a format like this:
+and the JSON RPC data comes, as usual for POST requests, in the request body and
+must be in UTF-8 without any BOM. The `Content-Type` of the request is not relevant.
+
+Here is the body of an example request:
 
 ```
 {
@@ -393,20 +396,18 @@ there are these callbacks:
 The JSON adapter register its own functions at the Engine which propagate these
 events to all connected clients.
 
-The event propagation to the clients are also done via JSON RPC calls. Here
-the JSON Adapter acts as "client" which connects to a host:port that was told
-to by the Client to the JSON Adapter via `registerEventListener()` call, where
-Client also sends a security token to the JSON Adapter for the reverse JSON RPC
-connection.
+The event propagation to the clients are done via the special API function
+`pollForEvents()`. This function expects a special "session" string (which can be
+optained by a call to `create_session()`) and a numerical
+timeout (in seconds) and blocks until at least one event arrives, which is returned.
+If no event arrives until the given timeout, this function returns an empty JSON array.
+If events arrive between two calls of `pollForEvents()` (with the same "session") they
+are cached by the JSON adapter and returned in the next call, which returns immediately.
 
-Note: It is planned to change the way how events are sent to the Client, when
-the Client is unable to open listen sockets (it is rumored that future versions
-of Mozilla Thunderbird's plugin API will no longer allow this).
+A call to `close_session()` with delete all pending events for that session.
 
-Idea 1: Use long polling: The Client calls a function that blocks until an event
-from the Engine arrives. This approach requires only a few changes in the JSON Adapter.
 
-Idea 2: Use WebSockets: In fact this is also a type of "long polling" and an open
+TODO: Use WebSockets: In fact this is also a type of "long polling" and an open
 TCP connection, opened by the Client. But it requires additional code in the JSON
 Adapter for the WebSockets protocol and a mechanism how to transfer the underlaying
 TCP socket and buffer from the libevent library to the WebSockets implementation.
