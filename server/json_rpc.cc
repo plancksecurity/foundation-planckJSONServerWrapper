@@ -91,6 +91,9 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: Wrong security token.", request, request_id);
 		}
 		
+		const auto client_id = find_value(request, "client_id");
+		const std::string client_id_s = (client_id.type()==js::str_type ? client_id.get_str() : std::string() ); // missing or non-string "client_id" --> empty string.
+		
 		const auto method = find_value(request, "method");
 		if(method.type()!=js::str_type)
 		{
