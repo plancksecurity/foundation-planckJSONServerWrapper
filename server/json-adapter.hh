@@ -75,8 +75,6 @@ public:
 	// returns 'true' if 's' is the security token created by the function above.
 	virtual bool verify_security_token(const std::string& s) const override;
 	
-	virtual void augment(json_spirit::Object& returnObject) override;
-	
 	virtual void cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) override;
 	
 	// returns the version of the JsonAdapter
@@ -97,7 +95,7 @@ public:
 	static JsonAdapter& getInstance();
 	
 	static SessionRegistry& getSessionRegistry();
-
+	
 	JsonAdapter& startup(::messageToSend_t messageToSend);
 
 protected:

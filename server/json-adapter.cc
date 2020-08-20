@@ -341,13 +341,6 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 }
 
 
-void JsonAdapter::augment(json_spirit::Object& returnObject)
-{
-	check_guard();
-	// nothing to do anymore.
-}
-
-
 void JsonAdapter::cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func)
 {
 	i->session_registry->add_to_cache(fn_name, func);

@@ -12,7 +12,6 @@ public:
 	virtual ~Context() = default;
 	
 	virtual bool verify_security_token(const std::string& token) const = 0;
-	virtual void augment(json_spirit::Object& returnObject) = 0;
 	
 	// Cache a certain function call. See JSON-155.
 	virtual void cache(const std::string& func_name, const std::function<void(PEP_SESSION)>& fn) = 0;
