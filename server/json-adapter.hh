@@ -1,6 +1,7 @@
 #ifndef JSON_ADAPTER_HH
 #define JSON_ADAPTER_HH
 
+#include <thread>
 #include <pEp/message.h>
 #include <pEp/sync_api.h>
 #include "registry.hh"
@@ -37,7 +38,7 @@ public:
 	
 	// if called with "false" the JSON Adpapter would no longer deliver HTML and JavaScript files, only handle JSON-RPC requests
 	JsonAdapter& deliver_html(bool _deliver_html);
-
+	
 	// look for a free port to listen on and set the given configuration
 	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port, ::messageToSend_t messageToSend);
 
@@ -68,6 +69,8 @@ public:
 	const std::string& address() const;
 	
 	unsigned request_count() const;
+	
+	virtual std::thread::id  get_sync_thread_id() const = 0;
 	
 	// returns 'true' if 's' is the security token created by the function above.
 	virtual bool verify_security_token(const std::string& s) const override;

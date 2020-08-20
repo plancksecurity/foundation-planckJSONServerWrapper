@@ -1,9 +1,17 @@
 #include "base64.hh"
+#include "logger.hh"
 #include <stdint.h>
 #include <stdexcept>
 
 namespace
 {
+
+	Logger& Log()
+	{
+		static Logger L("b64");
+		return L;
+	}
+
 
 #define __ (-1) // invalid char -> exception!
 #define SP (-2) // space char -> ignore
@@ -80,6 +88,7 @@ try{
 		if(u3!=255) { ret += char( (u2 << 6) | (u3     ) ); }
 	}
 
+	DEBUG_OUT( Log(), "decode %zu input bytes into %zd output bytes.", input.size(), ret.size());
 	return ret;
 }
 catch(const IllegalCharacter& ic)
@@ -115,9 +124,10 @@ std::string base64_encode(const std::string& input)
 				ret += b64c[ (u>>12) & 63 ];
 				ret += b64c[ (u>> 6) & 63 ];
 				ret += '=';
+				DEBUG_OUT( Log(), "encode %zu input bytes into %zd output bytes.", input.size(), ret.size());
 				return ret;
 			}
-
+		
 		case 1 :
 			{
 				const uint32_t u = U8(s[0])*65536;
@@ -125,9 +135,16 @@ std::string base64_encode(const std::string& input)
 				ret += b64c[ (u>>12) & 63 ];
 				ret += '=';
 				ret += '=';
+				DEBUG_OUT( Log(), "encode %zu input bytes into %zd output bytes.", input.size(), ret.size());
 				return ret;
 			}
-		case 0: return ret;
+		
+		case 0:
+			{
+				DEBUG_OUT( Log(), "encode %zu input bytes into %zd output bytes.", input.size(), ret.size());
+				return ret;
+			}
+		
 		default : throw std::logic_error("Internal error in base64_encode()!");
 	}
 }

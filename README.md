@@ -165,19 +165,19 @@ the `Debug` or `Release` directory of the solution.
 ## Running the pEp JSON Adapter
 You can use `make run` to start the server.
 
-1. Run ./pep-json-server.  This creates a file that is readable only by the
-   current user (~/.pEp/json-token-${USER}) and contains the address and
+1. Run `./pEp-mini-json-adapter`.  This creates a file that is readable only by the
+   current user (`~/.pEp/json-token`) and contains the address and
    port the JSON adapter is listening on, normally 127.0.0.1:4223 and a
    "security-token" that must be given in each function call to authenticate
    you as the valid user.
 
    ```
-   ./pep-json-server
+   ./pEp-mini-json-adapter
    ```
 
-2. Visit that address (normally http://127.0.0.1:4223/) in your
+2. Visit that address (normally `http://127.0.0.1:4223/`) in your
    JavaScript-enabled web browser to see the "JavaScript test client".
-3. Call any function ("version()" or "get_gpg_path()" should work just
+3. Call any function (`version()` or `get_gpg_path()` should work just
    fine) with the correct security token.
 
 ## Using the p≡p JSON Adapter
@@ -284,6 +284,90 @@ Engine is compiled in debug mode (= with enabled assert() checking).
 Currently there are no range checks for numerical parameter types (e.g. a
 JSON decimal number can hold a bigger value than the `int` parameter type of
 a certain C function).
+
+### JSON RPC Requests
+
+The JSON Server Adapter offers its services via HTTP on the address and port
+specified on command line. It offers a simple test HTML page on the root
+URL.
+
+The JSON RPC functions are POST requests to the path /ja/0.1/callFunction
+and the JSON RPC data comes, as usual for POST requests, in the request body and
+must be in UTF-8 without any BOM. The `Content-Type` of the request is not relevant.
+
+Here is the body of an example request:
+
+```
+{
+  "id": 1001,
+  "jsonrpc": "2.0",
+  "security_token": "YSxxkNga0YUlkmdpUL6_qJuioicGK1wOC5sjGVG",
+  "method": "import_key",
+  "params": [
+    "4oW5PKhgY8XdvIYQiu+KaKnZYyP5UseHD1Sfjb8HpO75m/QT/FxFI………",
+    4444,
+    [
+      "OP"
+    ]
+  ]
+}
+```
+
+another example:
+
+```
+{
+  "id": 1002,
+  "jsonrpc": "2.0",
+  "security_token": "YSxxkNga0YUlkmdpUL6_qJuioicGK1wOC5sjGVG",
+  "method": "myself",
+  "params": [
+    {
+      "user_id": "alice",
+      "username": "Alice in pEp land",
+      "address": "alice@pEp.lol",
+      "fpr": "4ABE3AAF59AC32CFE4F86500A9411D176FF00E97"
+    }
+  ]
+}
+```
+
+Output parameters must be given, but their value is not relevant. The
+JavaScript example test client fills the output values with a dummy array,
+containing one string element "OP", just to ease debugging.
+
+The result contains the return value and the values of the output parameters,
+in reverse order:
+
+Request:
+
+```
+{
+  "id": 1003,
+  "jsonrpc": "2.0",
+  "security_token": "YSxxkNga0YUlkmdpUL6_qJuioicGK1wOC5sjGVG",
+  "method": "get_languagelist",
+  "params": [
+    [
+      "OP"
+    ]
+  ]
+}
+```
+
+Result:
+
+```
+{
+  "outParams": [
+    "\"en\",\"English\",\"I want to display the trustwords in English language\"……"
+  ],
+  "return": {
+    "status": 0,
+    "hex": "0 \"PEP_STATUS_OK\""
+  }
+}
+```
 
 ### API Reference
 

@@ -8,7 +8,7 @@
 
 namespace
 {
-	std::atomic<unsigned long long> request_nr{0};
+	std::atomic<std::uint64_t> request_nr{0};
 }
 
 

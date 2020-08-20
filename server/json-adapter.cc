@@ -187,8 +187,9 @@ ServerVersion JsonAdapter::version()
 
 PEP_STATUS JsonAdapter::messageToSend(message* msg)
 {
+	JsonAdapter& ja = getInstance();	
 	js::Value v{to_json(msg)};
-	getInstance().i->makeAndDeliverRequest("messageToSend", js::Array{ std::move(v) } );
+	ja.i->makeAndDeliverRequest("messageToSend", js::Array{ std::move(v) } );
 	return PEP_STATUS_OK;
 }
 
@@ -314,7 +315,8 @@ void JsonAdapter::close_session(const std::string& session_id)
 
 std::string JsonAdapter::create_session()
 {
-	return create_random_token(12);
+	std::string rt = create_random_token(12);
+	return rt;
 }
 
 

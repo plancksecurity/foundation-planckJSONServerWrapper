@@ -2,6 +2,7 @@
 #include <sstream>
 #include <pEp/call_with_lock.hh>
 #include <pEp/status_to_string.hh>
+#include <pEp/Adapter.hh>
 
 
 // creates a PEP_SESSION if none yet exists for the given thread
@@ -17,7 +18,7 @@ PEP_SESSION SessionRegistry::get(std::thread::id tid)
 	}
 	
 	PEP_SESSION session = nullptr;
-	PEP_STATUS status = pEp::call_with_lock(&init, &session, mts, ise);
+	PEP_STATUS status = pEp::call_with_lock(&init, &session, mts, ise, pEp::Adapter::_ensure_passphrase);
 	if(status != PEP_STATUS_OK)
 	{
 		throw std::runtime_error("init() fails: " + pEp::status_to_string(status) );

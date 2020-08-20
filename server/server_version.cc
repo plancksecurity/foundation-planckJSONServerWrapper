@@ -74,7 +74,8 @@ static const std::string VersionName =
 
 // 41a,b were skipped, intentionally
 //	"(42) Gotha"; // JSON-152: 2-parameter version of pollForEvents().
-	"(43) Wandersleben"; // JSON-153 passphrase support. *sigh*
+//	"(43) Wandersleben"; // JSON-153 passphrase support. *sigh*
+	"(44) Neudietendorf"; // replace my own sync thread code by libpEpAdapter's implementation.
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
@@ -108,7 +109,9 @@ const ServerVersion& server_version()
 
 // 0.19 was skipped intentionally.
 //static const ServerVersion sv(0,20,0);  // JSON-152: 2-parameter version of pollForEvents().
-static const ServerVersion sv(0,20,1);  // JSON-153: passphrase support
+//static const ServerVersion sv(0,20,1);  // JSON-153: passphrase support
+//static const ServerVersion sv(0,21,0);  // import_key() expects binary data, so they are always base64-encoded!
+static const ServerVersion sv(0,21,1);  // wrap _all_ Engine functions with passphrase_cache.api(), except config_*() functions.
 
 	return sv;
 }

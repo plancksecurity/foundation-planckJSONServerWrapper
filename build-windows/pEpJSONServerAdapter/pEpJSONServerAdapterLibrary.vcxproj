@@ -111,7 +111,6 @@
     <ClInclude Include="..\..\server\json_spirit\json_spirit_writer_template.h" />
     <ClInclude Include="..\..\server\logger.hh" />
     <ClInclude Include="..\..\server\logger_config.hh" />
-    <ClInclude Include="..\..\server\mini-adapter-impl.hh" />
     <ClInclude Include="..\..\server\nfc.hh" />
     <ClInclude Include="..\..\server\nfc_sets.hh" />
     <ClInclude Include="..\..\server\pEp-types.hh" />
@@ -128,7 +127,7 @@
     <ClCompile Include="..\..\server\base64.cc" />
     <ClCompile Include="..\..\server\context.cc" />
     <ClCompile Include="..\..\server\c_string.cc" />
-    <ClCompile Include="..\..\server\daemonize.cc" />
+    <ClCompile Include="..\..\server\daemonize_windows.cc" />
     <ClCompile Include="..\..\server\ev_server.cc" />
     <ClCompile Include="..\..\server\function_map.cc" />
     <ClCompile Include="..\..\server\inout.cc" />

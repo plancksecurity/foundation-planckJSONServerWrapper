@@ -5,21 +5,16 @@
 #include <pEp/sync_api.h>
 #include "json-adapter.hh"
 #include <pEp/passphrase_cache.hh>
+#include <pEp/Adapter.hh>
 
 
 namespace pEp{
 namespace mini {
 
-	int injectSyncMsg(Sync_event* msg, void* /*management*/ );
-	
 	int injectIdentity(pEp_identity* idy);
-	
-	Sync_event* retrieveNextSyncMsg(void* /*management*/,  unsigned timeout);
 	
 	pEp_identity* retrieveNextIdentity( void* /*management*/);
 	
-	void* syncThreadRoutine(void* arg);
-
 	void startSync();
 	void stopSync();
 
@@ -33,12 +28,13 @@ namespace mini {
 	class Adapter : public JsonAdapter
 	{
 	public:
-		static Adapter& createInstance();
+		static Adapter&  createInstance();
+		std::thread::id  get_sync_thread_id() const override;
 		
 	protected:
 		virtual inject_sync_event_t getInjectSyncEvent() const override
 		{
-			return &::pEp::mini::injectSyncMsg;
+			return &::pEp::Adapter::_inject_sync_event;
 		}
 	};
 
