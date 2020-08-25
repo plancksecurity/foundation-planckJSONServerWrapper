@@ -5,15 +5,27 @@
 #include <pEp/message.h>
 #include <pEp/sync_api.h>
 #include "registry.hh"
-#include "context.hh"
 #include "logger.hh"
 #include "server_version.hh"
+#include "json_spirit/json_spirit_value.h"
 
 
 class SessionRegistry;
 
 
-class JsonAdapter : public Context
+// allow mocking the JsonAdapter in unittest_rpc
+class JsonAdapterBase
+{
+public:
+	~JsonAdapterBase() = default;
+	virtual bool verify_security_token(const std::string& s) const = 0;
+	
+	// Cache a certain function call. See JSON-155.
+	virtual void cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) = 0;
+};
+
+
+class JsonAdapter : public JsonAdapterBase
 {
 public:
 	

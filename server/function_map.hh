@@ -209,8 +209,6 @@ public:
 		rs.emplace_back("outParams", std::move(out_params));
 		rs.emplace_back("return", std::move(ret));
 		
-		context->clear(); // clear all stored values, if any.
-		
 		return rs;
 	}
 
