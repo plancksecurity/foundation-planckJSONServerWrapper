@@ -75,7 +75,8 @@ static const std::string VersionName =
 // 41a,b were skipped, intentionally
 //	"(42) Gotha"; // JSON-152: 2-parameter version of pollForEvents().
 //	"(43) Wandersleben"; // JSON-153 passphrase support. *sigh*
-	"(44) Neudietendorf"; // replace my own sync thread code by libpEpAdapter's implementation.
+//	"(44) Neudietendorf"; // replace my own sync thread code by libpEpAdapter's implementation.
+	"(45) Kreuz Erfurt"; // fix of context-saved function parameters that would cause trouble when >1 request is processed in parallel.
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
