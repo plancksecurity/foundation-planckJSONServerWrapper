@@ -150,15 +150,15 @@ struct JsonAdapter::Internal
 };
 
 
-PEP_SESSION JsonAdapter::getSessionForThread()
+PEP_SESSION JsonAdapter::getSessionForThread(const std::string& client_id)
 {
-	const auto id = std::this_thread::get_id();
-	return JsonAdapter::getInstance().i->session_registry->get(id);
+	const auto thread_id = std::this_thread::get_id();
+	return JsonAdapter::getInstance().i->session_registry->get(thread_id, client_id);
 }
 
 
-In_Pep_Session::In_Pep_Session(const js::Value& v, Context*, unsigned)
-: Base( JsonAdapter::getSessionForThread() )
+In_Pep_Session::In_Pep_Session(const js::Value& v, Context* ctx, unsigned)
+: Base( JsonAdapter::getSessionForThread(ctx->client_id()) )
 {}
 
 
@@ -343,9 +343,9 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 }
 
 
-void JsonAdapter::cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func)
+void JsonAdapter::cache(const std::string& client_id, const std::string& fn_name, const std::function<void(PEP_SESSION)>& func)
 {
-	i->session_registry->add_to_cache(fn_name, func);
+	i->session_registry->add_to_cache(client_id, fn_name, func);
 }
 
 

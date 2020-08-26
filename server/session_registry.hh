@@ -18,7 +18,7 @@ public:
 	{}
 	
 	// calls "init" for the given thread if no PEP_SESSION exists, yet for the given thread
-	PEP_SESSION get(std::thread::id tid = std::this_thread::get_id());
+	PEP_SESSION get(std::thread::id tid, const std::string& client_id);
 	void     remove(std::thread::id tid = std::this_thread::get_id());
 	
 	std::size_t  size() const { return m.size();  }
@@ -28,7 +28,7 @@ public:
 	// on each stored session.
 	void for_each(void(*function)(PEP_SESSION));
 	
-	void add_to_cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func);
+	void add_to_cache(const std::string& client_id, const std::string& fn_name, const std::function<void(PEP_SESSION)>& func);
 	
 	std::string to_string() const;
 	
@@ -37,7 +37,11 @@ private:
 	messageToSend_t      mts;
 	inject_sync_event_t  ise;
 	Logger Log;
-	std::map<std::string, std::function<void(PEP_SESSION)>> cache;
+	
+	typedef
+	std::map<std::string, std::function<void(PEP_SESSION)>> cache_per_client_t;
+	
+	std::map<std::string, cache_per_client_t> cache;
 	
 	typedef std::recursive_mutex     Mutex;
 	typedef std::unique_lock<Mutex>  Lock;

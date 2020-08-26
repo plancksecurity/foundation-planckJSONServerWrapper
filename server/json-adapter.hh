@@ -21,7 +21,7 @@ public:
 	virtual bool verify_security_token(const std::string& s) const = 0;
 	
 	// Cache a certain function call. See JSON-155.
-	virtual void cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) = 0;
+	virtual void cache(const std::string& client_id, const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) = 0;
 };
 
 
@@ -87,14 +87,14 @@ public:
 	// returns 'true' if 's' is the security token created by the function above.
 	virtual bool verify_security_token(const std::string& s) const override;
 	
-	virtual void cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) override;
+	virtual void cache(const std::string& client_id, const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) override;
 	
 	// returns the version of the JsonAdapter
 	static
 	ServerVersion version();
 	
 	// returns the PEP_SESSION registered for the current thread
-	static PEP_SESSION getSessionForThread();
+	static PEP_SESSION getSessionForThread(const std::string& client_id);
 	
 	static PEP_STATUS messageToSend(message* msg);
 	static PEP_STATUS notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal);

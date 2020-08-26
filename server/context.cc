@@ -22,7 +22,7 @@ bool Context::verify_security_token(const std::string& token) const
 // Cache a certain function call. See JSON-155.
 void Context::cache(const std::string& func_name, const std::function<void(PEP_SESSION)>& fn)
 {
-	ja->cache(func_name, fn);
+	ja->cache(client_id(), func_name, fn);
 }
 
 

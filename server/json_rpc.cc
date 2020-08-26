@@ -131,7 +131,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request, JsonAdapterBas
 		DEBUG_OUT(L, "method_name=\"" + method_name + "\"\n"
 					"params=" + js::write(params) );
 		
-		Context context{ja};
+		Context context{ja, client_id_s};
 		const js::Value result = fn->second->call(p, &context);
 		DEBUG_OUT(L, "result=" + js::write(result, js::raw_utf8) );
 		
