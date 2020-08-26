@@ -19,7 +19,7 @@ BOOST_LIBRARY_PATH?=../../boost_1_72_0/stage/lib
 
 # path to installed libraries
 
-PREFIX=$(HOME)
+PREFIX?=$(HOME)
 
 PEP_INCLUDE?=$(PREFIX)/include
 
