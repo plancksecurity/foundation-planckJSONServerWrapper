@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "json_rpc.hh"
+#include "json-adapter.hh"
 #include "function_map.hh"
 #include "c_string.hh"
 #include "json_spirit/json_spirit_reader.h"
@@ -24,11 +25,10 @@ std::ostream& operator<<(std::ostream& os, const Value& value)
 
 namespace {
 
-class DummyContext : public Context
+class DummyAdapter : public JsonAdapterBase
 {
 public:
 	virtual bool verify_security_token(const std::string& token) const override { return true; }
-	virtual void augment(js::Object&) override { /* do nothing */ }
 	
 	virtual void cache(const std::string& func_name, const std::function<void(PEP_SESSION)>& fn) override
 	{
@@ -37,7 +37,7 @@ public:
 };
 
 
-DummyContext dummyContext;
+DummyAdapter dummyAdapter;
 
 
 // some example & test functions:
@@ -163,7 +163,7 @@ TEST_P( RpcTest, Meh )
 	js::read_or_throw(v.result, expected_result);
 	auto r = request;
 	
-	const js::Value actual_result = call( test_functions, request.get_obj(), &dummyContext);
+	const js::Value actual_result = call( test_functions, request.get_obj(), &dummyAdapter);
 	js::Object result_obj = actual_result.get_obj();
 	js::Object::iterator q = std::find_if(result_obj.begin(), result_obj.end(), [](const js::Pair& v){ return js::Config::get_name(v) == "thread_id"; } );
 	result_obj.erase( q );

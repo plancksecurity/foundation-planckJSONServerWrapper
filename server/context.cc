@@ -1,5 +1,7 @@
 #include "context.hh"
 #include "logger.hh"
+#include "json-adapter.hh"
+
 
 namespace
 {
@@ -8,6 +10,19 @@ namespace
 		static Logger L("ctx");
 		return L;
 	}
+}
+
+
+bool Context::verify_security_token(const std::string& token) const
+{
+	return ja->verify_security_token(token);
+}
+
+
+// Cache a certain function call. See JSON-155.
+void Context::cache(const std::string& func_name, const std::function<void(PEP_SESSION)>& fn)
+{
+	ja->cache(func_name, fn);
 }
 
 
@@ -28,10 +43,4 @@ size_t Context::retrieve(int position)
 		Log() << Logger::Error << "There is no value stored at position " << position << "!";
 		throw;
 	}
-}
-
-
-void Context::clear()
-{
-	obj_store.clear();
 }

@@ -26,6 +26,7 @@
 
 #include <pEp/keymanagement.h>
 #include <pEp/call_with_lock.hh>
+#include <pEp/constant_time_algo.hh>
 #include <pEp/status_to_string.hh>  // from libpEpAdapter.
 #include <pEp/locked_queue.hh>
 
@@ -333,18 +334,12 @@ void JsonAdapter::shutdown(timeval* t)
 bool JsonAdapter::verify_security_token(const std::string& s) const
 {
 	check_guard();
-	if(s!=i->token)
+	const bool eq = pEp::constant_time_equal(s, i->token);
+	if( eq==false )
 	{
 		Log(Logger::Notice) << "sec_token=\"" << i->token << "\" (len=" << i->token.size() << ") is unequal to \"" << s << "\" (len=" << s.size() << ")!";
 	}
-	return s == i->token;
-}
-
-
-void JsonAdapter::augment(json_spirit::Object& returnObject)
-{
-	check_guard();
-	// nothing to do anymore.
+	return eq;
 }
 
 

@@ -189,22 +189,44 @@ the adapter and its functions.
 
 The JSON Server Adapter can be started on demand.
 It checks automatically whether an instance for the same user on the machine
-is already running and if yes it ends itself gracefully.
+is already running and if yes it ends itself gracefully. (TODO!)
 
 If there is no running server found the newly started server creates the
 server token file and forks itself into background (if not prevented via
 "-d" commandline switch).
 
+### Multi-Client handling
 
-### Session handling
+The p≡p JSON server adapter supports multiple clients, communicating with the
+server at the same time. Each client instance is identified by a client ID,
+that the clients put into each JSON RPC request in the field "clientid".
 
-When using the p≡p engine, a session is needed to which any adapter can
-connect. The p≡p JSON Server Adapter automatically creates one session per
+The client ID is a UUID Version 4, created by the client at startup and has to
+be stable while the client application runs.  When the client restarts, a new
+client ID should be created to avoid interferene with data from the old client
+session.
+
+The p≡p JSON server adapter stores data (e.g., a so called "config cache", see
+next section) associated with each client ID. After a timeout period with no
+JSON RPC calls and no open client connections these data are removed
+automatically. Run the mini adapter with -h to see the compiled-in default
+timeout value.
+
+### PEP_SESSION handling
+
+When using the p≡p engine, a `PEP_SESSION` is needed as parameter to many API
+functions. The p≡p JSON Server Adapter automatically creates one session per
 HTTP client connection (and also closes that session automatically when the
 client connections is closed). Therefore, the client does not need to take
-care of the session management. However, the client has to set up a [HTTP
+care of the session management. However, the client should set up a [HTTP
 persistent
-connection](https://en.wikipedia.org/wiki/HTTP_persistent_connection).
+connection](https://en.wikipedia.org/wiki/HTTP_persistent_connection) to
+minify session creation and destruction.
+
+There is a configuration cache, that stores all `config_*()` calls and its
+configured values. Whenever a new PEP_SESSION is needed for this client
+(identified via its client ID, see previous section), all config values
+are applied to this new session, too, before the session is used.
 
 ### API Principles
 
@@ -352,13 +374,16 @@ Result:
 An complete overview with all functions that are callable from the client
 can be found in the [API Reference](pEp JSON Server Adapter/API Reference).
 
-That API reference is a generated file that shows the current API briefly.
+That API reference is a generated file (at irregular intervals) that shows the current API briefly.
 There is also a (currently manually written) file that holts a copy of the
 documentation from the Engine's header files: [API reference detail.md]
 
+BEWARE: Because this file is not auto-generated, yet, it might be even more outdated!
+
 Most of the callable functions are functions from the C API of the p≡p
 Engine.  They are described in detail, incl.  pre- and post-conditions in
-the appropriate C header files of the Engine.
+the appropriate C header files of the Engine, which are the authoritative source
+of documentation in cases of doubt.
 
 
 ### Authentication
@@ -385,7 +410,7 @@ file that has user-only read permissions.
    token".
 
 
-### Callbacks / Reverse connection
+### Callbacks / Event delivery
 
 p≡p applications must register callback handlers at the Engine. At the moment
 there are these callbacks:
@@ -396,21 +421,13 @@ there are these callbacks:
 The JSON adapter register its own functions at the Engine which propagate these
 events to all connected clients.
 
-The event propagation to the clients are done via the special API function
-`pollForEvents()`. This function expects a special "session" string (which can be
-optained by a call to `create_session()`) and a numerical
-timeout (in seconds) and blocks until at least one event arrives, which is returned.
-If no event arrives until the given timeout, this function returns an empty JSON array.
-If events arrive between two calls of `pollForEvents()` (with the same "session") they
-are cached by the JSON adapter and returned in the next call, which returns immediately.
-
-A call to `close_session()` with delete all pending events for that session.
+The event propagation to the clients are done via long polling: Clients
+call the function `pollForEvents()` that blocks until an event
+from the Engine arrives.  TODO: remove create_session(), use client ID instead?
 
 
-TODO: Use WebSockets: In fact this is also a type of "long polling" and an open
-TCP connection, opened by the Client. But it requires additional code in the JSON
-Adapter for the WebSockets protocol and a mechanism how to transfer the underlaying
-TCP socket and buffer from the libevent library to the WebSockets implementation.
+It is planned to switch to use WebSockets: In fact this is also a type of
+"long polling" and an open TCP connection, opened by the Client.
 See: https://pep.foundation/jira/browse/JSON-128
 
 
