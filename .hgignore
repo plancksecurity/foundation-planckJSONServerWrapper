@@ -64,6 +64,8 @@ build-windows/libevent/Debug/*
 build-windows/pEpJSONServerAdapter/Release/*
 build-windows/pEpJSONServerAdapter/Debug/*
 
+server/pEp-mini-json-adapter
+
 *.d.*
 .??*.swp
 tags
