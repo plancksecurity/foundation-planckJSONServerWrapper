@@ -23,7 +23,7 @@ PREFIX?=$(HOME)
 
 PEP_INCLUDE?=$(PREFIX)/include
 
-LIBRARY_PATH?=/opt/local/lib
+LIBRARY_PATH?=$(PREFIX)/lib
 
 GMP_LIBRARY_PATH?=$(LIBRARY_PATH)
 SQLITE3_LIBRARY_PATH?=$(LIBRARY_PATH)
@@ -178,10 +178,6 @@ local.conf:
 	@echo "# path where to find GNU iconv" >> local.conf
 	@echo >> local.conf
 	@echo "ICONV_LIBRARY_PATH=$(ICONV_LIBRARY_PATH)" >> local.conf
-	@echo >> local.conf
-	@echo "# path where to find libevent" >> local.conf
-	@echo >> local.conf
-	@echo "LIBEVENT_LIBRARY_PATH=$(LIBEVENT_LIBRARY_PATH)" >> local.conf
 
 help:
 	@echo "usage:"
