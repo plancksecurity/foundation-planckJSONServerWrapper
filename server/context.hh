@@ -1,6 +1,8 @@
 #ifndef JSON_ADAPTER_CONTEXT_HH
 #define JSON_ADAPTER_CONTEXT_HH
 
+#include <string>
+#include <functional>
 #include <map>
 #include <pEp/pEpEngine.h>
 
