@@ -10,20 +10,21 @@ endif
 
 PEP_WEBSERVER?=../../webserver
 PEP_ADAPTER_LIBRARY=../../libpEpAdapter
-PEP_ENGINE?=../../pEpEngine
-LIBETPAN_FDIK?=../../libetpan
-SEQOUIA_PGP?=../../sequoia
+PEP_ENGINE?=../../pEpEngine/src
+LIBETPAN_FDIK?=../../libetpan/src/.libs
+SEQOUIA_PGP?=../../sequoia/target/release
 NETTLE?=../../nettle
 BOOST_INCLUDE_PATH?=../../boost_1_72_0
 BOOST_LIBRARY_PATH?=../../boost_1_72_0/stage/lib
+ASN1_PATH?=$(PEP_ENGINE)/asn.1
 
 # path to installed libraries
 
-PREFIX=$(HOME)
+PREFIX?=$(HOME)
 
 PEP_INCLUDE?=$(PREFIX)/include
 
-LIBRARY_PATH?=/opt/local/lib
+LIBRARY_PATH?=$(PREFIX)/lib
 
 GMP_LIBRARY_PATH?=$(LIBRARY_PATH)
 SQLITE3_LIBRARY_PATH?=$(LIBRARY_PATH)
@@ -93,10 +94,11 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
 		$(GMP_LIBRARY_PATH)/libgmp.a \
 		$(NETTLE)/libnettle.a $(NETTLE)/libhogweed.a \
-		$(SEQOUIA_PGP)/target/release/libsequoia_ffi.a \
-		$(SEQOUIA_PGP)/target/release/libsequoia_openpgp_ffi.a \
-		$(LIBETPAN_FDIK)/src/.libs/libetpan.a \
-		$(PEP_ENGINE)/src/libpEpEngine.a $(PEP_ENGINE)/asn.1/libasn1.a \
+		$(SEQOUIA_PGP)/libsequoia_ffi.a \
+		$(SEQOUIA_PGP)/libsequoia_openpgp_ffi.a \
+		$(LIBETPAN_FDIK)/libetpan.a \
+		$(PEP_ENGINE)/libpEpEngine.a \
+		$(ASN1_PATH)/libasn1.a \
 		$(PEP_ADAPTER_LIBRARY)/libpEpAdapter.a \
 		$(MA_OBJECTS) $(SPIRIT_OBJECTS) $(LIB_TARGET) -o "$@"
 
@@ -178,10 +180,6 @@ local.conf:
 	@echo "# path where to find GNU iconv" >> local.conf
 	@echo >> local.conf
 	@echo "ICONV_LIBRARY_PATH=$(ICONV_LIBRARY_PATH)" >> local.conf
-	@echo >> local.conf
-	@echo "# path where to find libevent" >> local.conf
-	@echo >> local.conf
-	@echo "LIBEVENT_LIBRARY_PATH=$(LIBEVENT_LIBRARY_PATH)" >> local.conf
 
 help:
 	@echo "usage:"
