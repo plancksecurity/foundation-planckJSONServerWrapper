@@ -44,6 +44,9 @@ section below.
 Build and install the pEp Engine.  Instructions can be found here:
 [https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md](https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md).
 
+Build and install the pEp Webserver.  Instructions can be found here:
+[pEp webserver README](https://gitea.pep.foundation/fdik/webserver/src/branch/master/README.md)
+
 ### Build and install libevent
 
 It is recommended to use the libevent from your system's repository, if it contains the right version.
