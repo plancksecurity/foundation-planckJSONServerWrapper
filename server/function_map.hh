@@ -132,9 +132,6 @@ public:
 			try {
 
 				const js::Array ret_ = ret.get_array()[0].get_array();
-#ifndef NDEBUG
-				std::string _ret_ = js::write(ret_);
-#endif
 				return ret_;
 			}
 			catch (std::runtime_error&) {
