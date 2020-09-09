@@ -10,12 +10,13 @@ endif
 
 PEP_WEBSERVER?=../../webserver
 PEP_ADAPTER_LIBRARY=../../libpEpAdapter
-PEP_ENGINE?=../../pEpEngine
-LIBETPAN_FDIK?=../../libetpan
-SEQOUIA_PGP?=../../sequoia
+PEP_ENGINE?=../../pEpEngine/src
+LIBETPAN_FDIK?=../../libetpan/src/.libs
+SEQUOIA_PGP?=../../sequoia/target/release
 NETTLE?=../../nettle
 BOOST_INCLUDE_PATH?=../../boost_1_72_0
 BOOST_LIBRARY_PATH?=../../boost_1_72_0/stage/lib
+ASN1_PATH?=$(PEP_ENGINE)/asn.1
 
 # path to installed libraries
 
@@ -93,10 +94,11 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
 		$(GMP_LIBRARY_PATH)/libgmp.a \
 		$(NETTLE)/libnettle.a $(NETTLE)/libhogweed.a \
-		$(SEQOUIA_PGP)/target/release/libsequoia_ffi.a \
-		$(SEQOUIA_PGP)/target/release/libsequoia_openpgp_ffi.a \
-		$(LIBETPAN_FDIK)/src/.libs/libetpan.a \
-		$(PEP_ENGINE)/src/libpEpEngine.a $(PEP_ENGINE)/asn.1/libasn1.a \
+		$(SEQUOIA_PGP)/libsequoia_ffi.a \
+		$(SEQUOIA_PGP)/libsequoia_openpgp_ffi.a \
+		$(LIBETPAN_FDIK)/libetpan.a \
+		$(PEP_ENGINE)/libpEpEngine.a \
+		$(ASN1_PATH)/libasn1.a \
 		$(PEP_ADAPTER_LIBRARY)/libpEpAdapter.a \
 		$(MA_OBJECTS) $(SPIRIT_OBJECTS) $(LIB_TARGET) -o "$@"
 
@@ -144,7 +146,7 @@ local.conf:
 	@echo >> local.conf
 	@echo "# path to Sequoia PGP" >> local.conf
 	@echo >> local.conf
-	@echo "SEQOUIA_PGP=$(SEQOUIA_PGP)" >> local.conf
+	@echo "SEQUOIA_PGP=$(SEQUOIA_PGP)" >> local.conf
 	@echo >> local.conf
 	@echo "# path to nettle and hogweed crypto libraries" >> local.conf
 	@echo >> local.conf
