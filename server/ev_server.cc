@@ -95,7 +95,7 @@ const FunctionMap functions = {
 		FP( "pEp Engine Core API", new Separator),
 //		FP( "log_event",  new Func<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, In<c_string>, In<c_string>>( &log_event) ),
 		FP( "get_trustwords", new FuncPC<PEP_STATUS, In_Pep_Session, In<const pEp_identity*>, In<const pEp_identity*>, In<Language>, Out<char*>, Out<size_t>, In<bool>>( &get_trustwords) ),
-		FP( "re_evaluate_message_rating", new FuncPC<PEP_STATUS, In_Pep_Session, In<message *>, In<stringlist_t *>, In<PEP_rating>, Out<PEP_rating>>( &re_evaluate_message_rating ) ),
+		FP( "re_evaluate_message_rating", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message *>, In<stringlist_t *>, In<PEP_rating>, Out<PEP_rating>>( &re_evaluate_message_rating ) ),
 		FP( "get_languagelist", new FuncPC<PEP_STATUS, In_Pep_Session, Out<char*>>( &get_languagelist) ),
 //		FP( "get_phrase"      , new Func<PEP_STATUS, In_Pep_Session, In<Language>, In<int>, Out<char*>> ( &get_phrase) ),
 //		FP( "get_engine_version", new Func<const char*> ( &get_engine_version) ),
