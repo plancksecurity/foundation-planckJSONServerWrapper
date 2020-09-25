@@ -75,6 +75,8 @@ struct EventListenerValue
 
 static std::hash<std::thread::id> hash_tid;
 
+const js::Object queue_close_event{ {"queue_close",true} };
+
 } // end of anonymous namespace
 
 
@@ -188,7 +190,7 @@ ServerVersion JsonAdapter::version()
 
 PEP_STATUS JsonAdapter::messageToSend(message* msg)
 {
-	JsonAdapter& ja = getInstance();	
+	JsonAdapter& ja = getInstance();
 	js::Value v{to_json(msg)};
 	ja.i->makeAndDeliverRequest("messageToSend", js::Array{ std::move(v) } );
 	return PEP_STATUS_OK;
@@ -297,6 +299,11 @@ void JsonAdapter::connection_close_cb()
 	Log() << "Connection Close Callback: " << (q==i->eventListener.end() ? "NO" : "1") << " entry in eventListener map";
 	if(q != i->eventListener.end())
 	{
+		while(q->second.Q.waiting() > 0)
+		{
+			q->second.Q.push_back(queue_close_event);
+			std::this_thread::sleep_for( std::chrono::milliseconds(333) );
+		}
 		i->eventListener.erase(q);
 	}
 }
@@ -309,6 +316,11 @@ void JsonAdapter::close_session(const std::string& session_id)
 	Log() << "Close session \"" << session_id << "\": " << (q==i->eventListener.end() ? "NO" : "1") << " entry in eventListener map";
 	if(q != i->eventListener.end())
 	{
+		while(q->second.Q.waiting() > 0)
+		{
+			q->second.Q.push_back(queue_close_event);
+			std::this_thread::sleep_for( std::chrono::milliseconds(333) );
+		}
 		i->eventListener.erase(q);
 	}
 }
