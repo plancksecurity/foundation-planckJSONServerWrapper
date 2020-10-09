@@ -180,7 +180,13 @@ void Webserver::do_session(tcp::socket *socket)
 
         http::read(*socket, buffer, parser, ec);
         if (ec) {
-            std::cerr << ec.message() << "\n";
+#ifndef NDEBUG
+            // This will print stuff like ...
+            // - end of stream
+            // - An established connection was aborted by the software in your host machine
+            // ... so don't be alarmed.
+            std::cerr << "pEpWebserver: " << ec.message() << "\n";
+#endif
             goto the_end;
         }
 
