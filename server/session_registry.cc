@@ -10,6 +10,8 @@ PEP_SESSION SessionRegistry::get(std::thread::id tid, const std::string& client_
 {
 	Lock L(_mtx);
 	
+	update_last_use(client_id);
+	
 	auto q = m.find(tid);
 	if(q != m.end())
 	{
@@ -69,6 +71,7 @@ void SessionRegistry::add_to_cache(const std::string& client_id, const std::stri
 	Lock L(_mtx);
 	Log.debug("add_to_cache(\"%s\", \"%s\")", client_id.c_str(), fn_name.c_str());
 	cache[client_id][fn_name] = func;
+	update_last_use(client_id);
 }
 
 
@@ -82,4 +85,24 @@ std::string SessionRegistry::to_string() const
 		ss << "\t" << e.first << ": " << e.second << "\n";
 	}
 	return ss.str();
+}
+
+
+void SessionRegistry::update_last_use(const std::string& client_id)
+{
+	const auto now = std::chrono::system_clock::now();
+	const auto too_old = now - std::chrono::seconds(client_timeout);
+	last_use[client_id] = now;
+	
+	// TODO: replace by C++20 std::erase_if()
+	for(auto q = last_use.begin(); q != last_use.end(); /* no increment here */ )
+	{
+		if(q->second < too_old)
+		{
+			cache.erase( q->first );
+			q = last_use.erase(q);
+		}else{
+			++q;
+		}
+	}
 }
