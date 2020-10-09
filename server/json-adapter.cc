@@ -100,6 +100,8 @@ struct JsonAdapter::Internal
 	bool        ignore_session_error = false;
 	bool        deliver_html = true;
 	
+	int  client_session_timeout = 7*60; // in seconds
+	
 	explicit Internal()
 	: Log("JAI")
 	{}
@@ -240,6 +242,14 @@ JsonAdapter& JsonAdapter::deliver_html(bool dh)
 {
 	check_guard();
 	i->deliver_html = dh;
+	return *this;
+}
+
+
+JsonAdapter& JsonAdapter::set_client_session_timeout(int timeout_seconds)
+{
+	check_guard();
+	i->client_session_timeout = timeout_seconds;
 	return *this;
 }
 

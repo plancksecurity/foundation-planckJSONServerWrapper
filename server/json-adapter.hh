@@ -51,6 +51,9 @@ public:
 	// if called with "false" the JSON Adpapter would no longer deliver HTML and JavaScript files, only handle JSON-RPC requests
 	JsonAdapter& deliver_html(bool _deliver_html);
 	
+	// sets the timeout to drop client's config cache
+	JsonAdapter& set_client_session_timeout(int timeout_seconds);
+	
 	// look for a free port to listen on and set the given configuration
 	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port, ::messageToSend_t messageToSend);
 
