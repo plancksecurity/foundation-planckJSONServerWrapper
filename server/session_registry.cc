@@ -6,9 +6,11 @@
 
 
 // creates a PEP_SESSION if none yet exists for the given thread
-PEP_SESSION SessionRegistry::get(std::thread::id tid)
+PEP_SESSION SessionRegistry::get(std::thread::id tid, const std::string& client_id)
 {
 	Lock L(_mtx);
+	
+	update_last_use(client_id);
 	
 	auto q = m.find(tid);
 	if(q != m.end())
@@ -24,8 +26,10 @@ PEP_SESSION SessionRegistry::get(std::thread::id tid)
 		throw std::runtime_error("init() fails: " + pEp::status_to_string(status) );
 	}
 	m[tid] = session;
-	Log.debug("Apply %zu cached config values to new session.", cache.size());
-	for(const auto& e : cache)
+	
+	const auto& cache_for_client = cache[client_id];
+	Log.debug("Apply %zu cached config values for client_id \"%s\" to new session.", cache_for_client.size(), client_id.c_str());
+	for(const auto& e : cache_for_client)
 	{
 		Log.debug("\t %s", e.first.c_str());
 		e.second(session);
@@ -62,11 +66,12 @@ void SessionRegistry::for_each(void(*function)(PEP_SESSION))
 }
 
 
-void SessionRegistry::add_to_cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func)
+void SessionRegistry::add_to_cache(const std::string& client_id, const std::string& fn_name, const std::function<void(PEP_SESSION)>& func)
 {
 	Lock L(_mtx);
-	Log.debug("add_to_cache(\"%s\")", fn_name.c_str());
-	cache[fn_name] = func;
+	Log.debug("add_to_cache(\"%s\", \"%s\")", client_id.c_str(), fn_name.c_str());
+	cache[client_id][fn_name] = func;
+	update_last_use(client_id);
 }
 
 
@@ -80,4 +85,24 @@ std::string SessionRegistry::to_string() const
 		ss << "\t" << e.first << ": " << e.second << "\n";
 	}
 	return ss.str();
+}
+
+
+void SessionRegistry::update_last_use(const std::string& client_id)
+{
+	const auto now = std::chrono::system_clock::now();
+	const auto too_old = now - std::chrono::seconds(client_timeout);
+	last_use[client_id] = now;
+	
+	// TODO: replace by C++20 std::erase_if()
+	for(auto q = last_use.begin(); q != last_use.end(); /* no increment here */ )
+	{
+		if(q->second < too_old)
+		{
+			cache.erase( q->first );
+			q = last_use.erase(q);
+		}else{
+			++q;
+		}
+	}
 }

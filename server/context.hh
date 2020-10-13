@@ -12,10 +12,14 @@ class JsonAdapterBase;
 class Context
 {
 public:
-	Context(JsonAdapterBase* _ja) : ja{_ja} {}
+	Context(JsonAdapterBase* _ja, const std::string& _cid)
+	: ja{_ja}, cid{_cid}
+	{}
 	
 	Context(const Context&) = delete;
 	void operator=(const Context&) = delete;
+	
+	const std::string& client_id() const { return cid; }
 	
 	// delegate call to the 'ja' member
 	bool verify_security_token(const std::string& token) const ;
@@ -29,11 +33,11 @@ public:
 	// KISS: at the moment only "size_t" objects are supported.
 	void store(int position, size_t value);
 	size_t retrieve(int position);
-	void clear();
 
 private:
 	std::map<int, size_t> obj_store;
 	JsonAdapterBase* ja;
+	const std::string& cid;
 };
 
 #endif // JSON_ADAPTER_CONTEXT_HH

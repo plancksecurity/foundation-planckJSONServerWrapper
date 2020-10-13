@@ -21,7 +21,7 @@ public:
 	virtual bool verify_security_token(const std::string& s) const = 0;
 	
 	// Cache a certain function call. See JSON-155.
-	virtual void cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) = 0;
+	virtual void cache(const std::string& client_id, const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) = 0;
 };
 
 
@@ -50,6 +50,9 @@ public:
 	
 	// if called with "false" the JSON Adpapter would no longer deliver HTML and JavaScript files, only handle JSON-RPC requests
 	JsonAdapter& deliver_html(bool _deliver_html);
+	
+	// sets the timeout to drop client's config cache
+	JsonAdapter& set_client_session_timeout(int timeout_seconds);
 	
 	// look for a free port to listen on and set the given configuration
 	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port, ::messageToSend_t messageToSend);
@@ -87,14 +90,14 @@ public:
 	// returns 'true' if 's' is the security token created by the function above.
 	virtual bool verify_security_token(const std::string& s) const override;
 	
-	virtual void cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) override;
+	virtual void cache(const std::string& client_id, const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) override;
 	
 	// returns the version of the JsonAdapter
 	static
 	ServerVersion version();
 	
 	// returns the PEP_SESSION registered for the current thread
-	static PEP_SESSION getSessionForThread();
+	static PEP_SESSION getSessionForThread(const std::string& client_id);
 	
 	static PEP_STATUS messageToSend(message* msg);
 	static PEP_STATUS notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal);

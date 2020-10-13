@@ -27,6 +27,7 @@ bool do_sync    = false;
 bool ignore_missing_session = false;
 bool add_sharks = false;
 bool no_html    = false;
+int  client_session_timeout = 7*60; // in secondds
 
 uintptr_t status_handle = 0;
 
@@ -76,6 +77,7 @@ try
 		("ignore-missing-session", po::bool_switch(&ignore_missing_session), "Ignore when no PEP_SESSION can be created.")
 		("add-sharks", po::bool_switch(&add_sharks), "Add sharks to the JSON Adapter.")
 		("no-html"   , po::bool_switch(&no_html   ), "Don't deliver HTML and JavaScript files, only accept JSON-RPC calls.")
+		("client-timeout", po::value<int>(&client_session_timeout)->default_value(client_session_timeout), "Drop cached client session config after this timeout (in seconds).")
 #ifdef _WIN32
 		((STATUS_HANDLE), po::value<uintptr_t>(&status_handle)->default_value(0), "Status file handle, for internal use.")
 #endif
@@ -144,6 +146,7 @@ try
 	JsonAdapter& ja = pEp::mini::Adapter::createInstance();
 	ja.ignore_session_errors( ignore_missing_session)
 	  .deliver_html( !no_html )
+	  .set_client_session_timeout(client_session_timeout)
 	  ;
 	/*
 	 * FIXME: why are exceptions risen after the instantiation of JsonAdapter

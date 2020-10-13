@@ -100,6 +100,8 @@ struct JsonAdapter::Internal
 	bool        ignore_session_error = false;
 	bool        deliver_html = true;
 	
+	int  client_session_timeout = 7*60; // in seconds
+	
 	explicit Internal()
 	: Log("JAI")
 	{}
@@ -152,15 +154,15 @@ struct JsonAdapter::Internal
 };
 
 
-PEP_SESSION JsonAdapter::getSessionForThread()
+PEP_SESSION JsonAdapter::getSessionForThread(const std::string& client_id)
 {
-	const auto id = std::this_thread::get_id();
-	return JsonAdapter::getInstance().i->session_registry->get(id);
+	const auto thread_id = std::this_thread::get_id();
+	return JsonAdapter::getInstance().i->session_registry->get(thread_id, client_id);
 }
 
 
-In_Pep_Session::In_Pep_Session(const js::Value& v, Context*, unsigned)
-: Base( JsonAdapter::getSessionForThread() )
+In_Pep_Session::In_Pep_Session(const js::Value& v, Context* ctx, unsigned)
+: Base( JsonAdapter::getSessionForThread(ctx->client_id()) )
 {}
 
 
@@ -244,11 +246,19 @@ JsonAdapter& JsonAdapter::deliver_html(bool dh)
 }
 
 
+JsonAdapter& JsonAdapter::set_client_session_timeout(int timeout_seconds)
+{
+	check_guard();
+	i->client_session_timeout = timeout_seconds;
+	return *this;
+}
+
+
 void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, unsigned end_port, ::messageToSend_t messageToSend)
 {
 	check_guard();
 	// delayed after constructor, so virtual functions are working:
-	i->session_registry.reset(new SessionRegistry(messageToSend ? messageToSend : this->getMessageToSend(), this->getInjectSyncEvent()));
+	i->session_registry.reset(new SessionRegistry(messageToSend ? messageToSend : this->getMessageToSend(), this->getInjectSyncEvent(), i->client_session_timeout));
 	
 	for(unsigned short port = start_port; port<=end_port; ++port)
 	{
@@ -355,9 +365,9 @@ bool JsonAdapter::verify_security_token(const std::string& s) const
 }
 
 
-void JsonAdapter::cache(const std::string& fn_name, const std::function<void(PEP_SESSION)>& func)
+void JsonAdapter::cache(const std::string& client_id, const std::string& fn_name, const std::function<void(PEP_SESSION)>& func)
 {
-	i->session_registry->add_to_cache(fn_name, func);
+	i->session_registry->add_to_cache(client_id, fn_name, func);
 }
 
 
