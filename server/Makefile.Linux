@@ -79,13 +79,16 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 		$(LIBRARY_PATH)/libsequoia_openpgp_ffi.a \
 		$(LIBRARY_PATH)/libetpan.a \
 		$(LIBRARY_PATH)/libasn1.a \
+		/usr/lib/x86_64-linux-gnu/liblockfile.a \
 		/usr/lib/x86_64-linux-gnu/libz.a \
 		/usr/lib/x86_64-linux-gnu/libsqlite3.a \
 		/usr/lib/x86_64-linux-gnu/libhogweed.a \
 		/usr/lib/x86_64-linux-gnu/libnettle.a \
 		/usr/lib/x86_64-linux-gnu/libgmp.a \
 		/usr/lib/x86_64-linux-gnu/libpthread.a \
+		/usr/lib/x86_64-linux-gnu/libuuid.a \
 		/usr/lib/x86_64-linux-gnu/libdl.a \
+		/usr/lib/x86_64-linux-gnu/libc.a \
 		-o "$@"
 
 %.o: %.cc
