@@ -40,9 +40,11 @@ namespace fs = boost::filesystem;
 // compile-time default. might be overwritten in main() or before any ev_server function is called.
 fs::path ev_server::path_to_html = fs::path(html_directory);
 
+// for debugging ENGINE-857 ticket only
+PEP_STATUS engine_857(PEP_SESSION session);
+
 
 namespace {
-
 
 std::string version_as_a_string()
 {
@@ -66,6 +68,8 @@ std::string getBinaryPath()
 
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
+
+		FP( "ENGINE-857", new Func<PEP_STATUS, In_Pep_Session> (&engine_857) ),
 
 		// from message_api.h
 		FP( "Message API", new Separator ),
