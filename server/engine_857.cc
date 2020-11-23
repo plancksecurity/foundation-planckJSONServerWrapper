@@ -1,4 +1,7 @@
+#include "logger.hh"
+#include "pEp-types.hh"
 #include <pEp/message_cache.hh>
+#include <pEp/status_to_string.hh>
 
 namespace {
 const char* const example_eml =
@@ -7129,6 +7132,7 @@ const char* const example_eml =
 
 PEP_STATUS engine_857(PEP_SESSION session)
 {
+	Logger L("E857");
 	message* src = nullptr;
 	bool has_possible_pep_msg = false;
 	
@@ -7136,8 +7140,13 @@ PEP_STATUS engine_857(PEP_SESSION session)
 
 	if(status != PEP_STATUS_OK)
 	{
+		L << Logger::Error << "mime_decode_message() returns " << pEp::status_to_string(status) << ".";
 		return status;
 	}
+	
+	const js::Value msg_j = to_json(src);
+	
+	L << Logger::Info << "Parsed message: \n" << js::write(msg_j);
 
 	message* dst = nullptr;
 	PEP_rating rating;
