@@ -4,8 +4,6 @@ var lineRegEx = /(\d+)\s+(\S+)\s+(0x[0-9a-fA-F]+)\s+(.*)/;
 // NOTA BENE: Order of replacements matter!
 var replaces =
 	[
-		[ /boost::beast::http/g, "HTTP"],
-		[ /boost::beast/g, "BEAST"],
 		[ /std::__1::allocator/g , "ALLOC" ],
 		[ /std::__1::basic_string<char, std::__1::char_traits<char>, ALLOC<char> >/g, "STRING"],
 		[ /std::__1::vector<json_spirit::Pair_impl<json_spirit::Config_vector<STRING > >, ALLOC<json_spirit::Pair_impl<json_spirit::Config_vector<STRING > > > >/g, "JS::VALUE"],
