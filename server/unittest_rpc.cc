@@ -46,9 +46,6 @@ private:
 };
 
 
-DummyAdapter dummyAdapter;
-
-
 // some example & test functions:
 
 int add_mul_simple(int x, int y, int z)
@@ -167,6 +164,8 @@ INSTANTIATE_TEST_CASE_P(RpcTestInstance, RpcTest, testing::ValuesIn(testValues) 
 
 TEST_P( RpcTest, Meh )
 {
+	static DummyAdapter dummyAdapter;
+	
 	const auto v = GetParam();
 	js::Value request;
 	js::read_or_throw(v.input, request);
