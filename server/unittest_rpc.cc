@@ -23,6 +23,12 @@ std::ostream& operator<<(std::ostream& os, const Value& value)
 	return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const Object& obj)
+{
+	js::write(obj, os, 0x1B, 0);
+	return os;
+}
+
 } // end of namespace json_spirit
 
 namespace {
@@ -85,6 +91,17 @@ char* tohex(const char* input, size_t length)
 }
 
 
+js::Array gen_array(size_t num_elements)
+{
+	js::Array a;
+	for(unsigned u=0; u<num_elements; ++u)
+	{
+		a.push_back( js::Value( static_cast<int>(u)) );
+	}
+	return a;
+}
+
+
 const FunctionMap test_functions = {
 		FP( "add_mul_simple", new Func<int, In<int>, In<int>, In<int>>( &add_mul_simple )),
 		FP( "add_mul_inout" , new Func<char*, In<int>, In<c_string>, InOutP<int>, Out<char*>>( &add_mul_inout )),
@@ -92,6 +109,7 @@ const FunctionMap test_functions = {
 		FP( "tohex_1",        new Func<char*, In<c_string>, In<size_t>>( &tohex )), // with explicit length parameter
 		FP( "tohex_2",        new Func<char*, In<c_string>, InLength<>>( &tohex )), // with implicit length parameter, with dummy JSON parameter
 		FP( "tohex_3",        new Func<char*, In<c_string>, InLength<ParamFlag::NoInput>>( &tohex )), // with implicit length parameter, without JSON parameter
+		FP( "gen_array",      new Func<js::Array, In<size_t>>( &gen_array )),
 
 // TODO: test FuncCache stuff, too. :-/
 //		FP( "cache_s1",  new FuncCache<void, In_Pep_Session, In<c_string>> ( "cache_s1", &cache_s1 )),
@@ -109,8 +127,6 @@ std::ostream& operator<<(std::ostream& o, const TestEntry& tt)
 {
 	return o << "input=«" << tt.input << "», result=«" << tt.result << "».  ";
 }
-
-
 
 
 const std::vector<TestEntry> testValues =
@@ -150,6 +166,16 @@ const std::vector<TestEntry> testValues =
 		  "{\"jsonrpc\":\"2.0\", \"id\":30, \"result\":{ \"outParams\":[], \"return\":\"00 f0 9f 99 87\"}}"
 		},
 
+		{ "{\"jsonrpc\":\"2.0\", \"id\":40, \"method\":\"gen_array\", \"params\":[0]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":40, \"result\":{ \"outParams\":[], \"return\":[]}}"
+		},
+		{ "{\"jsonrpc\":\"2.0\", \"id\":40, \"method\":\"gen_array\", \"params\":[1]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":40, \"result\":{ \"outParams\":[], \"return\":[0]}}"
+		},
+		{ "{\"jsonrpc\":\"2.0\", \"id\":40, \"method\":\"gen_array\", \"params\":[2]}",
+		  "{\"jsonrpc\":\"2.0\", \"id\":40, \"result\":{ \"outParams\":[], \"return\":[0,1]}}"
+		},
+
 	};
 
 } // end of anonymous namespace
@@ -178,5 +204,5 @@ TEST_P( RpcTest, Meh )
 	js::Object result_obj = actual_result.get_obj();
 	js::Object::iterator q = std::find_if(result_obj.begin(), result_obj.end(), [](const js::Pair& v){ return js::Config::get_name(v) == "thread_id"; } );
 	result_obj.erase( q );
-	EXPECT_EQ( expected_result, result_obj );
+	EXPECT_EQ( expected_result.get_obj(), result_obj );
 }
