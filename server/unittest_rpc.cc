@@ -88,11 +88,6 @@ char* tohex(const char* input, size_t length)
 }
 
 
-void cache_s1(PEP_SESSION dummy, const char* s)
-{
-
-}
-
 const FunctionMap test_functions = {
 		FP( "add_mul_simple", new Func<int, In<int>, In<int>, In<int>>( &add_mul_simple )),
 		FP( "add_mul_inout" , new Func<char*, In<int>, In<c_string>, InOutP<int>, Out<char*>>( &add_mul_inout )),
@@ -100,8 +95,9 @@ const FunctionMap test_functions = {
 		FP( "tohex_1",        new Func<char*, In<c_string>, In<size_t>>( &tohex )), // with explicit length parameter
 		FP( "tohex_2",        new Func<char*, In<c_string>, InLength<>>( &tohex )), // with implicit length parameter, with dummy JSON parameter
 		FP( "tohex_3",        new Func<char*, In<c_string>, InLength<ParamFlag::NoInput>>( &tohex )), // with implicit length parameter, without JSON parameter
-		
-		FP( "cache_s1",  new FuncCache<void, In_Pep_Session, In<c_string>> ( "cache_s1", &cache_s1 )),
+
+// TODO: test FuncCache stuff, too. :-/
+//		FP( "cache_s1",  new FuncCache<void, In_Pep_Session, In<c_string>> ( "cache_s1", &cache_s1 )),
 	};
 
 
