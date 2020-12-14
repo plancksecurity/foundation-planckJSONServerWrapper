@@ -31,7 +31,30 @@ std::ostream& operator<<(std::ostream& os, const Object& obj)
 
 } // end of namespace json_spirit
 
+
+
 namespace {
+
+// HACK: Define a dummy type, so I can define an operator<< which is used by GTest,
+// which refuses to pretty-print js::Object directly, for whatever reason. *sigh*
+struct O
+{
+	js::Object obj;
+};
+
+std::ostream& operator<<(std::ostream& os, const O& o)
+{
+	js::write(o.obj, os, 0x1B, 0);
+	return os;
+}
+
+bool operator==(const O& o1, const O& o2)
+{
+	return o1.obj == o2.obj;
+}
+
+/// END OF HACK
+
 
 class DummyAdapter : public JsonAdapterBase
 {
@@ -204,5 +227,5 @@ TEST_P( RpcTest, Meh )
 	js::Object result_obj = actual_result.get_obj();
 	js::Object::iterator q = std::find_if(result_obj.begin(), result_obj.end(), [](const js::Pair& v){ return js::Config::get_name(v) == "thread_id"; } );
 	result_obj.erase( q );
-	EXPECT_EQ( expected_result.get_obj(), result_obj );
+	EXPECT_EQ( O{expected_result.get_obj()}, O{result_obj} );
 }
