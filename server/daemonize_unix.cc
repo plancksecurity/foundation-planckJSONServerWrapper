@@ -2,6 +2,7 @@
 
 // Unix/Linux implementation
 #include <cstdlib>
+#include <unistd.h>
 
 void daemonize (const bool, const uintptr_t )
 {
