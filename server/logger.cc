@@ -186,9 +186,11 @@ namespace {
 			end += delta;
 			ofs += delta;
 			
-			if(end != oneline.end())
+			if(end != oneline.end()) // we're not yet at the end, so we wrap the line here...
 			{
-				while( (uint8_t(*end) >= 0x80) && (end>begin) )
+				// avoid split within a UTF-8 multibyte sequence.
+				// Therefore move backwards until we point to the start octet of an UTF-8 sequence.
+				while( (uint8_t(*end) >= 0x80) && (uint8_t(*end)<0xC0) && (end>begin) )
 				{
 					// rewind
 					--end;
