@@ -10,7 +10,7 @@ namespace
 		std::string s;
 		s.reserve(length);
 		unsigned u=0;
-		for(; u+nonAscii.size()<length; u+=nonAscii.size())
+		for(; u+nonAscii.size()<=length; u+=nonAscii.size())
 		{
 			s += nonAscii;
 		}
@@ -68,7 +68,7 @@ TEST_F( LoggerTest, LongLine )
 	Logger L("LongLine");
 	
 	char buffer[64];
-	double length = 10.0;
+	double length = 0;
 	while(length < 4444)
 	{
 		snprintf(buffer, 63, "Length %d octets: ", int(length));
