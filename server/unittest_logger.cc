@@ -3,14 +3,24 @@
 
 namespace
 {
+	const std::string nonAscii = "€§";
+
 	std::string longstring(unsigned length)
 	{
 		std::string s;
 		s.reserve(length);
-		for(unsigned u=0; u<length; ++u)
+		unsigned u=0;
+		for(; u+nonAscii.size()<length; u+=nonAscii.size())
+		{
+			s += nonAscii;
+		}
+		
+		for(u=s.size(); u<length; ++u)
 		{
 			s += char( (u%94) + '!' );
 		}
+		
+		
 		return s;
 	}
 }
@@ -63,7 +73,7 @@ TEST_F( LoggerTest, LongLine )
 	{
 		snprintf(buffer, 63, "Length %d octets: ", int(length));
 		L.notice( buffer + longstring(length));
-		length *= 1.71;
+		++length;
 	}
 
 }
