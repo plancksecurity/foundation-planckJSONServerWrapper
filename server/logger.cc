@@ -188,13 +188,24 @@ namespace {
 			
 			if(end != oneline.end()) // we're not yet at the end, so we wrap the line here...
 			{
+				unsigned sequence_length = 0;
+				
 				// avoid split within a UTF-8 multibyte sequence.
 				// Therefore move backwards until we point to the start octet of an UTF-8 sequence.
-				while( (uint8_t(*end) >= 0x80) && (uint8_t(*end)<0xC0) && (end>begin) )
+				while( (uint8_t(*end) >= 0x80) && (uint8_t(*end)<0xC0) && (end>begin) && (sequence_length<8))
 				{
 					// rewind
 					--end;
 					--ofs;
+					++sequence_length;
+				}
+				
+				if(sequence_length>=8) // can never happen on valid UTF-8 strings
+				{
+					// the input is not valid UTF-8, so undo the rewind from above
+					// and write out whatever the string contains. :-/
+					end += sequence_length;
+					ofs += sequence_length;
 				}
 			}
 			
