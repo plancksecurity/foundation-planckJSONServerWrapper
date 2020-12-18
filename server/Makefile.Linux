@@ -66,7 +66,7 @@ $(LIB_TARGET): $(LIB_OBJECTS)
 	$(AR) -cr $@ $^
 
 $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
-	$(CXX) $(LDFLAGS) \
+	$(CXX) -static $(LDFLAGS) \
 		$(MA_OBJECTS) $(SPIRIT_OBJECTS) $(LIB_TARGET) \
 		$(LIBRARY_PATH)/libpEpEngine.a \
 		$(LIBRARY_PATH)/libpEpAdapter.a \

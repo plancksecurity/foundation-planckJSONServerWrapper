@@ -12,29 +12,30 @@ supported, Windows is about to follow.  Newer versions should also work
 (file a bug report if not) but are not in our main focus, yet.
 
 ## Dependencies
-* C++ compiler: tested with g++ 4.8 and 4.9, and clang++ 2.8. Newer versions should work, too.
+* C++ compiler: tested with g++ 4.8, 4.9, 8.3 and clang++ 2.8. Newer versions should work, too.
 * GNU make
-* libboost-thread-dev (tested with 1.58, 1.62 and 1.70)
-* libboost-program-options-dev  (tested with 1.58, 1.62 and 1.70)
-* libboost-filesystem-dev (tested with 1.58, 1.62 and 1.70)
-* libevent-dev 2.0.21 or 2.0.22 (or build from source, see below)
+* libboost-thread-dev (tested with 1.58, 1.62, 1.67, 1.70 and 1.74)
+* libboost-program-options-dev 
+* libboost-filesystem-dev
 * [p≡p Engine](https://pep.foundation/dev/repos/pEpEngine/)
   (which needs gpgme-thread, a patched libetpan, libboost-system-dev)
 * [libpEpAdapter](https://pep.foundation/dev/repos/libpEpAdapter/)
+* [webserver](https://gitea.pep.foundation/fdik/webserver)
 * OSSP libuuid
 
 ## Building/Installing (Linux and macOS)
 ### Install the dependencies
-Debian 9:
+
+Debian 9/10:
 
 ~~~~~
-apt install -y build-essential libboost1.62-dev libboost-system1.62-dev \
-    libboost-filesystem1.62-dev libboost-program-options1.62-dev \
-    libboost-thread1.62-dev libgpgme-dev uuid-dev googletest \
+apt install -y build-essential libboost-dev libboost-system-dev \
+    libboost-filesystem-dev libboost-program-options-dev \
+    libboost-thread-dev libgpgme-dev uuid-dev googletest \
     libevent-dev libevhtp-dev
 ~~~~~
 
-macOS 10.12:
+macOS 10.12, 10.13, 10.14:
 
 Use homebrew or macports to install the required libraries.
 
@@ -42,28 +43,33 @@ For more explicit instructions on how to do this with macports, see the
 section below.
 
 Build and install the pEp Engine.  Instructions can be found here:
-[https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md](https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md).
+[https://pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md](https://pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md).
 
-Build and install the pEp Webserver.  Instructions can be found here:
-[pEp webserver README](https://gitea.pep.foundation/fdik/webserver/src/branch/master/README.md)
 
-### Build and install libevent
-
-It is recommended to use the libevent from your system's repository, if it contains the right version.
+### Build and install the 'webserver' project
 
 ~~~~~
-mkdir ~/code/json-ad
-hg clone https://cacert.pep.foundation/dev/repos/pEpJSONServerAdapter/ ~/code/json-ad
-cd ~/code/json-ad/libevent-2.0.22-stable
-./configure --prefix="$HOME/code/json-ad/libevent-2.0.22-stable/build/" --disable-openssl
+cd ~/code
+git clone https://gitea.pep.foundation/fdik/webserver
+cd webserver
+  (edit the Makefile for your $PREFIX etc.)
 make
 make install
 ~~~~~
+
 
 ### Build and install the JSON server
 ~~~~~
 cd ~/code/json-ad/server
 ~~~~~
+
+| :warning: FIXME: The following instructions refer to the old Makefile system that built a dynamically linked binary. This old Makefile was replaced by a hack to create a static binary. Unfortunately the config flexibility of the old Makefile system was removed in this change. |
+| ------ |
+| There is now also an ad-hoc created `Makefile.Linux`, which also can only be configured directly by editing the file. :-( |
+| ------ |
+| TODO: Re-create a more flexible build system with a `Makefile` (which is under revision control) and a `local.conf` (which is not, but contains your local-only config settings) |
+| ------ |
+
 
 Edit the build configuration to your needs in `./Makefile.conf`, or create a
 `./local.conf` that sets any of the make variables documented in
@@ -76,7 +82,8 @@ libevent.
 
 Below are two sample `./local.conf` files, for orientation.
 
-macOS 10.12:
+
+macOS 10.12, 10.13:
 
 ~~~~~
 PREFIX=$(HOME)/code/json-ad/build
@@ -92,9 +99,6 @@ ENGINE_LIB=-L$(HOME)/code/engine/build/lib
 ETPAN_INC=-I$(HOME)/code/libetpan/build/include
 ETPAN_LIB=-L$(HOME)/code/libetpan/build/lib
 
-EVENT_INC=-I$(HOME)/code/json-ad/libevent-2.0.22-stable/build/include
-EVENT_LIB=-L$(HOME)/code/json-ad/libevent-2.0.22-stable/build/lib
-
 GPGME_INC=-I$(HOME)/Cellar/gpgme/1.9.0_1/include
 GPGME_LIB=-L$(HOME)/Cellar/gpgme/1.9.0_1/lib
 
@@ -102,7 +106,7 @@ UUID_INC=-I$(HOME)/Cellar/ossp-uuid/1.6.2_2/include
 UUID_LIB=-L$(HOME)/Cellar/ossp-uuid/1.6.2_2/lib
 ~~~~~
 
-Debian 9:
+Debian 9/10:
 
 ~~~~~
 PREFIX=$(HOME)/code/json-ad/build
@@ -115,8 +119,6 @@ ENGINE_LIB=-L$(HOME)/code/engine/build/lib
 ETPAN_INC=-I$(HOME)/code/libetpan/build/include
 ETPAN_LIB=-L$(HOME)/code/libetpan/build/lib
 
-EVENT_INC=-I$(HOME)/code/json-ad/libevent-2.0.22-stable/build/include
-EVENT_LIB=-L$(HOME)/code/json-ad/libevent-2.0.22-stable/build/lib
 ~~~~~
 
 Now, build and install the server:
