@@ -124,6 +124,22 @@ TEST_P( ToJsonTest, Meh )
 }
 
 
+TEST( ToJsonTest, Arrays )
+{
+	js::Array arr;
+	EXPECT_EQ( js::write(arr), "[]" );
+	js::Value varr{arr};
+	EXPECT_EQ( js::write(varr), "[]" );
+	
+	Out<js::Array> oarr{arr};
+	EXPECT_EQ( js::write(oarr.to_json()), "[]" );
+	
+	arr.push_back(42);
+	arr.push_back("Meh");
+	EXPECT_EQ( js::write(arr), "[42,\"Meh\"]" );
+}
+
+
 TEST( ToJsonTest, IllegalUtf8 )
 {
 	// examples from UTF-8 stress test:
