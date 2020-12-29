@@ -6,23 +6,27 @@ endif
 
 # default config
 
-# these are source builds
+PREFIX?=$(HOME)/local
 
-PEP_WEBSERVER?=../../webserver
-PEP_ADAPTER_LIBRARY=../../libpEpAdapter
-PEP_ENGINE?=../../pEpEngine/src
-LIBETPAN_FDIK?=../../libetpan/src/.libs
-SEQUOIA_PGP?=../../sequoia/target/release
-NETTLE?=../../nettle
-BOOST_INCLUDE_PATH?=../../boost_1_72_0
-BOOST_LIBRARY_PATH?=../../boost_1_72_0/stage/lib
-ASN1_PATH?=$(PEP_ENGINE)/asn.1
-
-# path to installed libraries
-
-PREFIX?=$(HOME)
-
+# where pEp stuff is installed into:
+PEP_LIB_PATH?=$(PREFIX)/lib
 PEP_INCLUDE?=$(PREFIX)/include
+
+# where libs from the packages systems are installed into:
+LIBRARY_PATH?=/usr/local/lib
+
+# paths to the .a libraries. Can be overridden in local.conf
+PEP_WEBSERVER?=$(PEP_LIB_PATH)
+PEP_ADAPTER_LIBRARY=$(PEP_LIB_PATH)
+PEP_ENGINE?=$(PEP_LIB_PATH)
+LIBETPAN_FDIK?=$(PEP_LIB_PATH)
+SEQUOIA_PGP?=$(PEP_LIB_PATH)
+ASN1_PATH?=$(PEP_LIB_PATH)
+NETTLE?=$(LIBRARY_PATH)
+
+BOOST_INCLUDE_PATH?=/usr/local/include
+BOOST_LIBRARY_PATH?=$(LIBRARY_PATH)
+
 
 LIBRARY_PATH?=$(PREFIX)/lib
 
@@ -32,27 +36,27 @@ LIBZ_LIBRARY_PATH?=$(LIBRARY_PATH)
 ICONV_LIBRARY_PATH?=$(LIBRARY_PATH)
 LIBEVENT_LIBRARY_PATH=$(LIBRARY_PATH)
 
-AR?=ar
+AR?=/usr/bin/ar
 CC?=cc
 CXX?=c++
-CFLAGS+=-std=c14
-CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14
+CFLAGS+=-std=c14 -fvisibility=hidden
+CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14
 
 ifdef NDEBUG
-	CFLAGS+=-O3 -DNDEBUG -fvisibility=hidden -fno-stack-check
-	CXXFLAGS+=-O3 -DNDEBUG -fvisibility=hidden -fno-stack-check
+	CFLAGS+=-O3 -DNDEBUG  
+	CXXFLAGS+=-O3 -DNDEBUG
 else
-	CFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden -fno-stack-check
-	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden -fno-stack-check
+	CFLAGS+=-O0 -g -DDEBUG_ENABLED
+	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED
 endif
 
 TARGET=pEp-mini-json-adapter
 LIB_TARGET=libjson-adapter.a
 
 ALL_SOURCE=$(filter-out unittest_%.cc,$(wildcard *.cc))
-LIB_SOURCE=$(filter-out miniadapter-%.cc,$(ALL_SOURCE))
-MA_SOURCE=$(wildcard miniadapter-*.cc)
+LIB_SOURCE=$(filter-out mini-adapter-%.cc,$(ALL_SOURCE))
+MA_SOURCE=$(wildcard mini-adapter-*.cc)
 DEPENDS=$(subst .cc,.d,$(ALL_SOURCE))
 ALL_OBJECTS=$(subst .d,.o,$(DEPENDS))
 LIB_OBJECTS=$(subst .cc,.o,$(LIB_SOURCE))
@@ -60,11 +64,10 @@ MA_OBJECTS=$(subst .cc,.o,$(MA_SOURCE))
 SPIRIT_SOURCE=$(wildcard json_spirit/*.cpp)
 SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
 
-TEST_SOURCE=$(wildcard test_*.cc)
+TEST_SOURCE=$(wildcard unittest_*.cc)
 TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
-TESTS=$(subst .cc,,$(TEST_SOURCE))
 
-all: $(TARGET)
+all: $(TARGET) unittests
 
 %.d: %.cc
 	@set -e; rm -f $@; \
@@ -81,35 +84,33 @@ $(LIB_TARGET): $(LIB_OBJECTS)
 	$(AR) -cr $@ $^
 
 $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
-	$(CXX) $(LDFLAGS) -liconv \
+	$(CXX) $(LDFLAGS) \
+		$(MA_OBJECTS) $(SPIRIT_OBJECTS)  $(LIB_TARGET) \
 		-lobjc -framework Foundation -framework Security \
+		$(PEP_ENGINE)/libpEpEngine.a \
+		$(PEP_ADAPTER_LIBRARY)/libpEpAdapter.a \
 		$(PEP_WEBSERVER)/libpEpwebserver.a \
 		$(BOOST_LIBRARY_PATH)/libboost_filesystem$(BOOST_MT).a \
 		$(BOOST_LIBRARY_PATH)/libboost_program_options$(BOOST_MT).a \
 		$(BOOST_LIBRARY_PATH)/libboost_system$(BOOST_MT).a \
 		$(BOOST_LIBRARY_PATH)/libboost_thread$(BOOST_MT).a \
 		$(BOOST_LIBRARY_PATH)/libboost_regex$(BOOST_MT).a \
-		$(ICONV_LIBRARY_PATH)/libiconv.a \
-		$(LIBZ_LIBRARY_PATH)/libz.a \
-		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
-		$(GMP_LIBRARY_PATH)/libgmp.a \
-		$(NETTLE)/libnettle.a $(NETTLE)/libhogweed.a \
-		$(SEQUOIA_PGP)/libsequoia_ffi.a \
 		$(SEQUOIA_PGP)/libsequoia_openpgp_ffi.a \
 		$(LIBETPAN_FDIK)/libetpan.a \
-		$(PEP_ENGINE)/libpEpEngine.a \
 		$(ASN1_PATH)/libasn1.a \
-		$(PEP_ADAPTER_LIBRARY)/libpEpAdapter.a \
-		$(MA_OBJECTS) $(SPIRIT_OBJECTS) $(LIB_TARGET) -o "$@"
+		$(LIBZ_LIBRARY_PATH)/libz.a \
+		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
+		$(NETTLE)/libhogweed.a \
+		$(NETTLE)/libnettle.a \
+		$(GMP_LIBRARY_PATH)/libgmp.a \
+		$(ICONV_LIBRARY_PATH)/libiconv.a \
+		-o "$@"
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-test_%: test_%.o $(TARGET)
-	$(CXX) $(LDFLAGS) $(TARGET) -o $@ $<
-
-test: $(TESTS)
-	for i in $(TESTS) ; do ./$$i ; done
+unittests: $(TEST_OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
 .PHONY: clean uninstall install
 
