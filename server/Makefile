@@ -54,7 +54,7 @@ endif
 TARGET=pEp-mini-json-adapter
 LIB_TARGET=libjson-adapter.a
 
-ALL_SOURCE=$(filter-out unittest_%.cc,$(wildcard *.cc))
+ALL_SOURCE=$(filter-out encode_decode.cc unittest_%.cc,$(wildcard *.cc))
 LIB_SOURCE=$(filter-out mini-adapter-%.cc,$(ALL_SOURCE))
 MA_SOURCE=$(wildcard mini-adapter-*.cc)
 DEPENDS=$(subst .cc,.d,$(ALL_SOURCE))
@@ -67,7 +67,7 @@ SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
 TEST_SOURCE=$(wildcard unittest_*.cc)
 TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
 
-all: $(TARGET) unittests
+all: $(TARGET) unittests encode_decode
 
 %.d: %.cc
 	@set -e; rm -f $@; \
@@ -112,6 +112,9 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 unittests: $(TEST_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
+encode_decode: encode_decode.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
 .PHONY: clean uninstall install
 
 install: $(TARGET)
@@ -123,7 +126,7 @@ uninstall:
 	for i in *.hh; do rm -f $(PREFIX)/include/pEp/\$i ; done
 
 clean:
-	rm -vf *.o *.d *.d.* $(TARGET) $(TESTS)
+	rm -vf *.o *.d *.d.* $(TARGET) $(TESTS) encode_decode
 
 local.conf:
 	@echo "# the following are directories with the source build" >> local.conf
