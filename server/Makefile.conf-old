@@ -104,13 +104,21 @@ endif
 CXXFLAGS+= -Ijson_spirit $(BOOST_INC) $(ENGINE_INC) $(ETPAN_INC) $(GPGME_INC) $(UUID_INC)
 LDFLAGS+=                $(BOOST_LIB) $(ENGINE_LIB) $(ETPAN_LIB) $(GPGME_LIB) $(UUID_LIB)
 ifeq ($(BUILD_FOR),Linux)
-    LDLIBS+= -lpEpEngine -lpEpAdapter -lboost_system    -lboost_filesystem    -lboost_program_options    -lboost_thread    -lboost_regex -lpEpMIME
+    LDLIBS+= -lpEpEngine -lpEpAdapter -lboost_system    -lboost_filesystem    -lboost_program_options    -lboost_thread    -lboost_regex
     GTEST_DIR=/usr/src/googletest/googletest/
 else ifeq ($(BUILD_FOR),Darwin)
-    LDLIBS+= -lpEpEngine -lpEpAdapter -lboost_system-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_thread-mt -lboost_regex-mt -lpEpMIME
+    LDLIBS+= -lpEpEngine -lpEpAdapter -lboost_system-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_thread-mt -lboost_regex-mt
 endif
 
-LDLIBS+=$(WEBSERVER_LIB) -lboost_regex-mt
+LDLIBS+=$(WEBSERVER_LIB)
+
+ifeq ($(MIME_LIB),etpan)
+    LDLIBS+=-letpan
+else ifeq ($(MIME_LIB),pEpMIME)
+    LDLIBS+=-lpEpMIME
+else
+    $(error "You must set MIME_LIB to 'etpan' or 'pEpMIME'!" )
+endif
 
 ######### Google Test #########
 #GTEST_DIR=

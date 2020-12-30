@@ -6,6 +6,9 @@ endif
 
 # default config
 
+# set to 'etpan' or 'pEpMIME'
+MIME_LIB?=etpan
+
 PREFIX?=$(HOME)/local
 
 # where pEp stuff is installed into:
@@ -15,11 +18,13 @@ PEP_INCLUDE?=$(PREFIX)/include
 # where libs from the packages systems are installed into:
 LIBRARY_PATH?=/usr/local/lib
 
+
 # paths to the .a libraries. Can be overridden in local.conf
 PEP_WEBSERVER?=$(PEP_LIB_PATH)
 PEP_ADAPTER_LIBRARY=$(PEP_LIB_PATH)
 PEP_ENGINE?=$(PEP_LIB_PATH)
 LIBETPAN_FDIK?=$(PEP_LIB_PATH)
+PEP_MIME_PATH?=$(PEP_LIB_PATH)
 SEQUOIA_PGP?=$(PEP_LIB_PATH)
 ASN1_PATH?=$(PEP_LIB_PATH)
 NETTLE?=$(LIBRARY_PATH)
@@ -54,7 +59,7 @@ endif
 TARGET=pEp-mini-json-adapter
 LIB_TARGET=libjson-adapter.a
 
-ALL_SOURCE=$(filter-out encode_decode.cc unittest_%.cc,$(wildcard *.cc))
+ALL_SOURCE=$(filter-out parse_mail.cc unittest_%.cc,$(wildcard *.cc))
 LIB_SOURCE=$(filter-out mini-adapter-%.cc,$(ALL_SOURCE))
 MA_SOURCE=$(wildcard mini-adapter-*.cc)
 DEPENDS=$(subst .cc,.d,$(ALL_SOURCE))
@@ -67,7 +72,18 @@ SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
 TEST_SOURCE=$(wildcard unittest_*.cc)
 TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
 
-all: $(TARGET) unittests encode_decode
+ifeq ($(MIME_LIB),etpan)
+    LDLIBS+=-letpan
+    MIME_LIB_A=$(LIBETPAN_FDIK)/libetpan.a
+else ifeq ($(MIME_LIB),pEpMIME)
+    LDLUBS+=-lpEpMIME
+    MIME_LIB_A=$(PEP_MIME_PATH)/libpEpMIME.a
+else
+    $(error "You must set MIME_LIB to 'etpan' or 'pEpMIME'!" )
+endif
+
+
+all: $(TARGET) unittests parse_mail
 
 %.d: %.cc
 	@set -e; rm -f $@; \
@@ -96,7 +112,7 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 		$(BOOST_LIBRARY_PATH)/libboost_thread$(BOOST_MT).a \
 		$(BOOST_LIBRARY_PATH)/libboost_regex$(BOOST_MT).a \
 		$(SEQUOIA_PGP)/libsequoia_openpgp_ffi.a \
-		$(LIBETPAN_FDIK)/libetpan.a \
+		$(MIME_LIB_A) \
 		$(ASN1_PATH)/libasn1.a \
 		$(LIBZ_LIBRARY_PATH)/libz.a \
 		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
@@ -112,7 +128,7 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 unittests: $(TEST_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-encode_decode: encode_decode.o
+parse_mail: parse_mail.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 .PHONY: clean uninstall install
