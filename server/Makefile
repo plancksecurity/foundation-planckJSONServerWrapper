@@ -45,7 +45,7 @@ AR?=/usr/bin/ar
 CC?=cc
 CXX?=c++
 CFLAGS+=-std=c14 -fvisibility=hidden
-CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden
+CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden -fsanitize=address
 LDFLAGS+=-std=c++14
 
 ifdef NDEBUG
@@ -59,28 +59,57 @@ endif
 TARGET=pEp-mini-json-adapter
 LIB_TARGET=libjson-adapter.a
 
-ALL_SOURCE=$(filter-out parse_mail.cc unittest_%.cc,$(wildcard *.cc))
-LIB_SOURCE=$(filter-out mini-adapter-%.cc,$(ALL_SOURCE))
+ifeq ($(MIME_LIB),etpan)
+    LDLIBS+=-letpan
+    MIME_LIB_A=$(LIBETPAN_FDIK)/libetpan.a
+    OMIT_NFC_SOURCE=
+else ifeq ($(MIME_LIB),pEpMIME)
+    LDLUBS+=-lpEpMIME
+    MIME_LIB_A=$(PEP_MIME_PATH)/libpEpMIME.a
+    
+    # is already in libpEpMIME:
+    OMIT_NFC_SOURCE=nfc.cc nfc_sets.cc
+else
+    $(error "You must set MIME_LIB to 'etpan' or 'pEpMIME'!" )
+endif
+
+
+ALL_SOURCE=$(filter-out parse_mail.cc unittest_%.cc, $(wildcard *.cc))
 MA_SOURCE=$(wildcard mini-adapter-*.cc)
+
+LIB_SOURCE=$(filter-out $(MA_SOURCE) $(OMIT_NFC_SOURCE), $(ALL_SOURCE))
+
 DEPENDS=$(subst .cc,.d,$(ALL_SOURCE))
+
 ALL_OBJECTS=$(subst .d,.o,$(DEPENDS))
 LIB_OBJECTS=$(subst .cc,.o,$(LIB_SOURCE))
 MA_OBJECTS=$(subst .cc,.o,$(MA_SOURCE))
+
 SPIRIT_SOURCE=$(wildcard json_spirit/*.cpp)
 SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
 
 TEST_SOURCE=$(wildcard unittest_*.cc)
 TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
 
-ifeq ($(MIME_LIB),etpan)
-    LDLIBS+=-letpan
-    MIME_LIB_A=$(LIBETPAN_FDIK)/libetpan.a
-else ifeq ($(MIME_LIB),pEpMIME)
-    LDLUBS+=-lpEpMIME
-    MIME_LIB_A=$(PEP_MIME_PATH)/libpEpMIME.a
-else
-    $(error "You must set MIME_LIB to 'etpan' or 'pEpMIME'!" )
-endif
+
+
+ALL_STATIC_LIBS=$(PEP_ENGINE)/libpEpEngine.a \
+		$(PEP_ADAPTER_LIBRARY)/libpEpAdapter.a \
+		$(PEP_WEBSERVER)/libpEpwebserver.a \
+		$(BOOST_LIBRARY_PATH)/libboost_filesystem$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_program_options$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_system$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_thread$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_regex$(BOOST_MT).a \
+		$(SEQUOIA_PGP)/libsequoia_openpgp_ffi.a \
+		$(MIME_LIB_A) \
+		$(ASN1_PATH)/libasn1.a \
+		$(LIBZ_LIBRARY_PATH)/libz.a \
+		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
+		$(NETTLE)/libhogweed.a \
+		$(NETTLE)/libnettle.a \
+		$(GMP_LIBRARY_PATH)/libgmp.a \
+		$(ICONV_LIBRARY_PATH)/libiconv.a
 
 
 all: $(TARGET) unittests parse_mail
@@ -103,33 +132,17 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) \
 		$(MA_OBJECTS) $(SPIRIT_OBJECTS)  $(LIB_TARGET) \
 		-lobjc -framework Foundation -framework Security \
-		$(PEP_ENGINE)/libpEpEngine.a \
-		$(PEP_ADAPTER_LIBRARY)/libpEpAdapter.a \
-		$(PEP_WEBSERVER)/libpEpwebserver.a \
-		$(BOOST_LIBRARY_PATH)/libboost_filesystem$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_program_options$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_system$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_thread$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_regex$(BOOST_MT).a \
-		$(SEQUOIA_PGP)/libsequoia_openpgp_ffi.a \
-		$(MIME_LIB_A) \
-		$(ASN1_PATH)/libasn1.a \
-		$(LIBZ_LIBRARY_PATH)/libz.a \
-		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
-		$(NETTLE)/libhogweed.a \
-		$(NETTLE)/libnettle.a \
-		$(GMP_LIBRARY_PATH)/libgmp.a \
-		$(ICONV_LIBRARY_PATH)/libiconv.a \
+		$(ALL_STATIC_LIBS)
 		-o "$@"
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
 unittests: $(TEST_OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS)
 
-parse_mail: parse_mail.o
-	$(CXX) $(CXXFLAGS) -o $@ $^
+parse_mail: parse_mail.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS) $(LIB_TARGET) -liconv
 
 .PHONY: clean uninstall install
 
