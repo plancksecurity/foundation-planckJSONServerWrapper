@@ -2,13 +2,14 @@
 
 #include <pEp/mime.h>
 #include <pEp/status_to_string.hh>
+#include <pEp/slurp.hh>
 #include "pEp-types.hh"
 #include <string>
 #include <iostream>
 
 namespace js = json_spirit;
 
-int main()
+std::string read_from_stdin()
 {
 	std::string mime_text;
 	std::string line;
@@ -18,7 +19,12 @@ int main()
 		mime_text += line;
 		mime_text += "\r\n";
 	}
-	
+	return mime_text;
+}
+
+
+PEP_STATUS parse_mail(const std::string& mime_text)
+{
 	bool has_pEp_msg = false;
 	message* msg = nullptr;
 	
@@ -29,4 +35,27 @@ int main()
 	std::cout << "message: " << (msg ? js::write(to_json<const message*>(msg), js::pretty_print | js::raw_utf8 | js::single_line_arrays) : "null" ) << '\n';
 	
 	return status;
+}
+
+
+int main(int argc, char** argv)
+{
+	if(argc==1 || argv[1]==std::string("-"))
+	{
+		const std::string mime_text = read_from_stdin();
+		return parse_mail(mime_text);
+	}
+	
+	for(int a=1; a<argc; ++a)
+	{
+		std::cout << "=== File #" << a << ": \"" << argv[a] << "\" ===\n";
+		const std::string mime_text = pEp::slurp(argv[a]);
+		const PEP_STATUS status = parse_mail(mime_text);
+		if(status!=PEP_STATUS_OK)
+		{
+			return status;
+		}
+	}
+	
+	return 0;
 }
