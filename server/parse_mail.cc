@@ -9,20 +9,35 @@
 
 namespace js = json_spirit;
 
-std::string S(const char* s, std::size_t size = std::string::npos)
+std::string S(const char* s)
 {
 	if(s)
 	{
-		const std::string ss = std::string(s);
-		if(size>ss.size())
-		{
-			return '\"' + ss + '\"';
-		}else{
-			return '\"' + ss.substr(0, size) + "…\"";
-		}
+		return '\"' + std::string(s) + '\"';
 	}else{
 		return "(NULL)";
 	}
+}
+
+std::string SX(const char* s, std::size_t length)
+{
+	std::string ss(s); ss.resize( std::min(ss.size(), length) );
+	std::string ret; ret.reserve(ss.size() + 4);
+	ret = "“";
+	char buf[8];
+	
+	for(char c: ss)
+	{
+		if(c>' ' && c<127 && c!='\\' && c!='\"')
+		{
+			ret += c;
+		}else{
+			snprintf(buf, 7, "\\x%02hhx", uint8_t(c) );
+			ret += buf;
+		}
+	}
+	ret += "”";
+	return ret;
 }
 
 std::ostream& operator<<(std::ostream& o, const bloblist_t* att)
@@ -38,7 +53,8 @@ std::ostream& operator<<(std::ostream& o, const bloblist_t* att)
 		o << "\t\t size=" << att->size
 		  << ", mime_type=" << S(att->mime_type)
 		  << ", filename=" << S(att->filename)
-		  << ", data=" << S(att->value, 32) << ".\n";
+		  << ", dispo=" << att->disposition
+		  << ", data=" << SX(att->value, 32) << ".\n";
 		att = att->next;
 	}
 	return o;
@@ -50,7 +66,7 @@ std::ostream& operator<<(std::ostream& o, const tm* t)
 		return o << "(NULL)";
 	
 	char buf[64];
-	strftime(buf, 63, "%f %T", t);
+	strftime(buf, 63, "%F %T", t);
 	return o << buf;
 }
 
@@ -167,9 +183,11 @@ PEP_STATUS parse_mail(const std::string& mime_text)
 	
 	const PEP_STATUS status = mime_decode_message(mime_text.data(), mime_text.size(), &msg, &has_pEp_msg);
 	
+	std::cerr << "\n––––––––––– RESULT –––––––––––\n";
 	std::cerr << "status: " << pEp::status_to_string(status) << '\n';
 	std::cerr << "has_pEp_msg: " << (has_pEp_msg?"true":"false") << '\n';
 	dump_message(msg);
+	std::cerr << "\n––––––––––– ALL DONE –––––––––––\n";
 	
 	return status;
 }
