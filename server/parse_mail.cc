@@ -139,7 +139,7 @@ void dump_message(const message* msg)
 		// TODO: refered_by
 		
 	std::cerr 	<< "\tkeywords  : " << msg->keywords << "\n";
-	std::cerr 	<< "\tcomments  : " << msg->comments << "\n";
+	std::cerr 	<< "\tcomments  : " << S(msg->comments) << "\n";
 	std::cerr 	<< "\topt_fields: " << msg->opt_fields << "\n";
 	std::cerr 	<< "\tenc_format: " << msg->enc_format << "\n";
 	std::cerr 	<< std::endl;
