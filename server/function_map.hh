@@ -127,19 +127,6 @@ public:
 		else {
 			//			std::cerr << "|$ Param #" << U << " is not for output.\n";
 		}
-#ifdef _MSC_BUILD
-		if (ret.type() == js::array_type && !ret.get_array().empty()) {
-			try {
-
-				const js::Array ret_ = ret.get_array()[0].get_array();
-				return ret_;
-			}
-			catch (std::runtime_error&) {
-				return ret;
-			}
-		}
-		else
-#endif
 		return ret;
 	}
 };
