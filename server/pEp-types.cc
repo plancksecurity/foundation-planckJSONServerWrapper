@@ -272,6 +272,8 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 	}
 	
 	const js::Object& o = v.get_obj();
+	if(o.empty())
+		return nullptr;
 	
 	auto address     = pEp::utility::make_c_ptr(from_json_object<char*, js::str_type>(o, "address")  , &free_string );
 	auto fingerprint = pEp::utility::make_c_ptr(from_json_object<char*, js::str_type>(o, "fpr")      , &free_string );
@@ -647,7 +649,7 @@ js::Value to_json<identity_list*>(identity_list* const& idl)
 	identity_list* il = idl;
 	js::Array a;
 	
-	while(il)
+	while(il && il->ident)
 	{
 		const js::Value value = to_json<pEp_identity*>(il->ident);
 		a.push_back(value);
