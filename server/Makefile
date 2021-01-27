@@ -38,6 +38,7 @@ LIBRARY_PATH?=$(PREFIX)/lib
 GMP_LIBRARY_PATH?=$(LIBRARY_PATH)
 SQLITE3_LIBRARY_PATH?=$(LIBRARY_PATH)
 LIBZ_LIBRARY_PATH?=$(LIBRARY_PATH)
+UUID_LIBRARY_PATH?=$(LIBRARY_PATH)
 ICONV_LIBRARY_PATH?=$(LIBRARY_PATH)
 LIBEVENT_LIBRARY_PATH=$(LIBRARY_PATH)
 
@@ -63,7 +64,7 @@ ifeq ($(BUILD_ON),Darwin)
 else ifeq ($(BUILD_ON),Linux)
     ifeq ($(BUILD_FOR),Linux)
         LDLIBS+= -luuid
-        EXTRA_STATIC_LIBS=$(LIBRARY_PATH)/libuuid.a
+        EXTRA_STATIC_LIBS=$(UUID_LIBRARY_PATH)/libuuid.a
     else
         $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
     endif
@@ -237,9 +238,19 @@ local.conf:
 	@echo >> local.conf
 	@echo "LIBZ_LIBRARY_PATH=$(LIBZ_LIBRARY_PATH)" >> local.conf
 	@echo >> local.conf
+	@echo "# path where to find libuuid" >> local.conf
+	@echo >> local.conf
+	@echo "UUID_LIBRARY_PATH=$(UUID_LIBRARY_PATH)" >> local.conf
+	@echo >> local.conf
 	@echo "# path where to find GNU iconv" >> local.conf
 	@echo >> local.conf
 	@echo "ICONV_LIBRARY_PATH=$(ICONV_LIBRARY_PATH)" >> local.conf
+	@echo >> local.conf
+	@echo "# Additional options" >> local.conf
+	@echo "# ------------------" >> local.conf
+	@echo >> local.conf
+	@echo "# for a dynamically linked binary (for development) remove this." >> local.conf
+	@echo "LD_FLAGS+=--static" >> local.conf
 
 help:
 	@echo "usage:"
