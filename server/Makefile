@@ -21,7 +21,7 @@ LIBRARY_PATH?=/usr/local/lib
 
 # paths to the .a libraries. Can be overridden in local.conf
 PEP_WEBSERVER?=$(PEP_LIB_PATH)
-PEP_ADAPTER_LIBRARY=$(PEP_LIB_PATH)
+PEP_ADAPTER_LIBRARY?=$(PEP_LIB_PATH)
 PEP_ENGINE?=$(PEP_LIB_PATH)
 LIBETPAN_FDIK?=$(PEP_LIB_PATH)
 PEP_MIME_PATH?=$(PEP_LIB_PATH)
@@ -132,14 +132,14 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) \
 		$(MA_OBJECTS) $(SPIRIT_OBJECTS)  $(LIB_TARGET) \
 		-lobjc -framework Foundation -framework Security \
-		$(ALL_STATIC_LIBS)
+		$(ALL_STATIC_LIBS) \
 		-o "$@"
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-unittests: $(TEST_OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS)
+unittests: $(TEST_OBJECTS) $(LIB_TARGET) $(SPIRIT_OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS) -lgtest
 
 parse_mail: parse_mail.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS) $(LIB_TARGET) -liconv
@@ -155,7 +155,7 @@ uninstall:
 	for i in *.hh; do rm -f $(PREFIX)/include/pEp/\$i ; done
 
 clean:
-	rm -vf *.o *.d *.d.* $(TARGET) $(TESTS) encode_decode
+	rm -vf *.a *.o */*.o *.d *.d.* $(TARGET) $(TESTS) encode_decode
 
 local.conf:
 	@echo "# the following are directories with the source build" >> local.conf
@@ -180,6 +180,10 @@ local.conf:
 	@echo "# path to Sequoia PGP" >> local.conf
 	@echo >> local.conf
 	@echo "SEQUOIA_PGP=$(SEQUOIA_PGP)" >> local.conf
+	@echo >> local.conf
+	@echo "# path to ASN1 (part of pEp Engine)" >> local.conf
+	@echo >> local.conf
+	@echo "ASN1_PATH=$(ASN1_PATH)" >> local.conf
 	@echo >> local.conf
 	@echo "# path to nettle and hogweed crypto libraries" >> local.conf
 	@echo >> local.conf
