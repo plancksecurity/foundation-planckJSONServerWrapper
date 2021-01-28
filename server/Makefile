@@ -45,8 +45,32 @@ AR?=/usr/bin/ar
 CC?=cc
 CXX?=c++
 CFLAGS+=-std=c14 -fvisibility=hidden
-CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden -fsanitize=address
+CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14
+
+# This idiom is from the pEp Engine Makefile, but we don't sure Makefile.conf here.
+BUILD_ON:=$(shell uname)
+BUILD_FOR=$(BUILD_ON)
+ifeq ($(BUILD_ON),Darwin)
+    ifeq ($(BUILD_FOR),Darwin)
+        LDLIBS+= -liconv -lobjc -framework Foundation -framework Security
+        # ASAN is not strictly a MacOS/clang feature, but won't work with musl.
+        CXXFLAGS+= -fsanitize=address
+        EXTRA_STATIC_LIBS=$(ICONV_LIBRARY_PATH)/libiconv.a
+    else
+        $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
+    endif
+else ifeq ($(BUILD_ON),Linux)
+    ifeq ($(BUILD_FOR),Linux)
+        LDLIBS+= -luuid
+        EXTRA_STATIC_LIBS=$(LIBRARY_PATH)/libuuid.a
+    else
+        $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
+    endif
+else
+    $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
+endif
+
 
 ifdef NDEBUG
 	CFLAGS+=-O3 -DNDEBUG  
@@ -109,7 +133,7 @@ ALL_STATIC_LIBS=$(PEP_ENGINE)/libpEpEngine.a \
 		$(NETTLE)/libhogweed.a \
 		$(NETTLE)/libnettle.a \
 		$(GMP_LIBRARY_PATH)/libgmp.a \
-		$(ICONV_LIBRARY_PATH)/libiconv.a
+		$(EXTRA_STATIC_LIBS)
 
 
 all: $(TARGET) unittests parse_mail
@@ -131,7 +155,6 @@ $(LIB_TARGET): $(LIB_OBJECTS)
 $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) \
 		$(MA_OBJECTS) $(SPIRIT_OBJECTS)  $(LIB_TARGET) \
-		-lobjc -framework Foundation -framework Security \
 		$(ALL_STATIC_LIBS) \
 		-o "$@"
 
@@ -142,7 +165,7 @@ unittests: $(TEST_OBJECTS) $(LIB_TARGET) $(SPIRIT_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS) -lgtest
 
 parse_mail: parse_mail.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS) $(LIB_TARGET) -liconv
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS) $(LIB_TARGET)
 
 .PHONY: clean uninstall install
 
