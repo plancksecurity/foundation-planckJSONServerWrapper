@@ -46,7 +46,7 @@ CC?=cc
 CXX?=c++
 CFLAGS+=-std=c14 -fvisibility=hidden
 CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden -fsanitize=address
-LDFLAGS+=-std=c++14
+LDFLAGS+=-std=c++14 -fsanitize=address
 
 ifdef NDEBUG
 	CFLAGS+=-O3 -DNDEBUG  
