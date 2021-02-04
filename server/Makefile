@@ -6,32 +6,23 @@ endif
 
 # default config
 
-# set to 'etpan' or 'pEpMIME'
-MIME_LIB?=etpan
+# these are source builds
 
-PREFIX?=$(HOME)/local
+PEP_WEBSERVER?=../../webserver
+PEP_ADAPTER_LIBRARY=../../libpEpAdapter
+PEP_ENGINE?=../../pEpEngine/src
+LIBETPAN_FDIK?=../../libetpan/src/.libs
+SEQUOIA_PGP?=../../sequoia/target/release
+NETTLE?=../../nettle
+BOOST_INCLUDE_PATH?=../../boost_1_72_0
+BOOST_LIBRARY_PATH?=../../boost_1_72_0/stage/lib
+ASN1_PATH?=$(PEP_ENGINE)/asn.1
 
-# where pEp stuff is installed into:
-PEP_LIB_PATH?=$(PREFIX)/lib
+# path to installed libraries
+
+PREFIX?=$(HOME)
+
 PEP_INCLUDE?=$(PREFIX)/include
-
-# where libs from the packages systems are installed into:
-LIBRARY_PATH?=/usr/local/lib
-
-
-# paths to the .a libraries. Can be overridden in local.conf
-PEP_WEBSERVER?=$(PEP_LIB_PATH)
-PEP_ADAPTER_LIBRARY=$(PEP_LIB_PATH)
-PEP_ENGINE?=$(PEP_LIB_PATH)
-LIBETPAN_FDIK?=$(PEP_LIB_PATH)
-PEP_MIME_PATH?=$(PEP_LIB_PATH)
-SEQUOIA_PGP?=$(PEP_LIB_PATH)
-ASN1_PATH?=$(PEP_LIB_PATH)
-NETTLE?=$(LIBRARY_PATH)
-
-BOOST_INCLUDE_PATH?=/usr/local/include
-BOOST_LIBRARY_PATH?=$(LIBRARY_PATH)
-
 
 LIBRARY_PATH?=$(PREFIX)/lib
 
@@ -41,78 +32,39 @@ LIBZ_LIBRARY_PATH?=$(LIBRARY_PATH)
 ICONV_LIBRARY_PATH?=$(LIBRARY_PATH)
 LIBEVENT_LIBRARY_PATH=$(LIBRARY_PATH)
 
-AR?=/usr/bin/ar
+AR?=ar
 CC?=cc
 CXX?=c++
-CFLAGS+=-std=c14 -fvisibility=hidden
-CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden -fsanitize=address
+CFLAGS+=-std=c14
+CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14
 LDFLAGS+=-std=c++14
 
 ifdef NDEBUG
-	CFLAGS+=-O3 -DNDEBUG  
-	CXXFLAGS+=-O3 -DNDEBUG
+	CFLAGS+=-O3 -DNDEBUG -fvisibility=hidden -fno-stack-check
+	CXXFLAGS+=-O3 -DNDEBUG -fvisibility=hidden -fno-stack-check
 else
-	CFLAGS+=-O0 -g -DDEBUG_ENABLED
-	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED
+	CFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden -fno-stack-check
+	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden -fno-stack-check
 endif
 
 TARGET=pEp-mini-json-adapter
 LIB_TARGET=libjson-adapter.a
 
-ifeq ($(MIME_LIB),etpan)
-    LDLIBS+=-letpan
-    MIME_LIB_A=$(LIBETPAN_FDIK)/libetpan.a
-    OMIT_NFC_SOURCE=
-else ifeq ($(MIME_LIB),pEpMIME)
-    LDLUBS+=-lpEpMIME
-    MIME_LIB_A=$(PEP_MIME_PATH)/libpEpMIME.a
-    
-    # is already in libpEpMIME:
-    OMIT_NFC_SOURCE=nfc.cc nfc_sets.cc
-else
-    $(error "You must set MIME_LIB to 'etpan' or 'pEpMIME'!" )
-endif
-
-
-ALL_SOURCE=$(filter-out parse_mail.cc unittest_%.cc, $(wildcard *.cc))
-MA_SOURCE=$(wildcard mini-adapter-*.cc)
-
-LIB_SOURCE=$(filter-out $(MA_SOURCE) $(OMIT_NFC_SOURCE), $(ALL_SOURCE))
-
+ALL_SOURCE=$(filter-out unittest_%.cc,$(wildcard *.cc))
+LIB_SOURCE=$(filter-out miniadapter-%.cc,$(ALL_SOURCE))
+MA_SOURCE=$(wildcard miniadapter-*.cc)
 DEPENDS=$(subst .cc,.d,$(ALL_SOURCE))
-
 ALL_OBJECTS=$(subst .d,.o,$(DEPENDS))
 LIB_OBJECTS=$(subst .cc,.o,$(LIB_SOURCE))
 MA_OBJECTS=$(subst .cc,.o,$(MA_SOURCE))
-
 SPIRIT_SOURCE=$(wildcard json_spirit/*.cpp)
 SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
 
-TEST_SOURCE=$(wildcard unittest_*.cc)
+TEST_SOURCE=$(wildcard test_*.cc)
 TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
+TESTS=$(subst .cc,,$(TEST_SOURCE))
 
-
-
-ALL_STATIC_LIBS=$(PEP_ENGINE)/libpEpEngine.a \
-		$(PEP_ADAPTER_LIBRARY)/libpEpAdapter.a \
-		$(PEP_WEBSERVER)/libpEpwebserver.a \
-		$(BOOST_LIBRARY_PATH)/libboost_filesystem$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_program_options$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_system$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_thread$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_regex$(BOOST_MT).a \
-		$(SEQUOIA_PGP)/libsequoia_openpgp_ffi.a \
-		$(MIME_LIB_A) \
-		$(ASN1_PATH)/libasn1.a \
-		$(LIBZ_LIBRARY_PATH)/libz.a \
-		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
-		$(NETTLE)/libhogweed.a \
-		$(NETTLE)/libnettle.a \
-		$(GMP_LIBRARY_PATH)/libgmp.a \
-		$(ICONV_LIBRARY_PATH)/libiconv.a
-
-
-all: $(TARGET) unittests parse_mail
+all: $(TARGET)
 
 %.d: %.cc
 	@set -e; rm -f $@; \
@@ -129,20 +81,35 @@ $(LIB_TARGET): $(LIB_OBJECTS)
 	$(AR) -cr $@ $^
 
 $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
-	$(CXX) $(LDFLAGS) \
-		$(MA_OBJECTS) $(SPIRIT_OBJECTS)  $(LIB_TARGET) \
+	$(CXX) $(LDFLAGS) -liconv \
 		-lobjc -framework Foundation -framework Security \
-		$(ALL_STATIC_LIBS)
-		-o "$@"
+		$(PEP_WEBSERVER)/libpEpwebserver.a \
+		$(BOOST_LIBRARY_PATH)/libboost_filesystem$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_program_options$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_system$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_thread$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_regex$(BOOST_MT).a \
+		$(ICONV_LIBRARY_PATH)/libiconv.a \
+		$(LIBZ_LIBRARY_PATH)/libz.a \
+		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
+		$(GMP_LIBRARY_PATH)/libgmp.a \
+		$(NETTLE)/libnettle.a $(NETTLE)/libhogweed.a \
+		$(SEQUOIA_PGP)/libsequoia_ffi.a \
+		$(SEQUOIA_PGP)/libsequoia_openpgp_ffi.a \
+		$(LIBETPAN_FDIK)/libetpan.a \
+		$(PEP_ENGINE)/libpEpEngine.a \
+		$(ASN1_PATH)/libasn1.a \
+		$(PEP_ADAPTER_LIBRARY)/libpEpAdapter.a \
+		$(MA_OBJECTS) $(SPIRIT_OBJECTS) $(LIB_TARGET) -o "$@"
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-unittests: $(TEST_OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS)
+test_%: test_%.o $(TARGET)
+	$(CXX) $(LDFLAGS) $(TARGET) -o $@ $<
 
-parse_mail: parse_mail.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS) $(LIB_TARGET) -liconv
+test: $(TESTS)
+	for i in $(TESTS) ; do ./$$i ; done
 
 .PHONY: clean uninstall install
 
@@ -155,7 +122,7 @@ uninstall:
 	for i in *.hh; do rm -f $(PREFIX)/include/pEp/\$i ; done
 
 clean:
-	rm -vf *.o *.d *.d.* $(TARGET) $(TESTS) encode_decode
+	rm -vf *.o *.d *.d.* $(TARGET) $(TESTS)
 
 local.conf:
 	@echo "# the following are directories with the source build" >> local.conf
