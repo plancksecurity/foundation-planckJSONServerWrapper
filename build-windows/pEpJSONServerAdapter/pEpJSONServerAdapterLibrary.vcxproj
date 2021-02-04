@@ -148,7 +148,7 @@
     <ClCompile Include="..\..\server\session_registry.cc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\libpEpAdapter\libpEpAdapter\libpEpAdapter.vcxproj">
+    <ProjectReference Include="..\..\..\libpEpAdapter\build-windows\libpEpAdapter.vcxproj">
       <Project>{ec44fec9-2f3a-4a0c-b60e-0f22aa43ef58}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\pEpEngine\build-windows\pEpEngine.vcxproj">
