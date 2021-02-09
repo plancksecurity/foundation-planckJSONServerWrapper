@@ -17,9 +17,9 @@ supported, Windows is about to follow.  Newer versions should also work
 * libboost-thread-dev (tested with 1.58, 1.62, 1.67, 1.70 and 1.74)
 * libboost-program-options-dev 
 * libboost-filesystem-dev
-* [p≡p Engine](https://pep.foundation/dev/repos/pEpEngine/)
-  (which needs gpgme-thread, a patched libetpan, libboost-system-dev)
-* [libpEpAdapter](https://pep.foundation/dev/repos/libpEpAdapter/)
+* [p≡p Engine](https://gitea.pep.foundation/pEp.foundation/pEpEngine/)
+  (which needs sequoia, a patched libetpan, libboost-system-dev)
+* [libpEpAdapter](https://gitea.pep.foundation/pEp.foundation/libpEpAdapter/)
 * [webserver](https://gitea.pep.foundation/fdik/webserver)
 * OSSP libuuid
 
@@ -43,7 +43,7 @@ For more explicit instructions on how to do this with macports, see the
 section below.
 
 Build and install the pEp Engine.  Instructions can be found here:
-[https://pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md](https://pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md).
+[the Engine's Readme](https://gitea.pep.foundation/pEp.foundation/pEpEngineREADME.md)
 
 
 ### Build and install the 'webserver' project
