@@ -20,7 +20,7 @@ AR?=ar
 CC?=cc
 CXX?=c++
 CFLAGS+=-std=c14
-CXXFLAGS+=-I$(PEP_INCLUDE) -std=c++14
+CXXFLAGS+=-I$(PEP_INCLUDE) -I$(GTEST_DIR)/include -std=c++14
 LDFLAGS+=-std=c++14
 
 ifdef NDEBUG
@@ -45,11 +45,13 @@ MA_OBJECTS=$(subst .cc,.o,$(MA_SOURCE))
 SPIRIT_SOURCE=$(wildcard json_spirit/*.cpp)
 SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
 
-TEST_SOURCE=$(wildcard test_*.cc)
-TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
-TESTS=$(subst .cc,,$(TEST_SOURCE))
+GTEST_SOURCE=$(wildcard unittest_*.cc)
+GTEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
 
-all: $(TARGET)
+# Filename of the unittest binary
+TARGET_GTEST=unittests
+
+all: $(TARGET) $(TARGET_GTEST)
 
 %.d: %.cc
 	@set -e; rm -f $@; \
@@ -94,11 +96,17 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-test_%: test_%.o $(TARGET)
-	$(CXX) $(LDFLAGS) $(TARGET) -o $@ $<
+gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -o $@ -c $<
 
-test: $(TESTS)
-	for i in $(TESTS) ; do ./$$i ; done
+gtest_main.o: $(GTEST_DIR)/src/gtest_main.cc
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -o $@ -c $<
+
+$(TARGET_GTEST): unittest_json.o unittest_nfc.o unittest_decompose.o unittest_rpc.o \
+    unittest_logger.o unittest_pEp.o unittest_string.o \
+    gtest-all.o gtest_main.o libjson-adapter.a
+	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
+
 
 .PHONY: clean uninstall install
 
