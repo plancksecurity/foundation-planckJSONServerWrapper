@@ -64,6 +64,39 @@ std::string getBinaryPath()
 }
 
 
+bool at_least_one_PGP_address(const identity_list* il)
+{
+	for(; il!=nullptr; il = il->next)
+	{
+		if(il->ident->comm_type == PEP_ct_pEp)
+			return true;
+	}
+	return false;
+}
+
+
+PEP_STATUS outgoing_message_rating_with_subject_info(PEP_SESSION session, message* msg, PEP_rating* rating, bool* subject_info)
+{
+	PEP_STATUS status = outgoing_message_rating(session, msg, rating);
+	if(*rating == PEP_rating_unencrypted)
+	{
+		*subject_info = false;
+	}else{
+		// pseudo code:
+		//  if (at_least_one_PGP_address()) protect_subject = session->unprotected_subject; else true;
+		if( at_least_one_PGP_address(msg->to)
+		 || at_least_one_PGP_address(msg->cc) 
+		 || at_least_one_PGP_address(msg->bcc))
+		{
+			*subject_info = session->unprotected_subject;
+		}else{
+			*subject_info = true;
+		}
+	}
+	return status;
+}
+
+
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 
@@ -116,6 +149,7 @@ const FunctionMap functions = {
 		FP( "mark_as_comprimized", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>> ( &mark_as_compromized) ),
 		FP( "identity_rating"    , new FuncPC<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "outgoing_message_rating", new FuncPC<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating) ),
+		FP( "outgoing_message_rating_with_subject_info", new FuncPC<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>, Out<bool>>( &outgoing_message_rating_with_subject_info) ),
 		FP( "outgoing_message_rating_preview", new FuncPC<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating_preview) ),
 		FP( "set_identity_flags"     , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &set_identity_flags) ),
 		FP( "unset_identity_flags"   , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &unset_identity_flags) ),
