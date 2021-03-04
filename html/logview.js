@@ -1,3 +1,5 @@
+
+
 var lineRegEx = /(\d\d\d\d-\d\d-\d\d\.\d\d:\d\d:\d\d) (¶\S+) (\S+) :(.*)/;
 var colors = ['fcf7de', 'defde0', 'def3fd', 'f0defd', 'fddfdf', 'dfdfdf', 'B7C68B', 'F4F0CB', 'DED29E'];
 
@@ -86,3 +88,5 @@ function handleFileSelect(evt)
 	reader.readAsText(file, "UTF-8"); 
 }
 
+
+document.getElementById('files').addEventListener('change', handleFileSelect, false);
