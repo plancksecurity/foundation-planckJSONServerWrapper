@@ -80,7 +80,7 @@ PEP_STATUS outgoing_message_rating_with_partner_info(PEP_SESSION session, messag
 	// Nota bene: outgoing_message_rating calls update_identity() on every recipient,
 	// but these changes in their identities are not given back to the JSON-RPC clients.
 	PEP_STATUS status = outgoing_message_rating(session, msg, rating);
-	if(*rating == PEP_rating_unencrypted)
+	if(*rating < PEP_rating_reliable)
 	{
 		// if mail would be sent unencrypted, we also cannot encrypt/protect the subject,
 		// so handle it the same way as if there were non-pEp recipients.
