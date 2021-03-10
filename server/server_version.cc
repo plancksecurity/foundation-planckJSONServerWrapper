@@ -79,7 +79,7 @@ static const std::string VersionName =
 //	"(45) Kreuz Erfurt"; // fix of context-saved function parameters that would cause trouble when >1 request is processed in parallel.
 //	"(46) Erfurt-West";  // JSON-156: delete client cached values after timeout.
 //	"(47a) Erfurt-Ost";  // JSON-160, JSON-172, JSON-179.
-    "(47b) Erfurt-Vieselbach" // JSON-183: "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
+    "(47b) Erfurt-Vieselbach"; // JSON-183: "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
