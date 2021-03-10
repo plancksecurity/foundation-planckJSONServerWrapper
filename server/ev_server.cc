@@ -68,29 +68,26 @@ bool has_non_pEp_user(PEP_SESSION session, const identity_list* il)
 {
 	for(; il!=nullptr; il = il->next)
 	{
-		update_identity(session, il->ident);
-		if(il->ident->comm_type != PEP_ct_pEp)
+		if(il->ident->comm_type < PEP_ct_pEp_unconfirmed)
 			return true;
 	}
 	return false;
 }
 
 
-PEP_STATUS outgoing_message_rating_with_subject_info(PEP_SESSION session, message* msg, PEP_rating* rating, bool* subject_info)
+PEP_STATUS outgoing_message_rating_with_partner_info(PEP_SESSION session, message* msg, PEP_rating* rating, bool* partner_info)
 {
 	PEP_STATUS status = outgoing_message_rating(session, msg, rating);
 	if(*rating == PEP_rating_unencrypted)
 	{
-		*subject_info = false;
+		*partner_info = false;
 	}else{
-		// pseudo code:
-		//  if (at_least_one_PGP_address()) protect_subject = session->unprotected_subject; else true;
 		if( has_non_pEp_user(session, msg->to)
 		 || has_non_pEp_user(session, msg->cc))
 		{
-			*subject_info = false;
+			*partner_info = false;
 		}else{
-			*subject_info = true;
+			*partner_info = true;
 		}
 	}
 	return status;
@@ -149,7 +146,7 @@ const FunctionMap functions = {
 		FP( "mark_as_comprimized", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>> ( &mark_as_compromized) ),
 		FP( "identity_rating"    , new FuncPC<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "outgoing_message_rating", new FuncPC<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating) ),
-		FP( "outgoing_message_rating_with_subject_info", new FuncPC<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>, Out<bool>>( &outgoing_message_rating_with_subject_info) ),
+		FP( "outgoing_message_rating_with_partner_info", new FuncPC<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>, Out<bool>>( &outgoing_message_rating_with_partner_info) ),
 		FP( "outgoing_message_rating_preview", new FuncPC<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating_preview) ),
 		FP( "set_identity_flags"     , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &set_identity_flags) ),
 		FP( "unset_identity_flags"   , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &unset_identity_flags) ),
