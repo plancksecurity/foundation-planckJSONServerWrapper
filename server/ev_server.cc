@@ -85,8 +85,7 @@ PEP_STATUS outgoing_message_rating_with_subject_info(PEP_SESSION session, messag
 		// pseudo code:
 		//  if (at_least_one_PGP_address()) protect_subject = session->unprotected_subject; else true;
 		if( at_least_one_PGP_address(msg->to)
-		 || at_least_one_PGP_address(msg->cc) 
-		 || at_least_one_PGP_address(msg->bcc))
+		 || at_least_one_PGP_address(msg->cc))
 		{
 			*subject_info = false;
 		}else{
