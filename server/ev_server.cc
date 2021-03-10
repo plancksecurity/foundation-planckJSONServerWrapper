@@ -64,12 +64,12 @@ std::string getBinaryPath()
 }
 
 
-bool at_least_one_PGP_address(PEP_SESSION session, const identity_list* il)
+bool has_non_pEp_user(PEP_SESSION session, const identity_list* il)
 {
 	for(; il!=nullptr; il = il->next)
 	{
 		update_identity(session, il->ident);
-		if(il->ident->comm_type == PEP_ct_pEp)
+		if(il->ident->comm_type != PEP_ct_pEp)
 			return true;
 	}
 	return false;
@@ -85,8 +85,8 @@ PEP_STATUS outgoing_message_rating_with_subject_info(PEP_SESSION session, messag
 	}else{
 		// pseudo code:
 		//  if (at_least_one_PGP_address()) protect_subject = session->unprotected_subject; else true;
-		if( at_least_one_PGP_address(session, msg->to)
-		 || at_least_one_PGP_address(session, msg->cc))
+		if( has_non_pEp_user(session, msg->to)
+		 || has_non_pEp_user(session, msg->cc))
 		{
 			*subject_info = false;
 		}else{
