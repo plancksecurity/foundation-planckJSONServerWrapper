@@ -75,19 +75,23 @@ bool has_non_pEp_user(PEP_SESSION session, const identity_list* il)
 }
 
 
-PEP_STATUS outgoing_message_rating_with_partner_info(PEP_SESSION session, message* msg, PEP_rating* rating, bool* partner_info)
+PEP_STATUS outgoing_message_rating_with_partner_info(PEP_SESSION session, message* msg, PEP_rating* rating, bool* only_pEp_partners)
 {
+	// Nota bene: outgoing_message_rating calls update_identity() on every recipient,
+	// but these changes in their identities are not given back to the JSON-RPC clients.
 	PEP_STATUS status = outgoing_message_rating(session, msg, rating);
 	if(*rating == PEP_rating_unencrypted)
 	{
-		*partner_info = false;
+		// if mail would be sent unencrypted, we also cannot encrypt/protect the subject,
+		// so handle it the same way as if there were non-pEp recipients.
+		*only_pEp_partners = false;
 	}else{
 		if( has_non_pEp_user(session, msg->to)
 		 || has_non_pEp_user(session, msg->cc))
 		{
-			*partner_info = false;
+			*only_pEp_partners = false;
 		}else{
-			*partner_info = true;
+			*only_pEp_partners = true;
 		}
 	}
 	return status;
