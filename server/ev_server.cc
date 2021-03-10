@@ -68,7 +68,7 @@ bool has_non_pEp_user(PEP_SESSION session, const identity_list* il)
 {
 	for(; il!=nullptr; il = il->next)
 	{
-		if(il->ident->comm_type < PEP_ct_pEp_unconfirmed)
+		if((il->ident->comm_type | PEP_ct_confirmed) < PEP_ct_pEp)
 			return true;
 	}
 	return false;
