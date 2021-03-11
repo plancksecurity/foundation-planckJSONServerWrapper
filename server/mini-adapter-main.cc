@@ -6,7 +6,6 @@
 #include "json-adapter.hh"
 #include "daemonize.hh"
 #include "logger.hh"
-#include "nulllogger.hh"
 
 #include <thread>
 #include <fstream>
@@ -16,14 +15,19 @@
 
 #include <pEp/call_with_lock.hh>
 #include <pEp/status_to_string.hh>
+#include <pEp/Adapter.hh>
+#include <pEp/callback_dispatcher.hh>
+
 
 namespace po = boost::program_options;
 
 bool debug_mode = false;
+bool foreground = false;
 bool do_sync    = false;
 bool ignore_missing_session = false;
 bool add_sharks = false;
 bool no_html    = false;
+int  client_session_timeout = 7*60; // in secondds
 
 uintptr_t status_handle = 0;
 
@@ -83,6 +87,7 @@ try
 		("help,h", "print this help messages")
 		("version,v", "print program version")
 		("debug,d"  , po::value<bool>(&debug_mode)->default_value(false), "Run in debug mode, don't fork() in background: --debug true")
+        ("foreground,D", po::bool_switch(&foreground), "do not fork and detach terminal")
 		("sync"     , po::value<bool>(&do_sync)->default_value(true)    , "Start keysync in an asynchounous thread (default) or not (--sync false)")
 		("start-port,s", po::value<unsigned>(&start_port)->default_value(start_port),  "First port to bind on")
 		("end-port,e",   po::value<unsigned>(&end_port)->default_value(end_port),      "Last port to bind on")
@@ -92,6 +97,7 @@ try
 		("ignore-missing-session", po::bool_switch(&ignore_missing_session), "Ignore when no PEP_SESSION can be created.")
 		("add-sharks", po::bool_switch(&add_sharks), "Add sharks to the JSON Adapter.")
 		("no-html"   , po::bool_switch(&no_html   ), "Don't deliver HTML and JavaScript files, only accept JSON-RPC calls.")
+		("client-timeout", po::value<int>(&client_session_timeout)->default_value(client_session_timeout), "Drop cached client session config after this timeout (in seconds).")
 #ifdef _WIN32
 		((STATUS_HANDLE), po::value<uintptr_t>(&status_handle)->default_value(0), "Status file handle, for internal use.")
 #endif
@@ -139,12 +145,14 @@ try
 		ev_server::addSharks();
 	}
 	
-	if( debug_mode == false )
+	if( debug_mode == false && !foreground )
 		daemonize (!debug_mode, (const uintptr_t) status_handle);
 	
+    pEp::callback_dispatcher.add(JsonAdapter::messageToSend, JsonAdapter::notifyHandshake);
+
 	// create a dummy session just to see whether the Engine is functional.
 	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
-	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, &JsonAdapter::messageToSend, &pEp::mini::injectSyncMsg);
+	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, pEp::CallbackDispatcher::messageToSend, pEp::Adapter::_inject_sync_event, pEp::Adapter::_ensure_passphrase);
 	if(status != PEP_STATUS_OK || first_session==nullptr)
 	{
 		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
@@ -154,24 +162,29 @@ try
 			throw std::runtime_error(error_msg);
 		}
 	}
-
-	JsonAdapter& ja = JsonAdapter::getInstance();
+	
+	JsonAdapter& ja = pEp::mini::Adapter::createInstance();
 	ja.ignore_session_errors( ignore_missing_session)
 	  .deliver_html( !no_html )
+	  .set_client_session_timeout(client_session_timeout)
 	  ;
 	/*
 	 * FIXME: why are exceptions risen after the instantiation of JsonAdapter
-	 *        not catched in the outer try/catch?
+	 *        not caught in the outer try/catch?
 	 */
 
 	try
 	{
+<<<<<<< HEAD
 		ja.prepare_run(address, start_port, end_port);
 		if( do_sync )
 		{
 			L.info("Start Sync");
 			pEp::mini::startSync();
 		}
+=======
+		ja.prepare_run(address, start_port, end_port, pEp::CallbackDispatcher::messageToSend);
+>>>>>>> master
 		
 		if( debug_mode )
 		{
@@ -191,7 +204,8 @@ try
 			
 		}else{
 			ja.run();
-			daemonize_commit(0);
+            if (!foreground)
+                daemonize_commit(0);
 			do{
 				std::this_thread::sleep_for(std::chrono::seconds(3));
 			}while(ja.running());
@@ -204,6 +218,7 @@ try
 		ja.shutdown(nullptr);
 		ja.Log() << "Good bye. :-)";
 		pEp::call_with_lock(&release, first_session);
+        pEp::callback_dispatcher.remove(JsonAdapter::messageToSend);
 	}
 	catch(std::exception const& e)
 	{

@@ -7,6 +7,7 @@
 
 #include <cstdlib>     // for getenv()
 #include <boost/filesystem.hpp>
+#include <pEp/pEpEngine.h> // for per_user_directory()
 
 namespace fs = boost::filesystem;
 
@@ -14,8 +15,15 @@ namespace
 {
 	// 36 alphanumeric characters
 	static const char token_alphabet[] = "qaywsxedcrfvtgbzhnujmikolp1234567890POIUZTREWQASDFGHJKLMNBVCXY";
+<<<<<<< HEAD
 	
 	std::string create_random_token(unsigned length=32)
+=======
+
+}
+
+	std::string create_random_token(unsigned length)
+>>>>>>> master
 	{
 		static std::random_device rd;
 		static std::mt19937_64 gen(rd());
@@ -38,9 +46,8 @@ namespace
 
 fs::path get_token_filename()
 {
-	// Windows guarantees that this directory is rw by the user only?
-	const char* const dir = getenv("LOCALAPPDATA");
-	return dir / fs::path("pEp") / fs::path("json-token");
+	// Get the directory from the pEp Engine.
+	return per_user_directory() / fs::path("json-token");
 }
 
 void write_security_file(const std::string& content)
@@ -62,19 +69,15 @@ void write_security_file(const std::string& content)
 
 fs::path get_token_filename()
 {
-	const char* const home_dir = getenv("HOME");
-	if(home_dir == nullptr)
+	const char* const pEp_home_dir = per_user_directory();
+	if(pEp_home_dir == nullptr)
 	{
-		throw std::runtime_error("Cannot get home directory. $HOME environment variable is not set.");
+		throw std::runtime_error("per_user_directory() fails.");
 	}
 	
-	const fs::path pEp_dir = fs::path(home_dir) / ".pEp";
+	const fs::path pEp_dir = fs::path(pEp_home_dir);
 	boost::system::error_code ec;
-	fs::create_directory( pEp_dir, ec );
-	if(ec)
-	{
-		throw boost::system::system_error(ec, "Cannot create pEp home directory" );
-	}
+	fs::create_directory( pEp_dir );
 	
 	fs::permissions( pEp_dir, fs::perms(0700), ec);
 	if(ec)
@@ -107,7 +110,6 @@ void write_security_file(const std::string& content)
 
 #endif // ! _WIN32
 
-} // end of anonymous namespace
 
 
 namespace js = json_spirit;
@@ -115,7 +117,7 @@ namespace js = json_spirit;
 // creates a file with restrictive access rights that contains a security token.
 std::string create_security_token(const std::string& server_address, unsigned port_nr, const std::string& path)
 {
-	const std::string sec_token = create_random_token();
+	const std::string sec_token = create_random_token(38);
 	
 	js::Object o;
 	o.emplace_back("address", server_address);

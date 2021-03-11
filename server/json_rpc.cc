@@ -1,9 +1,16 @@
+#include "context.hh"
 #include "json_rpc.hh"
 #include "json_spirit/json_spirit_utils.h"
 #include "json_spirit/json_spirit_writer.h"
 #include "json-adapter.hh"
 #include "security-token.hh"
 #include "logger.hh"
+#include <atomic>
+
+namespace
+{
+	std::atomic<std::uint64_t> request_nr{0};
+}
 
 
 Logger& Log()
@@ -21,6 +28,7 @@ Logger& Log()
 		js::Object ret;
 		ret.emplace_back( "jsonrpc", "2.0" );
 		ret.emplace_back( "id"     , id );
+		ret.emplace_back( "thread_id", Logger::thread_id() );
 		ret.emplace_back( "result" , result );
 		
 		DEBUG_OUT(Log(),  "make_result(): result: " + js::write(result) );
@@ -42,41 +50,30 @@ Logger& Log()
 		
 		js::Object ret;
 		ret.emplace_back( "jsonrpc", "2.0" );
-		ret.emplace_back( "error"  , err_obj );
 		ret.emplace_back( "id"     , id );
+		ret.emplace_back( "thread_id", Logger::thread_id() );
+		ret.emplace_back( "error"  , err_obj );
 		
 		return ret;
 	}
 
-// Client side:
-
-js::Object make_request(const std::string& functionName, const js::Array& parameters, const std::string& securityContext)
+// for event delivery to clients:
+js::Object make_request(const std::string& functionName, const js::Array& parameters)
 {
-	static int request_id = 2000;
-	
 	js::Object request;
-	request.emplace_back( "jsonrpc", "2.0" );
-	request.emplace_back( "id"     , ++request_id );
-	request.emplace_back( "security_token", securityContext );
 	request.emplace_back( "method", functionName );
+	request.emplace_back( "request_nr", ++request_nr );
+	request.emplace_back( "thread_id", Logger::thread_id() );
 	request.emplace_back( "params", parameters );
 	
 	return request;
 }
 
 
-namespace
-{
-	FunctionMap::const_iterator find_in_vector(const FunctionMap& fm, const std::string& key)
-	{
-		return std::find_if(fm.begin(), fm.end(), [&key](const FunctionMap::value_type& v){ return v.first == key; });
-	}
-}
-
 using json_spirit::find_value;
 
 
-js::Object call(const FunctionMap& fm, const js::Object& request, Context* context)
+js::Object call(const FunctionMap& fm, const js::Object& request, JsonAdapterBase* ja)
 {
 	Logger L("jrpc:call");
 	int request_id = -1;
@@ -90,10 +87,13 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 		
 		const auto sec_token = find_value(request, "security_token");
 		const std::string sec_token_s = (sec_token.type()==js::str_type ? sec_token.get_str() : std::string() ); // missing or non-string "security_token" --> empty string.
-		if( context->verify_security_token(sec_token_s)==false )
+		if( ja->verify_security_token(sec_token_s)==false )
 		{
 			return make_error(JSON_RPC::INVALID_REQUEST, "Invalid request: Wrong security token.", request, request_id);
 		}
+		
+		const auto client_id = find_value(request, "client_id");
+		const std::string client_id_s = (client_id.type()==js::str_type ? client_id.get_str() : std::string() ); // missing or non-string "client_id" --> empty string.
 		
 		const auto method = find_value(request, "method");
 		if(method.type()!=js::str_type)
@@ -102,8 +102,8 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 		}
 		
 		const std::string method_name = method.get_str();
-		//const auto fn = fm.find(method_name);
-		const auto fn = find_in_vector(fm,method_name);
+		const auto fn = fm.find(method_name);
+		//const auto fn = find_in_vector(fm,method_name);
 		if(fn == fm.end() || fn->second->isSeparator())
 		{
 			return make_error(JSON_RPC::METHOD_NOT_FOUND, "Method \"" + method_name + "\" is unknown to me.", request, request_id);
@@ -131,7 +131,8 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 		DEBUG_OUT(L, "method_name=\"" + method_name + "\"\n"
 					"params=" + js::write(params) );
 		
-		const js::Value result = fn->second->call(p, context);
+		Context context{ja, client_id_s};
+		const js::Value result = fn->second->call(p, &context);
 		DEBUG_OUT(L, "result=" + js::write(result, js::raw_utf8) );
 		
 		return make_result(result, request_id);
@@ -139,7 +140,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 	catch(const std::exception& e)
 	{
 		// JSON-RPC "internal error"
-		return make_error(JSON_RPC::INTERNAL_ERROR, std::string("std::exception catched: \"") + e.what() + "\".", request, request_id );
+		return make_error(JSON_RPC::INTERNAL_ERROR, std::string("std::exception caught: \"") + e.what() + "\".", request, request_id );
 	}
 	catch(...)
 	{

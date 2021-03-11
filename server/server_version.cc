@@ -70,7 +70,20 @@ static const std::string VersionName =
 //  So we got a new exit with the same number:
 //	"(39) Eisenach"; // JSON-118: fix to_json() for KeySync callbacks to avoid crashes. Add attachment support in interactive.js \o/
 //	"(40) Eisenach-Ost"; // remove all Enigmail leftovers. Bump API version to 0.17.0
+<<<<<<< HEAD
 	"(40b) Sättelstädt"; // JSON-128: getNextEvent() added, for long polling. API version 0.18.2
+=======
+//	"(40b) Sättelstädt"; // JSON-139: support for NULL pointers in "const char*" parameters: In<c_string, NullOkay>
+
+// 41a,b were skipped, intentionally
+//	"(42) Gotha"; // JSON-152: 2-parameter version of pollForEvents().
+//	"(43) Wandersleben"; // JSON-153 passphrase support. *sigh*
+//	"(44) Neudietendorf"; // replace my own sync thread code by libpEpAdapter's implementation.
+//	"(45) Kreuz Erfurt"; // fix of context-saved function parameters that would cause trouble when >1 request is processed in parallel.
+//	"(46) Erfurt-West";  // JSON-156: delete client cached values after timeout.
+//	"(47a) Erfurt-Ost";  // JSON-160, JSON-172, JSON-179.
+    "(47b) Erfurt-Vieselbach"; // JSON-183: "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
+>>>>>>> master
 
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
@@ -98,8 +111,22 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,17,0);  // kick out getGpgEnvironment(). It was Enigmail-only (JSON-18) and breaks architecture. Kick-out hotfixer un-feature.
 //static const ServerVersion sv(0,18,0);  // JSON-127: 'src' in encrypt_message() is InOut.
 //static const ServerVersion sv(0,18,1);  // JSON-130: some data members in pEp_identity added
+<<<<<<< HEAD
 static const ServerVersion sv(0,18,2);  // JSON-128: add getNextEvent() to JSON-RPC API
 
+=======
+//static const ServerVersion sv(0,18,2);  // JSON-135: Add mime_encode_message() and mime_decode_message() to the JSON API
+//static const ServerVersion sv(0,18,3);  // JSON-137: Add outgoing_message_rating_preview() to the JSON API
+//static const ServerVersion sv(0,18,4);  // JSON-141: fix handling of parameters of type PEP_rating
+
+// 0.19 was skipped intentionally.
+//static const ServerVersion sv(0,20,0);  // JSON-152: 2-parameter version of pollForEvents().
+//static const ServerVersion sv(0,20,1);  // JSON-153: passphrase support
+//static const ServerVersion sv(0,21,0);  // import_key() expects binary data, so they are always base64-encoded!
+//static const ServerVersion sv(0,21,1);  // wrap _all_ Engine functions with passphrase_cache.api(), except config_*() functions.
+//static const ServerVersion sv(0,21,2); // JSON-165 the msg param of re_evaluate_message_rating() is now "inout" and not "in" any more
+static const ServerVersion sv(0,22,0); // JSON-183 "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
+>>>>>>> master
 	return sv;
 }
 
@@ -112,15 +139,15 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 {
 	Logger L("ServerVersion");
 	if (!PackageVersion)
-		
+	{
 		try{
 			PackageVersion = "0.0.0";  /* break the loop */
-
+			
 			const std::string file_content =
 				boost::algorithm::trim_copy(
 					pEp::slurp("PackageVersion")
 				);
-
+			
 			try{
 				js::Value v;
 				js::read_or_throw(file_content, v);
@@ -132,7 +159,7 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 				L.warning(std::string("Cannot parse file \"PackageVersion\" as JSON object: ") + e.what() );
 				PackageVersion = strdup(file_content.c_str());
 			}
-
+			
 			this->package_version = PackageVersion;
 		}
 		catch(std::runtime_error& e)
@@ -140,7 +167,7 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 			// slurp() throws when it cannot read the file.
 			L.info(std::string("Cannot read file \"PackageVersion\": ") + e.what() );
 		}
-	
+	}
 	L.debug("ServerVersion set as %u.%u.%u name=\"%s\" package_version=\"%s\".",
 		major, minor, patch, name.c_str(), package_version
 		);

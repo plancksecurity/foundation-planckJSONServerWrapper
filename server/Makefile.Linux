@@ -6,120 +6,52 @@ endif
 
 # default config
 
-# set to 'etpan' or 'pEpMIME'
-MIME_LIB?=etpan
+# path to installed libraries
 
-PREFIX?=$(HOME)/local
+PREFIX=$(HOME)/local
 
-# where pEp stuff is installed into:
-PEP_LIB_PATH?=$(PREFIX)/lib
-PEP_INCLUDE?=$(PREFIX)/include
+PEP_INCLUDE=$(PREFIX)/include
 
-# where libs from the packages systems are installed into:
-LIBRARY_PATH?=/usr/local/lib
+LIBRARY_PATH=$(PREFIX)/lib
 
+BOOST_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
 
-# paths to the .a libraries. Can be overridden in local.conf
-PEP_WEBSERVER?=$(PEP_LIB_PATH)
-PEP_ADAPTER_LIBRARY=$(PEP_LIB_PATH)
-PEP_ENGINE?=$(PEP_LIB_PATH)
-LIBETPAN_FDIK?=$(PEP_LIB_PATH)
-PEP_MIME_PATH?=$(PEP_LIB_PATH)
-SEQUOIA_PGP?=$(PEP_LIB_PATH)
-ASN1_PATH?=$(PEP_LIB_PATH)
-NETTLE?=$(LIBRARY_PATH)
-
-BOOST_INCLUDE_PATH?=/usr/local/include
-BOOST_LIBRARY_PATH?=$(LIBRARY_PATH)
-
-
-LIBRARY_PATH?=$(PREFIX)/lib
-
-GMP_LIBRARY_PATH?=$(LIBRARY_PATH)
-SQLITE3_LIBRARY_PATH?=$(LIBRARY_PATH)
-LIBZ_LIBRARY_PATH?=$(LIBRARY_PATH)
-ICONV_LIBRARY_PATH?=$(LIBRARY_PATH)
-LIBEVENT_LIBRARY_PATH=$(LIBRARY_PATH)
-
-AR?=/usr/bin/ar
+AR?=ar
 CC?=cc
 CXX?=c++
-CFLAGS+=-std=c14 -fvisibility=hidden
-CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden -fsanitize=address
-LDFLAGS+=-std=c++14 -fsanitize=address
+CFLAGS+=-std=c14
+CXXFLAGS+=-I$(PEP_INCLUDE) -I$(GTEST_DIR)/include -std=c++14
+LDFLAGS+=-std=c++14
 
 ifdef NDEBUG
-	CFLAGS+=-O3 -DNDEBUG  
-	CXXFLAGS+=-O3 -DNDEBUG
+	CFLAGS+=-O3 -DNDEBUG -fvisibility=hidden -fno-stack-check
+	CXXFLAGS+=-O3 -DNDEBUG -fvisibility=hidden -fno-stack-check
 else
-	CFLAGS+=-O0 -g -DDEBUG_ENABLED
-	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED
+	CFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden -fno-stack-check
+	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden -fno-stack-check
 endif
 
 TARGET=pEp-mini-json-adapter
 LIB_TARGET=libjson-adapter.a
 
-ifeq ($(MIME_LIB),etpan)
-    LDLIBS+=-letpan
-    MIME_LIB_A=$(LIBETPAN_FDIK)/libetpan.a
-    OMIT_NFC_SOURCE=
-else ifeq ($(MIME_LIB),pEpMIME)
-    LDLUBS+=-lpEpMIME
-    MIME_LIB_A=$(PEP_MIME_PATH)/libpEpMIME.a
-    
-    # is already in libpEpMIME:
-    OMIT_NFC_SOURCE=nfc.cc nfc_sets.cc
-else
-    $(error "You must set MIME_LIB to 'etpan' or 'pEpMIME'!" )
-endif
-
-
-ALL_SOURCE=$(filter-out parse_mail.cc unittest_%.cc, $(wildcard *.cc))
+ALL_SOURCE=$(filter-out unittest_%.cc,$(wildcard *.cc))
+LIB_SOURCE=$(filter-out mini-adapter-%.cc,$(ALL_SOURCE))
 MA_SOURCE=$(wildcard mini-adapter-*.cc)
 
-LIB_SOURCE=$(filter-out $(MA_SOURCE) $(OMIT_NFC_SOURCE), $(ALL_SOURCE))
-
 DEPENDS=$(subst .cc,.d,$(ALL_SOURCE))
-
 ALL_OBJECTS=$(subst .d,.o,$(DEPENDS))
 LIB_OBJECTS=$(subst .cc,.o,$(LIB_SOURCE))
 MA_OBJECTS=$(subst .cc,.o,$(MA_SOURCE))
-
 SPIRIT_SOURCE=$(wildcard json_spirit/*.cpp)
 SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
 
-<<<<<<< HEAD
-$(TARGET_GTEST): unittest_json.o unittest_nfc.o unittest_decompose.o unittest_rpc.o \
-    unittest_logger.o unittest_pEp.o unittest_sha1.o \
-    gtest-all.o gtest_main.o libjson-adapter.a
-	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
-=======
-TEST_SOURCE=$(wildcard unittest_*.cc)
-TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
->>>>>>> master
+GTEST_SOURCE=$(wildcard unittest_*.cc)
+GTEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
 
+# Filename of the unittest binary
+TARGET_GTEST=unittests
 
-
-ALL_STATIC_LIBS=$(PEP_ENGINE)/libpEpEngine.a \
-		$(PEP_ADAPTER_LIBRARY)/libpEpAdapter.a \
-		$(PEP_WEBSERVER)/libpEpwebserver.a \
-		$(BOOST_LIBRARY_PATH)/libboost_filesystem$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_program_options$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_system$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_thread$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_regex$(BOOST_MT).a \
-		$(SEQUOIA_PGP)/libsequoia_openpgp_ffi.a \
-		$(MIME_LIB_A) \
-		$(ASN1_PATH)/libasn1.a \
-		$(LIBZ_LIBRARY_PATH)/libz.a \
-		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
-		$(NETTLE)/libhogweed.a \
-		$(NETTLE)/libnettle.a \
-		$(GMP_LIBRARY_PATH)/libgmp.a \
-		$(ICONV_LIBRARY_PATH)/libiconv.a
-
-
-all: $(TARGET) unittests parse_mail
+all: $(TARGET) $(TARGET_GTEST)
 
 %.d: %.cc
 	@set -e; rm -f $@; \
@@ -136,20 +68,45 @@ $(LIB_TARGET): $(LIB_OBJECTS)
 	$(AR) -cr $@ $^
 
 $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
-	$(CXX) $(LDFLAGS) \
-		$(MA_OBJECTS) $(SPIRIT_OBJECTS)  $(LIB_TARGET) \
-		-lobjc -framework Foundation -framework Security \
-		$(ALL_STATIC_LIBS)
+	$(CXX) -static $(LDFLAGS) \
+		$(MA_OBJECTS) $(SPIRIT_OBJECTS) $(LIB_TARGET) \
+		$(LIBRARY_PATH)/libpEpEngine.a \
+		$(LIBRARY_PATH)/libpEpAdapter.a \
+		$(LIBRARY_PATH)/libpEpwebserver.a \
+		$(BOOST_LIBRARY_PATH)/libboost_filesystem$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_program_options$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_system$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_thread$(BOOST_MT).a \
+		$(BOOST_LIBRARY_PATH)/libboost_regex$(BOOST_MT).a \
+		$(LIBRARY_PATH)/libsequoia_openpgp_ffi.a \
+		$(LIBRARY_PATH)/libetpan.a \
+		$(LIBRARY_PATH)/libasn1.a \
+		/usr/lib/x86_64-linux-gnu/liblockfile.a \
+		/usr/lib/x86_64-linux-gnu/libz.a \
+		/usr/lib/x86_64-linux-gnu/libsqlite3.a \
+		/usr/lib/x86_64-linux-gnu/libhogweed.a \
+		/usr/lib/x86_64-linux-gnu/libnettle.a \
+		/usr/lib/x86_64-linux-gnu/libgmp.a \
+		/usr/lib/x86_64-linux-gnu/libpthread.a \
+		/usr/lib/x86_64-linux-gnu/libuuid.a \
+		/usr/lib/x86_64-linux-gnu/libdl.a \
+		/usr/lib/x86_64-linux-gnu/libc.a \
 		-o "$@"
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-unittests: $(TEST_OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS)
+gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -o $@ -c $<
 
-parse_mail: parse_mail.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALL_STATIC_LIBS) $(LIB_TARGET) -liconv
+gtest_main.o: $(GTEST_DIR)/src/gtest_main.cc
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -o $@ -c $<
+
+$(TARGET_GTEST): unittest_json.o unittest_nfc.o unittest_decompose.o unittest_rpc.o \
+    unittest_logger.o unittest_pEp.o unittest_string.o \
+    gtest-all.o gtest_main.o libjson-adapter.a
+	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
+
 
 .PHONY: clean uninstall install
 
@@ -162,7 +119,7 @@ uninstall:
 	for i in *.hh; do rm -f $(PREFIX)/include/pEp/\$i ; done
 
 clean:
-	rm -vf *.o *.d *.d.* $(TARGET) $(TESTS) encode_decode
+	rm -vf *.o *.d *.d.* $(TARGET) $(TESTS)
 
 local.conf:
 	@echo "# the following are directories with the source build" >> local.conf

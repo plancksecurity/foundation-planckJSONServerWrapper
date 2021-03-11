@@ -230,12 +230,23 @@ var Param2Form =
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="0"' + disabled + '>Incoming,&nbsp;&nbsp;'
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="1"' + disabled + ' checked>Outgoing';
 					},
+<<<<<<< HEAD
 		PEP_sync_handshake_result: function(nr, pp, value)
 					{
 						return 'DeliverHandshakeResultt: '
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="-1" checked>Cancel,&nbsp;&nbsp;'
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="0" >Accepted,&nbsp;&nbsp;'
 							+ '<input type="radio" name="inp_rad_' + nr + '" value="1" >Rejected.';
+=======
+		PEP_rating : function(nr, pp, value)
+					{
+						if(pp.direction=="Out")
+						{
+							return 'PEP Rating output';
+						}else{
+							return 'PEP Rating: ' + genInput('inp_param_' + nr , 'number', pp.direction, 0);
+						}
+>>>>>>> master
 					},
 	};
 
@@ -390,6 +401,12 @@ var Form2Param =
 					{
 						return parseInt( $('input[name=inp_rad_' + nr + ']:checked', '#frm').val() );
 					}
+		PEP_rating : function(nr, pp, value)
+					{
+						var r = {};
+						r.rating = parseInt( document.getElementById('inp_param_' + nr ).value );
+						return r;
+					},
 	};
 
 // uses {0}, {1} etc. instead of %d etc.

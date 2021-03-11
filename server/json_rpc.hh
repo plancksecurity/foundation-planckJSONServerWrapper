@@ -2,7 +2,6 @@
 #define JSON_RPC_HH
 
 #include "json_spirit/json_spirit_value.h"
-#include "context.hh"
 #include "function_map.hh"
 
 namespace js = json_spirit;
@@ -17,11 +16,13 @@ enum class JSON_RPC
 	INTERNAL_ERROR   = -32603,
 };
 
+class JsonAdapterBase;
+
 // Server side:
 
 // parse the JSON-RPC 2.0 compatible "request", call the C function
 // and create an appropiate "response" object (containing a result or an error)
-js::Object call(const FunctionMap& fm, const js::Object& request, Context* context);
+js::Object call(const FunctionMap& fm, const js::Object& request, JsonAdapterBase* ja);
 
 // create a JSON-RPC 2.0 compatible result response object
 //js::Object make_result(const js::Value& result, int id);
@@ -30,7 +31,7 @@ js::Object call(const FunctionMap& fm, const js::Object& request, Context* conte
 js::Object make_error(JSON_RPC error_code, const std::string& error_message, const js::Value& data, int id);
 
 
-// Client side:
-js::Object make_request(const std::string& functionName, const js::Array& parameters, const std::string& securityContext);
+// for events to clients:
+js::Object make_request(const std::string& functionName, const js::Array& parameters);
 
 #endif // JSON_RPC_HH

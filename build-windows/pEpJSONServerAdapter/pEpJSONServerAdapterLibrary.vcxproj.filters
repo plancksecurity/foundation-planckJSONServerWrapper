@@ -39,9 +39,6 @@
     <ClInclude Include="..\..\server\pEp-types.hh">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\server\nulllogger.hh">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\server\nfc_sets.hh">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -108,6 +105,12 @@
     <ClInclude Include="..\..\server\json_spirit\json_spirit_writer_template.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\server\session_registry.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\server\adapter-library.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\server\server_version.cc">
@@ -123,9 +126,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\server\pEp-types.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\server\nulllogger.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\server\nfc_sets.cc">
@@ -152,9 +152,6 @@
     <ClCompile Include="..\..\server\ev_server.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\server\daemonize.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\server\context.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -174,6 +171,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\server\prefix-config.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\server\session_registry.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\server\daemonize_windows.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

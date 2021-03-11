@@ -1,15 +1,31 @@
 #ifndef JSON_ADAPTER_HH
 #define JSON_ADAPTER_HH
 
+#include <thread>
 #include <pEp/message.h>
 #include <pEp/sync_api.h>
 #include "registry.hh"
-#include "context.hh"
 #include "logger.hh"
 #include "server_version.hh"
+#include "json_spirit/json_spirit_value.h"
 
 
-class JsonAdapter : public Context
+class SessionRegistry;
+
+
+// allow mocking the JsonAdapter in unittest_rpc
+class JsonAdapterBase
+{
+public:
+	~JsonAdapterBase() = default;
+	virtual bool verify_security_token(const std::string& s) const = 0;
+	
+	// Cache a certain function call. See JSON-155.
+	virtual void cache(const std::string& client_id, const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) = 0;
+};
+
+
+class JsonAdapter : public JsonAdapterBase
 {
 public:
 	
@@ -20,8 +36,11 @@ public:
 	JsonAdapter(const JsonAdapter&) = delete;
 	void operator=(const JsonAdapter&) = delete;
 	
-	void   registerEventListener(const std::string& address, unsigned port, const std::string& securityContext);
-	void unregisterEventListener(const std::string& address, unsigned port, const std::string& securityContext);
+	// returns all events in queue, if any. Blocks for given number of seconds and returns empty array on timeout
+	json_spirit::Array pollForEvents(unsigned timeout_seconds);
+	
+	// same as above, but with explicit session_id. JUST FOR DEBUG!!!
+	json_spirit::Array pollForEvents2(const std::string& session_id, unsigned timeout_seconds);
 	
 	// set some internal variables and return itself for chaining.
 	// these functions shall be called before prepare_run()!
@@ -32,11 +51,22 @@ public:
 	// if called with "false" the JSON Adpapter would no longer deliver HTML and JavaScript files, only handle JSON-RPC requests
 	JsonAdapter& deliver_html(bool _deliver_html);
 	
-	// look for a free port to listen on
-	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port);
+	// sets the timeout to drop client's config cache
+	JsonAdapter& set_client_session_timeout(int timeout_seconds);
 	
-	// run the server in another thread and returns immediately.
+	// look for a free port to listen on and set the given configuration
+	void prepare_run(const std::string& address, unsigned start_port, unsigned end_port, ::messageToSend_t messageToSend);
+
+	// run the server in another thread and returns immediately. prepare_run() has to be called before!
 	void run();
+	
+	// non-static: does the real work. :-)
+	void connection_close_cb();
+	
+	void close_session(const std::string& session_id);
+	
+	static
+	std::string create_session();
 	
 	// exits gracefully after the given number of seconds.
 	// if "tv" is NULL it means: exits immediately after _all_ currently processed events have been finished.
@@ -55,15 +85,20 @@ public:
 	
 	unsigned request_count() const;
 	
+	virtual std::thread::id  get_sync_thread_id() const = 0;
+	
 	// returns 'true' if 's' is the security token created by the function above.
 	virtual bool verify_security_token(const std::string& s) const override;
 	
-	virtual void augment(json_spirit::Object& returnObject) override;
+	virtual void cache(const std::string& client_id, const std::string& fn_name, const std::function<void(PEP_SESSION)>& func) override;
 	
 	// returns the version of the JsonAdapter
 	static
 	ServerVersion version();
-
+	
+	// returns the PEP_SESSION registered for the current thread
+	static PEP_SESSION getSessionForThread(const std::string& client_id);
+	
 	static PEP_STATUS messageToSend(message* msg);
 	static PEP_STATUS notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal);
 
@@ -74,6 +109,7 @@ public:
 	
 	static JsonAdapter& getInstance();
 	
+<<<<<<< HEAD
 	// Very ugly: that function ptr has to be known to the JA before any instance is created. -.-
 	static JsonAdapter& startup(inject_sync_event_t inject_fn);
 	
@@ -84,17 +120,39 @@ public:
 	std::string getNextEvent_s(int timeout_seconds);
 	
 	std::string getNextEvent(int timeout_seconds);
+=======
+	static SessionRegistry& getSessionRegistry();
+	
+	JsonAdapter& startup(::messageToSend_t messageToSend);
+
+protected:
+
+	// might be overridden for multi-protocol adapters to dispatch to different client types.
+	virtual messageToSend_t getMessageToSend() const { return &JsonAdapter::messageToSend; }
+	
+	// MUST be overridden, because the sync event queue is _not_ part of the Json Adapter
+	virtual inject_sync_event_t getInjectSyncEvent() const = 0;
+	
+	static
+	JsonAdapter& createInstance(JsonAdapter* instance);
+	
+	static
+	JsonAdapter* singleton;
+
+	// creates the one and only instance of the JSON adapter.
+	JsonAdapter();
+>>>>>>> master
 
 //private:
 	struct Internal;
+	friend struct Internal;
+	
 	unsigned long long guard_0;
 	Internal* i; // pimpl for stable interface.
 	unsigned long long guard_1;
 
 private:
 
-	// creates the one and only instance of the JSON adapter.
-	JsonAdapter();
 
 	static
 	void staticThreadFunc(JsonAdapter* that) { that->threadFunc(); }
