@@ -16,6 +16,3 @@ Out<c_string, ParamFlag::DontOwn>::~Out()
 template<>
 In<size_t, ParamFlag::NoInput>::~In()
 {}
-
-template<>
-js::Value Type2String<binary_string>::get()  { return "BinaryString"; }

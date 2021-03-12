@@ -7,13 +7,11 @@
 #include "json_spirit/json_spirit_writer.h"
 
 #include "context.hh"
-#include "logger.hh"
 #include <type_traits>
 
 // Just for debugging:
 #include <iostream>
 #include <pEp/message_api.h>
-#include <pEp/passphrase_cache.hh>
 
 
 template<class R>
@@ -116,16 +114,15 @@ public:
 	{
 		// extract the U'th element of the parameter list
 		const Element element(parameters[U], ctx, U);
-
+		
 		const js::Value ret = NextHelper::call(fn, ctx, out_parameters, parameters, a2..., element );
 		if(Element::is_output)
 		{
 			js::Value out = element.to_json();
-			//			std::cerr << "|$ Out #" << U << " : " << js::write(out) << "\n";
-			out_parameters.push_back(std::move(out));
-		}
-		else {
-			//			std::cerr << "|$ Param #" << U << " is not for output.\n";
+//			std::cerr << "|$ Out #" << U << " : " << js::write(out) << "\n";
+			out_parameters.push_back( std::move(out) );
+		}else{
+//			std::cerr << "|$ Param #" << U << " is not for output.\n";
 		}
 		return ret;
 	}
@@ -150,20 +147,23 @@ public:
 	typedef typename Return<R>::return_type ReturnType;
 	
 	virtual ~Func() = default;
-	virtual bool isSeparator() const noexcept override { return false; }
+	virtual bool isSeparator() const override
+	{
+		return false;
+	}
 	
-	explicit Func( const std::function<ReturnType(typename Args::c_type ...)>& _f )
+	Func() : fn() {}
+
+	Func( const std::function<ReturnType(typename Args::c_type ...)>& _f )
 	: fn(_f)
 	{}
-	
-	Func(const Func<R, Args...>&) = delete;
-	void operator=(const Func<R, Args...>&) = delete;
-	
+
 	std::function<ReturnType(typename Args::c_type ...)> fn;
-	
+
 	js::Value call(const js::Array& parameters, Context* context) const override
 	{
 		typedef helper<R, 0, sizeof...(Args), Args...> Helper;
+		
 		if(parameters.size() != Helper::nr_of_input_params)
 			throw std::runtime_error("Size mismatch: "
 				"Array has "    + std::to_string( parameters.size() ) + " element(s), "
@@ -188,10 +188,13 @@ public:
 		out_params.reserve( Helper::nr_of_output_params );
 		
 		js::Value ret = Helper::call(fn, context, out_params, *p_params);
-		std::string _ret = js::value_type_to_string(ret.type());
+		
 		js::Object rs;
 		rs.emplace_back("outParams", std::move(out_params));
 		rs.emplace_back("return", std::move(ret));
+		
+		context->augment(rs);  // used e.g. add some debug infos to the status return value
+		context->clear(); // clear all stored values, if any.
 		
 		return rs;
 	}
@@ -208,162 +211,18 @@ public:
 };
 
 
-// wrap the function with passphrase_cache.api()
-template<class R, class... Args>
-class FuncPC : public Func<R, Args...>
-{
-public:
-	typedef Func<R, Args...> Base;
-	typedef typename Return<R>::return_type ReturnType;
-	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
-	
-	FuncPC( ReturnType(*_f)(typename Args::c_type ...) )
-	: Base( [_f](typename Args::c_type... args) { return pEp::passphrase_cache.api( _f, args...); } )
-	{}
-};
-
-
-// add the function & its parameters in the context->cache
-// (where they are cached and applied to all PEP_SESSIONs of the client)
-template<class R, class... Args>
-class FuncCache : public Func<R, Args...>
-{
-public:
-	typedef Func<R, Args...> Base;
-	typedef typename Return<R>::return_type ReturnType;
-	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
-	
-	FuncCache(const std::string& _func_name, const std::function<ReturnType(typename Args::c_type ...)>& _f )
-	: Base(_f)
-	, func_name(_func_name)
-	{}
-	
-	js::Value call(const js::Array& parameters, Context* context) const override
-	{
-		Logger Log("FuncCache::call");
-		typedef std::tuple<typename Args::c_type...> param_tuple_t;
-		//param_tuple_t param_tuple;
-		
-		// FIXME: Does only work with functions with type: void(PEP_SESSION, T):
-		const auto p1 = from_json< typename std::tuple_element<1, param_tuple_t>::type >(parameters[0]);
-		
-		Log << Logger::Debug << "func_name=\"" << func_name << "\", value=" << p1 << ".";
-		
-		std::function<void(PEP_SESSION)> func = std::bind(Base::fn, std::placeholders::_1, p1);
-		context->cache(func_name, func);
-		return Base::call(parameters, context);
-	}
-
-private:
-	const std::string func_name;
-};
-
-
-template<class R, class... Args>
-class FuncCachePassphrase : public Func<R, Args...>
-{
-public:
-	typedef Func<R, Args...> Base;
-	typedef typename Return<R>::return_type ReturnType;
-	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
-	
-	FuncCachePassphrase(const std::string& _func_name )
-	: Base( &config_passphrase )
-	, func_name(_func_name)
-	{}
-	
-	js::Value call(const js::Array& parameters, Context* context) const override
-	{
-		Logger Log("FuncCachePasswd::call");
-		const std::string& passphrase = parameters.at(0).get_str();
-		
-		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
-		
-		pEp::passphrase_cache.add(passphrase); // for the current PEP_SESSION
-		std::function<void(PEP_SESSION)> func = [passphrase](PEP_SESSION session)
-			{
-				config_passphrase(session, pEp::passphrase_cache.add(passphrase)); // for all other existing and future PEP_SESSIONs
-			};
-		
-		context->cache(func_name, func);
-		return Base::call(parameters, context);
-	}
-
-private:
-	const std::string func_name;
-};
-
-template<class R, class... Args>
-class FuncCachePassphrase4NewKeys : public Func<R, Args...>
-{
-public:
-	typedef Func<R, Args...> Base;
-	typedef typename Return<R>::return_type ReturnType;
-	typedef helper<R, 0, sizeof...(Args), Args...> Helper;
-	
-	FuncCachePassphrase4NewKeys(const std::string& _func_name )
-	: Base( &config_passphrase_for_new_keys )
-	, func_name(_func_name)
-	{}
-	
-	js::Value call(const js::Array& parameters, Context* context) const override
-	{
-		Logger Log("FuncCachePasswd4NK::call");
-		bool enable = parameters.at(0).get_bool();
-		const std::string& passphrase = parameters.at(1).get_str();
-		
-		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
-		
-		pEp::passphrase_cache.add_stored(passphrase); // for the current PEP_SESSION
-		std::function<void(PEP_SESSION)> func = [enable, passphrase](PEP_SESSION session)
-			{
-				// for all other existing and future PEP_SESSIONs
-				config_passphrase_for_new_keys(session, enable, pEp::passphrase_cache.add_stored(passphrase));
-			};
-		
-		context->cache(func_name, func);
-		return Base::call(parameters, context);
-	}
-
-private:
-	const std::string func_name;
-};
-
-
-
 // Just a separating placeholder in the drop-down list. Does not calls anything.
 class Separator : public FuncBase
 {
 public:
 	Separator() = default;
-	virtual bool isSeparator()                          const noexcept override { return true; }
+	virtual bool isSeparator()                          const override { return true; }
 	virtual void setJavaScriptSignature(js::Object& o)  const override { o.emplace_back("separator", true); }
 	virtual js::Value  call(const js::Array&, Context*) const override { return js::Value{}; }
 };
 
 //typedef std::map< std::string, FuncBase* > FunctionMap;
-
-typedef std::vector< std::pair< std::string, FuncBase*> > FunctionMapBase;
-
-class FunctionMap
-{
-public:
-    typedef FunctionMapBase::value_type     value_type;
-    typedef FunctionMapBase::const_iterator const_iterator;
-    
-    const_iterator begin() const noexcept { return v.begin(); }
-    const_iterator end()   const noexcept { return v.end(); }
-
-    const_iterator find(const std::string&) const noexcept;
-
-    FunctionMap(std::initializer_list<value_type> il);
-    ~FunctionMap();
-
-private:
-    FunctionMapBase v;
-};
-
+typedef std::vector< std::pair< std::string, FuncBase*> > FunctionMap;
 typedef FunctionMap::value_type FP;
-
 
 #endif // FUNCTION_MAP_HH

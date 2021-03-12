@@ -53,20 +53,12 @@ template<>
 In<message*>::~In()
 {
 	free_message(value);
-	value=nullptr;
-}
-
-template<>
-In<const message*>::~In()
-{
-	free_message(const_cast<message*>(value));
 }
 
 template<>
 In<stringlist_t*, ParamFlag::Default>::~In()
 {
 	free_stringlist(value);
-	value=nullptr;
 }
 
 template<>
@@ -79,7 +71,6 @@ template<>
 In<pEp_identity*>::~In()
 {
 	free_identity(value);
-	value=nullptr;
 }
 
 template<>
@@ -92,14 +83,12 @@ template<>
 Out<pEp_identity*>::~Out()
 {
 	free_identity(value);
-	value=nullptr;
 }
 
 template<>
 Out<identity_list*>::~Out()
 {
 	free_identity_list(value);
-	value=nullptr;
 }
 
 template<>
@@ -136,25 +125,12 @@ In<sync_handshake_result>::~In()
 	// nothing to do here. :-)
 }
 
-template<>
-In<PEP_CIPHER_SUITE>::~In()
-{
-	// nothing to do here. :-)
-}
-
-template<>
-const Logger::Stream& operator<<(const Logger::Stream& stream, const PEP_CIPHER_SUITE& cs)
-{
-	stream.s.append( std::to_string( static_cast<int>(cs) ) );
-	return stream;
-}
 
 
 template<>
 Out<stringlist_t*, ParamFlag::Default>::~Out()
 {
 	free_stringlist(value);
-	value=nullptr;
 }
 
 template<>
@@ -167,7 +143,6 @@ template<>
 Out<stringpair_list_t*>::~Out()
 {
 	free_stringpair_list(value);
-	value=nullptr;
 }
 
 
@@ -175,7 +150,6 @@ template<>
 Out<_message*>::~Out()
 {
 	free_message(value);
-	value=nullptr;
 }
 
 
@@ -256,12 +230,6 @@ message* from_json<message*>(const js::Value& v)
 	return msg.release();
 }
 
-template<>
-const message* from_json<const message*>(const js::Value& v)
-{
-    return const_cast<const message*>( from_json<message*>(v) );
-}
-
 
 template<>
 pEp_identity* from_json<pEp_identity*>(const js::Value& v)
@@ -272,8 +240,6 @@ pEp_identity* from_json<pEp_identity*>(const js::Value& v)
 	}
 	
 	const js::Object& o = v.get_obj();
-	if(o.empty())
-		return nullptr;
 	
 	auto address     = pEp::utility::make_c_ptr(from_json_object<char*, js::str_type>(o, "address")  , &free_string );
 	auto fingerprint = pEp::utility::make_c_ptr(from_json_object<char*, js::str_type>(o, "fpr")      , &free_string );
@@ -571,13 +537,13 @@ js::Value to_json<stringpair_list_t*>(stringpair_list_t* const& osl)
 
 
 template<>
-timestamp* from_json<timestamp *>(const js::Value& v)
+tm* from_json<tm*>(const js::Value& v)
 {
 	return new_timestamp( v.get_int64() );
 }
 
 template<>
-const timestamp* from_json<const timestamp*>(const js::Value& v)
+const tm* from_json<const tm*>(const js::Value& v)
 {
 	return new_timestamp( v.get_int64() );
 }
@@ -649,7 +615,7 @@ js::Value to_json<identity_list*>(identity_list* const& idl)
 	identity_list* il = idl;
 	js::Array a;
 	
-	while(il && il->ident)
+	while(il)
 	{
 		const js::Value value = to_json<pEp_identity*>(il->ident);
 		a.push_back(value);
@@ -673,7 +639,7 @@ template<>
 PEP_rating from_json<PEP_rating>(const js::Value& v)
 {
 	const js::Object& o = v.get_obj();
-	return static_cast<PEP_rating>( from_json_object<int, js::int_type>(o, "rating") );
+	return from_json_object<PEP_rating, js::int_type>(o, "rating");
 }
 
 
@@ -728,12 +694,6 @@ PEP_comm_type from_json<PEP_comm_type>(const js::Value& v)
 }
 
 template<>
-PEP_CIPHER_SUITE from_json<PEP_CIPHER_SUITE>(const js::Value& v)
-{
-	return  PEP_CIPHER_SUITE(v.get_int());
-}
-
-template<>
 sync_handshake_result from_json<sync_handshake_result>(const js::Value& v)
 {
 	return  sync_handshake_result(v.get_int());
@@ -745,20 +705,12 @@ js::Value to_json<PEP_comm_type>(const PEP_comm_type& v)
 	return js::Value( int(v) );
 }
 
-template<>
-js::Value to_json<PEP_CIPHER_SUITE>(const PEP_CIPHER_SUITE& v)
-{
-	return js::Value( int(v) );
-}
-
 
 template<>
 js::Value Type2String<PEP_SESSION>::get()  { return "Session"; }
 
 template<>
 js::Value Type2String<_message*>::get()  { return "Message"; }
-template<>
-js::Value Type2String<const _message*>::get()  { return "Message"; }
 
 template<>
 js::Value Type2String<const timestamp*>::get()  { return "Timestamp"; }
@@ -790,9 +742,6 @@ js::Value Type2String<sync_handshake_result>::get()  { return "PEP_sync_handshak
 
 template<>
 js::Value Type2String<_PEP_comm_type>::get()  { return "PEP_comm_type"; }
-
-template<>
-js::Value Type2String<PEP_CIPHER_SUITE>::get()  { return "PEP_CIPHER_SUITE"; }
 
 template<>
 js::Value Type2String<PEP_STATUS>::get()  { return "PEP_STATUS"; }

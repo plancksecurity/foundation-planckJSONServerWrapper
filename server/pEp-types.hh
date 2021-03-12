@@ -48,12 +48,4 @@ struct In<Language>
 };
 
 
-struct In_Pep_Session : public InBase<PEP_SESSION, ParamFlag::NoInput>
-{
-	typedef InBase<PEP_SESSION, ParamFlag::NoInput> Base;
-	
-	// fetch PEP_SESSION from Context, instead of returning default value (which would be: nullptr)
-	In_Pep_Session(const js::Value&, Context*, unsigned);
-};
-
 #endif // PEP_TYPES_HH

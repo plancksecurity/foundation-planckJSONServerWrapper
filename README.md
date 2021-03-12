@@ -12,30 +12,29 @@ supported, Windows is about to follow.  Newer versions should also work
 (file a bug report if not) but are not in our main focus, yet.
 
 ## Dependencies
-* C++ compiler: tested with g++ 4.8, 4.9, 8.3 and clang++ 2.8. Newer versions should work, too.
+* C++ compiler: tested with g++ 4.8 and 4.9, and clang++ 2.8. Newer versions should work, too.
 * GNU make
-* libboost-thread-dev (tested with 1.58, 1.62, 1.67, 1.70 and 1.74)
-* libboost-program-options-dev 
-* libboost-filesystem-dev
-* [p≡p Engine](https://gitea.pep.foundation/pEp.foundation/pEpEngine/)
-  (which needs sequoia, a patched libetpan, libboost-system-dev)
-* [libpEpAdapter](https://gitea.pep.foundation/pEp.foundation/libpEpAdapter/)
-* [webserver](https://gitea.pep.foundation/fdik/webserver)
+* libboost-thread-dev (tested with 1.58, 1.62 and 1.70)
+* libboost-program-options-dev  (tested with 1.58, 1.62 and 1.70)
+* libboost-filesystem-dev (tested with 1.58, 1.62 and 1.70)
+* libevent-dev 2.0.21 or 2.0.22 (or build from source, see below)
+* [p≡p Engine](https://pep.foundation/dev/repos/pEpEngine/)
+  (which needs gpgme-thread, a patched libetpan, libboost-system-dev)
+* [libpEpAdapter](https://pep.foundation/dev/repos/libpEpAdapter/)
 * OSSP libuuid
 
 ## Building/Installing (Linux and macOS)
 ### Install the dependencies
-
-Debian 9/10:
+Debian 9:
 
 ~~~~~
-apt install -y build-essential libboost-dev libboost-system-dev \
-    libboost-filesystem-dev libboost-program-options-dev \
-    libboost-thread-dev libgpgme-dev uuid-dev googletest \
+apt install -y build-essential libboost1.62-dev libboost-system1.62-dev \
+    libboost-filesystem1.62-dev libboost-program-options1.62-dev \
+    libboost-thread1.62-dev libgpgme-dev uuid-dev googletest \
     libevent-dev libevhtp-dev
 ~~~~~
 
-macOS 10.12, 10.13, 10.14:
+macOS 10.12:
 
 Use homebrew or macports to install the required libraries.
 
@@ -43,33 +42,25 @@ For more explicit instructions on how to do this with macports, see the
 section below.
 
 Build and install the pEp Engine.  Instructions can be found here:
-[the Engine's Readme](https://gitea.pep.foundation/pEp.foundation/pEpEngineREADME.md)
+[https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md](https://cacert.pep.foundation/dev/repos/pEpEngine/file/ef23982e4744/README.md).
 
+### Build and install libevent
 
-### Build and install the 'webserver' project
+It is recommended to use the libevent from your system's repository, if it contains the right version.
 
 ~~~~~
-cd ~/code
-git clone https://gitea.pep.foundation/fdik/webserver
-cd webserver
-  (edit the Makefile for your $PREFIX etc.)
+mkdir ~/code/json-ad
+hg clone https://cacert.pep.foundation/dev/repos/pEpJSONServerAdapter/ ~/code/json-ad
+cd ~/code/json-ad/libevent-2.0.22-stable
+./configure --prefix="$HOME/code/json-ad/libevent-2.0.22-stable/build/" --disable-openssl
 make
 make install
 ~~~~~
-
 
 ### Build and install the JSON server
 ~~~~~
 cd ~/code/json-ad/server
 ~~~~~
-
-| :warning: FIXME: The following instructions refer to the old Makefile system that built a dynamically linked binary. This old Makefile was replaced by a hack to create a static binary. Unfortunately the config flexibility of the old Makefile system was removed in this change. |
-| ------ |
-| There is now also an ad-hoc created `Makefile.Linux`, which also can only be configured directly by editing the file. :-( |
-| ------ |
-| TODO: Re-create a more flexible build system with a `Makefile` (which is under revision control) and a `local.conf` (which is not, but contains your local-only config settings) |
-| ------ |
-
 
 Edit the build configuration to your needs in `./Makefile.conf`, or create a
 `./local.conf` that sets any of the make variables documented in
@@ -82,8 +73,7 @@ libevent.
 
 Below are two sample `./local.conf` files, for orientation.
 
-
-macOS 10.12, 10.13:
+macOS 10.12:
 
 ~~~~~
 PREFIX=$(HOME)/code/json-ad/build
@@ -99,6 +89,9 @@ ENGINE_LIB=-L$(HOME)/code/engine/build/lib
 ETPAN_INC=-I$(HOME)/code/libetpan/build/include
 ETPAN_LIB=-L$(HOME)/code/libetpan/build/lib
 
+EVENT_INC=-I$(HOME)/code/json-ad/libevent-2.0.22-stable/build/include
+EVENT_LIB=-L$(HOME)/code/json-ad/libevent-2.0.22-stable/build/lib
+
 GPGME_INC=-I$(HOME)/Cellar/gpgme/1.9.0_1/include
 GPGME_LIB=-L$(HOME)/Cellar/gpgme/1.9.0_1/lib
 
@@ -106,7 +99,7 @@ UUID_INC=-I$(HOME)/Cellar/ossp-uuid/1.6.2_2/include
 UUID_LIB=-L$(HOME)/Cellar/ossp-uuid/1.6.2_2/lib
 ~~~~~
 
-Debian 9/10:
+Debian 9:
 
 ~~~~~
 PREFIX=$(HOME)/code/json-ad/build
@@ -119,6 +112,8 @@ ENGINE_LIB=-L$(HOME)/code/engine/build/lib
 ETPAN_INC=-I$(HOME)/code/libetpan/build/include
 ETPAN_LIB=-L$(HOME)/code/libetpan/build/lib
 
+EVENT_INC=-I$(HOME)/code/json-ad/libevent-2.0.22-stable/build/include
+EVENT_LIB=-L$(HOME)/code/json-ad/libevent-2.0.22-stable/build/lib
 ~~~~~
 
 Now, build and install the server:
@@ -170,19 +165,19 @@ the `Debug` or `Release` directory of the solution.
 ## Running the pEp JSON Adapter
 You can use `make run` to start the server.
 
-1. Run `./pEp-mini-json-adapter`.  This creates a file that is readable only by the
-   current user (`~/.pEp/json-token`) and contains the address and
+1. Run ./pep-json-server.  This creates a file that is readable only by the
+   current user (~/.pEp/json-token-${USER}) and contains the address and
    port the JSON adapter is listening on, normally 127.0.0.1:4223 and a
    "security-token" that must be given in each function call to authenticate
    you as the valid user.
 
    ```
-   ./pEp-mini-json-adapter
+   ./pep-json-server
    ```
 
-2. Visit that address (normally `http://127.0.0.1:4223/`) in your
+2. Visit that address (normally http://127.0.0.1:4223/) in your
    JavaScript-enabled web browser to see the "JavaScript test client".
-3. Call any function (`version()` or `get_gpg_path()` should work just
+3. Call any function ("version()" or "get_gpg_path()" should work just
    fine) with the correct security token.
 
 ## Using the p≡p JSON Adapter
@@ -194,44 +189,22 @@ the adapter and its functions.
 
 The JSON Server Adapter can be started on demand.
 It checks automatically whether an instance for the same user on the machine
-is already running and if yes it ends itself gracefully. (TODO!)
+is already running and if yes it ends itself gracefully.
 
 If there is no running server found the newly started server creates the
 server token file and forks itself into background (if not prevented via
 "-d" commandline switch).
 
-### Multi-Client handling
 
-The p≡p JSON server adapter supports multiple clients, communicating with the
-server at the same time. Each client instance is identified by a client ID,
-that the clients put into each JSON RPC request in the field "clientid".
+### Session handling
 
-The client ID is a UUID Version 4, created by the client at startup and has to
-be stable while the client application runs.  When the client restarts, a new
-client ID should be created to avoid interferene with data from the old client
-session.
-
-The p≡p JSON server adapter stores data (e.g., a so called "config cache", see
-next section) associated with each client ID. After a timeout period with no
-JSON RPC calls and no open client connections these data are removed
-automatically. Run the mini adapter with -h to see the compiled-in default
-timeout value.
-
-### PEP_SESSION handling
-
-When using the p≡p engine, a `PEP_SESSION` is needed as parameter to many API
-functions. The p≡p JSON Server Adapter automatically creates one session per
+When using the p≡p engine, a session is needed to which any adapter can
+connect. The p≡p JSON Server Adapter automatically creates one session per
 HTTP client connection (and also closes that session automatically when the
 client connections is closed). Therefore, the client does not need to take
-care of the session management. However, the client should set up a [HTTP
+care of the session management. However, the client has to set up a [HTTP
 persistent
-connection](https://en.wikipedia.org/wiki/HTTP_persistent_connection) to
-minify session creation and destruction.
-
-There is a configuration cache, that stores all `config_*()` calls and its
-configured values. Whenever a new PEP_SESSION is needed for this client
-(identified via its client ID, see previous section), all config values
-are applied to this new session, too, before the session is used.
+connection](https://en.wikipedia.org/wiki/HTTP_persistent_connection).
 
 ### API Principles
 
@@ -290,105 +263,18 @@ Currently there are no range checks for numerical parameter types (e.g. a
 JSON decimal number can hold a bigger value than the `int` parameter type of
 a certain C function).
 
-### JSON RPC Requests
-
-The JSON Server Adapter offers its services via HTTP on the address and port
-specified on command line. It offers a simple test HTML page on the root
-URL.
-
-The JSON RPC functions are POST requests to the path /ja/0.1/callFunction
-and the JSON RPC data comes, as usual for POST requests, in the request body and
-must be in UTF-8 without any BOM. The `Content-Type` of the request is not relevant.
-
-Here is the body of an example request:
-
-```
-{
-  "id": 1001,
-  "jsonrpc": "2.0",
-  "security_token": "YSxxkNga0YUlkmdpUL6_qJuioicGK1wOC5sjGVG",
-  "method": "import_key",
-  "params": [
-    "4oW5PKhgY8XdvIYQiu+KaKnZYyP5UseHD1Sfjb8HpO75m/QT/FxFI………",
-    4444,
-    [
-      "OP"
-    ]
-  ]
-}
-```
-
-another example:
-
-```
-{
-  "id": 1002,
-  "jsonrpc": "2.0",
-  "security_token": "YSxxkNga0YUlkmdpUL6_qJuioicGK1wOC5sjGVG",
-  "method": "myself",
-  "params": [
-    {
-      "user_id": "alice",
-      "username": "Alice in pEp land",
-      "address": "alice@pEp.lol",
-      "fpr": "4ABE3AAF59AC32CFE4F86500A9411D176FF00E97"
-    }
-  ]
-}
-```
-
-Output parameters must be given, but their value is not relevant. The
-JavaScript example test client fills the output values with a dummy array,
-containing one string element "OP", just to ease debugging.
-
-The result contains the return value and the values of the output parameters,
-in reverse order:
-
-Request:
-
-```
-{
-  "id": 1003,
-  "jsonrpc": "2.0",
-  "security_token": "YSxxkNga0YUlkmdpUL6_qJuioicGK1wOC5sjGVG",
-  "method": "get_languagelist",
-  "params": [
-    [
-      "OP"
-    ]
-  ]
-}
-```
-
-Result:
-
-```
-{
-  "outParams": [
-    "\"en\",\"English\",\"I want to display the trustwords in English language\"……"
-  ],
-  "return": {
-    "status": 0,
-    "hex": "0 \"PEP_STATUS_OK\""
-  }
-}
-```
-
 ### API Reference
 
 An complete overview with all functions that are callable from the client
 can be found in the [API Reference](pEp JSON Server Adapter/API Reference).
 
-That API reference is a generated file (at irregular intervals) that shows the current API briefly.
+That API reference is a generated file that shows the current API briefly.
 There is also a (currently manually written) file that holts a copy of the
 documentation from the Engine's header files: [API reference detail.md]
 
-BEWARE: Because this file is not auto-generated, yet, it might be even more outdated!
-
 Most of the callable functions are functions from the C API of the p≡p
 Engine.  They are described in detail, incl.  pre- and post-conditions in
-the appropriate C header files of the Engine, which are the authoritative source
-of documentation in cases of doubt.
+the appropriate C header files of the Engine.
 
 
 ### Authentication
@@ -415,33 +301,12 @@ file that has user-only read permissions.
    token".
 
 
-### Callbacks / Event delivery
-
-p≡p applications must register callback handlers at the Engine. At the moment
-there are these callbacks:
-
-* `PEP_STATUS messageToSend(message* msg)`
-* `PEP_STATUS notifyHandshake(pEp_identity* self, pEp_identity* partner, sync_handshake_signal signal)`
-
-The JSON adapter register its own functions at the Engine which propagate these
-events to all connected clients.
-
-The event propagation to the clients are done via long polling: Clients
-call the function `pollForEvents()` that blocks until an event
-from the Engine arrives.  TODO: remove create_session(), use client ID instead?
-
-
-It is planned to switch to use WebSockets: In fact this is also a type of
-"long polling" and an open TCP connection, opened by the Client.
-See: https://pep.foundation/jira/browse/JSON-128
-
-
 ## Extending / customizing
 
 If you want to extend or customize the p≡p JSON Adapter, there are several
 rules and definitions to take into account.
 
-### API Functions
+### Definitions
 
 * The `FunctionMap function` in `ev_server.cc` defines which functions
   are callable via the JSON-RPC interface.  The existing entries show the
@@ -490,15 +355,15 @@ number of parameters at the JSON side the same with the C side.
 For In/Out parameters there exist two calling conventions for
 call-by-pointer types:
 
-1. caller allocates object and fills with input values, callee can only *change members*.
-The C type of the parameter is usually `struct T*`. Use the wrapper `InOut<T*>`
+1. caller allocates object and fills with input values, callee can only change members.
+The C type of the parameter is usually `struct T*`. Use the wrapper `InOut<>`
 for these parameters.
 
 2. caller allocates object and fills with input values, callee might
-change/reallocate the *whole object*. The C type of the parameter is
-`struct T**`. Use the wrapper `InOutP<T*>` in these cases.
+change/reallocate the whole object. The C type of the parameter is
+`struct T**`. Use the wrapper `InOutP<>` in these cases.
 
-`InOutP<T>` is also the right wrapper for in/out parameters of fundamental or
+`InOutP<>` is also the right wrapper for in/out parameters of fundamental or
 enum types due to the additional indirection in the C function call
 signature.
 
@@ -512,7 +377,7 @@ semantics described already above.
 At the moment there exist two parameter type flags which are interpreted as
 bitfield, so they can be combined:
 
-* NoInput : This denotes a parameter at the C side that shall *not be exposed*
+* NoInput : This flags a parameter at the C side that shall not be exposed
   at the JSON side. So the value cannot be specified by the client, it is
   provided by the JSON Server Adapter internally (e.g. for PEP_SESSION)
 
@@ -523,7 +388,7 @@ bitfield, so they can be combined:
 More flags will be added when different semantics will be needed.
 
 
-#### Automatic parameter value generation
+### Automatic parameter value generation
 
 For some parameters or parameter combinations the JSON Server Adapter is
 able to generate the values automatically either from the environment or
@@ -531,21 +396,17 @@ from other parameters.
 
 These automatic parameter value generators are supported at the moment:
 
-##### In<c_string> and InLength
+#### InLength
 
 For functions that have a string parameter of type `const char*` followed by
 a `size_t` that specifies the length of the string, the JSON Adapter can
-calculate the value of that length parameter automatically, because in the
+calculate the value of that length parameter automatically because in the
 JSON API the lengths of strings are always known.
 
 Moreover, the "length" that has to be given here means the length of the
 string seen by the C API side after processing of all JSON escaping
 mechanisms as raw UTF-8 NFC string, so it might be difficult to calculate
 that value at client side.
-
-The "magic" is done inside the In<c_string> constructor that stores the string
-length in its "Context", and the InLength<> constructore retrieves the value
-from its "Context".
 
 Example:
 ```
@@ -580,24 +441,6 @@ Now the 2nd parameter is omitted:
  "method":"tohex", "params":["some string"]
 }
 ```
-
-### Embedding in other (desktop) adapters
-
-The JSON Adapter can run as a stand-alone program (called the "mini-adapter") or
-as part of another desktop adapter to enhance that adapter with a JSON-RPC interface.
-
-For this the JSON Adapter has to co-operate with the desktop adapter in several ways:
-
-* Startup, configuration and shutdown is managed by the desktop adapter.
-
-* Handshake events and sync messages created by the pEpEngine have to be dispatched
-  to *all* connected clients, no matter whether they are JSON clients or "native"
-  clients of the desktop adapter. See "messageToSend" and "notifyHandshake" callbacks.
-
-* The sync thread loop has to be managed by the desktop adapter. The libpEpAdapter
-  contains an example implementation for that.
-
-* (something else?)
 
 
 ## TODOs

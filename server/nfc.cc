@@ -1,6 +1,3 @@
-// This file is under GNU General Public License 3.0
-// see LICENSE.txt
-
 // converts a C++ string into NFC form
 
 #include "nfc.hh"
@@ -89,7 +86,7 @@ namespace
 	};
 
 
-	std::string escape(sv s)
+	std::string escape(const std::string& s)
 	{
 		std::string ret; ret.reserve(s.size() + 16 );
 		for(char c : s)
@@ -174,6 +171,8 @@ namespace
 	}
 
 } // end of anonymous namespace
+
+
 
 
 std::ostream& operator<<(std::ostream& o, IsNFC is_nfc)
@@ -272,8 +271,11 @@ uint32_t parseUtf8(const char*& c, const char* end)
 }
 
 
-void toUtf8(const char32_t c, std::string& ret)
+std::string toUtf8(const std::u32string& u32)
 {
+	std::string ret;
+	for(char32_t c : u32)
+	{
 		if(c<=0x7F)
 		{
 			ret += char(c);
@@ -295,21 +297,12 @@ void toUtf8(const char32_t c, std::string& ret)
 		}else{
 			throw too_big(0, c);
 		}
-}
-
-
-std::string toUtf8(const std::u32string& u32)
-{
-	std::string ret;
-	for(char32_t c : u32)
-	{
-		toUtf8(c, ret);
 	}
 	return ret;
 }
 
 
-illegal_utf8::illegal_utf8( sv s, unsigned position, const std::string& reason)
+illegal_utf8::illegal_utf8( const std::string& s, unsigned position, const std::string& reason)
 : std::runtime_error( "Illegal UTF-8 string \"" + escape(s) + "\" at position " + std::to_string(position) + ": " + reason  )
 {}
 
@@ -319,7 +312,7 @@ illegal_utf8::illegal_utf8( const std::string& msg )
 {}
 
 
-void assert_utf8(sv s)
+void assert_utf8(const std::string& s)
 {
 	const char* begin = s.data();
 	const char* const end = s.data() + s.size();
@@ -339,12 +332,12 @@ void assert_utf8(sv s)
 
 
 // creates a NFD string from s
-std::u32string fromUtf8_decompose(sv s)
+std::u32string fromUtf8_decompose(const std::string& s)
 {
 	std::u32string u32s;
 	u32s.reserve( static_cast<std::size_t>(s.size()*1.25) );
-	const char* begin = s.data();
-	const char* end   = s.data() + s.size();
+	const char* begin = s.c_str();
+	const char* end   = s.c_str() + s.size();
 	for(; begin<end; ++begin)
 	{
 		unsigned u = parseUtf8(begin, end);
@@ -423,7 +416,7 @@ std::u32string createNFC(std::u32string nfd)
 }
 
 
-IsNFC isNFC_quick_check(sv s)
+IsNFC isNFC_quick_check(const std::string& s)
 {
 	const char* begin = s.data();
 	const char* const end = s.data() + s.size();
@@ -452,7 +445,7 @@ IsNFC isNFC_quick_check(sv s)
 }
 
 
-bool isNFC(sv s)
+bool isNFC(const std::string& s)
 {
 	switch( isNFC_quick_check(s) )
 	{
@@ -467,23 +460,12 @@ bool isNFC(sv s)
 	throw -1; // could never happen, but compiler is too dumb to see this.
 }
 
-bool isUtf8(const char* begin, const char* end)
-try{
-	for(; begin<end; ++begin)
-	{
-		(void)parseUtf8(begin, end);
-	}
-	return true;
-}catch(const illegal_utf8&)
-{
-	return false;
-}
 
 // s is ''moved'' to the return value if possible so no copy is done here.
-std::string toNFC(sv s)
+std::string toNFC(std::string s)
 {
 	if(isNFC_quick_check(s)==IsNFC::Yes)
-		return std::string{s};
+		return s;
 	
 	return toUtf8( createNFC( fromUtf8_decompose(s) ));
 }

@@ -51,12 +51,7 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 		opensyslog();
 		if(target & Logger::Target::File)
 		{
-#ifndef WIN32
 			LoggerS::filename = filename.empty() ? "/tmp/log-" + program_name + ".log" : filename;
-#else // WIN23
-            LoggerS::filename = filename.empty() ? std::string(getenv("TEMP"))
-                + "\\pEp-JSON.log" : filename;
-#endif
 			openfile();
 		}
 		initialized = true;
@@ -186,26 +181,13 @@ namespace {
 			end += delta;
 			ofs += delta;
 			
-			if(end != oneline.end()) // we're not yet at the end, so we wrap the line here...
+			if(end != oneline.end())
 			{
-				unsigned sequence_length = 0;
-				
-				// avoid split within a UTF-8 multibyte sequence.
-				// Therefore move backwards until we point to the start octet of an UTF-8 sequence.
-				while( (uint8_t(*end) >= 0x80) && (uint8_t(*end)<0xC0) && (end>begin) && (sequence_length<8))
+				while( (uint8_t(*end) >= 0x80) && (end>begin) )
 				{
 					// rewind
 					--end;
 					--ofs;
-					++sequence_length;
-				}
-				
-				if(sequence_length>=8) // can never happen on valid UTF-8 strings
-				{
-					// the input is not valid UTF-8, so undo the rewind from above
-					// and write out whatever the string contains. :-/
-					end += sequence_length;
-					ofs += sequence_length;
 				}
 			}
 			
@@ -400,8 +382,6 @@ LOGGER_LAZY( debugInternal , DebugInternal )
 #else
 // intentionally left blank.
 // the methods are already defined as do-nothing inline functions in Logger.hh
-
-	const NullLogger nulllogger{}; // to make linker happy.
 #endif
 
 #undef LOGGER_LAZY
@@ -441,19 +421,14 @@ static const unsigned thread_alph_len = thread_alphabet.size(); // shall be a pr
 static std::hash<std::thread::id> hash_tid;
 
 // create a three-digit base37 string of the current thread ID for easy grepping and filtering:
-std::string Logger::thread_id(unsigned long long id)
+std::string thread_id()
 {
 	char buf[8] = { ' ', '\302', '\266', '?', '?', '?', ' ' };
+	unsigned long long id = hash_tid(std::this_thread::get_id());
 	buf[3] = thread_alphabet.at( id % thread_alph_len); id /= thread_alph_len;
 	buf[4] = thread_alphabet.at( id % thread_alph_len); id /= thread_alph_len;
 	buf[5] = thread_alphabet.at( id % thread_alph_len); id /= thread_alph_len;
 	return std::string(buf, buf+7);
-}
-
-std::string Logger::thread_id()
-{
-	const unsigned long long id = hash_tid(std::this_thread::get_id());
-	return thread_id(id);
 }
 
 
@@ -492,7 +467,7 @@ void LoggerS::log(Logger::Severity s, const std::string& logline)
 			timestamp = Logger::gmtime(time(0));
 		}
 		
-		timestamp.append( Logger::thread_id() );
+		timestamp.append( thread_id() );
 		timestamp.append(Levelname[s]);
 		timestamp.append(" :");
 		

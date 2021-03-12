@@ -27,7 +27,6 @@ SIMPLE_TYPE( long )
 SIMPLE_TYPE( long long )
 
 SIMPLE_TYPE( std::string )
-SIMPLE_TYPE( js::Array )
 
 
 template<>
@@ -155,21 +154,17 @@ js::Value to_json<char*>(char* const & s)
 
 
 template<>
-js::Value to_json<js::Array>(const js::Array& a)
-{
-    return a;
-}
-
-
-template<>
-js::Value to_json<timestamp *>(timestamp * const& t)
+js::Value to_json<struct tm*>(struct tm* const& t)
 {
 	if(t==nullptr)
 	{
 		return js::Value{};
 	}
 	
-	const int64_t u = timegm_with_gmtoff(t);
+	// neither timegm() nor mktime() respect t->tm_gmtoff for their conversions. What a mess!
+	// But t->tm_gmtoff is non-standard, though, and doesn't exist on MS Windows.
+	// So just hope the tm struct holds GMT.
+	const int64_t u = timegm(t);
 	return js::Value{u};
 }
 

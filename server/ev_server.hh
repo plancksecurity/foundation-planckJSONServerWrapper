@@ -5,47 +5,36 @@
 
 #include <string>
 #include <boost/filesystem/path.hpp>
-#include <pEp/webserver.hh>
 
+struct evhttp_request;
 
 class Logger;
 
-class ev_server : public pEp::Webserver
+class ev_server
 {
 public:
-	ev_server(const std::string& address, unsigned short start_port, bool deliver_html, const std::string& base_url);
-
-protected:
 	static
-	pEp::Webserver::response sendReplyString(const pEp::Webserver::request& req, const char* contentType, std::string&& outputText);
+	void sendReplyString(evhttp_request* req, const char* contentType, const std::string& outputText);
 	
 	static
-	pEp::Webserver::response sendFile(const pEp::Webserver::request& req, const char* mimeType, const boost::filesystem::path& fileName);
+	void sendFile( evhttp_request* req, const std::string& mimeType, const boost::filesystem::path& fileName);
 
 	// catch-all callback. Used by demo html & JavaScript client to deliver static HTML & JS files
 	static
-	pEp::Webserver::response OnOtherRequest(boost::cmatch match, const pEp::Webserver::request& req);
+	void OnOtherRequest(evhttp_request* req, void*);
 
 	// generate a JavaScript file containing the definition of all registered callable functions, see above.
 	static
-	pEp::Webserver::response OnGetFunctions(boost::cmatch match, const pEp::Webserver::request& req);
+	void OnGetFunctions(evhttp_request* req, void*);
 
 	// handles calls to the JSON-RPC API
 	static
-	pEp::Webserver::response OnApiRequest(boost::cmatch match, const pEp::Webserver::request& req);
-	
-	void thread_init() override;
-	
-	void thread_done() override;
+	void OnApiRequest(evhttp_request* req, void* obj);
 
-<<<<<<< HEAD
 	// handles WebSocket requests
 	static
 	void OnWebSocketRequest(evhttp_request* req, void* obj);
 
-=======
-public:
->>>>>>> master
 	// should be set before any of the methods above is called, due to static initializers use that value,
 	// so changing it later might be useless.
 	static boost::filesystem::path path_to_html;
