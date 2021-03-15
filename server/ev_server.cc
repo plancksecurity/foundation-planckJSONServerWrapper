@@ -240,7 +240,7 @@ ev_server::ev_server(const std::string& address, unsigned short port, bool deliv
 
 pEp::Webserver::response ev_server::sendReplyString(const pEp::Webserver::request& req, const char* contentType, std::string&& outputText)
 {
-	Log() << Logger::Debug << "sendReplyString(): "
+	DEBUG_LOG(Log()) << "sendReplyString(): "
 		<< ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL")
 		<< ", output.size()=«" << outputText.size() << "»"
 		<< ", keep_alive=" << req.keep_alive() << ".";
@@ -284,13 +284,13 @@ pEp::Webserver::response ev_server::OnOtherRequest(boost::cmatch match, const pE
 	
 	const std::string path = req.target().to_string(); // NB: is percent-encoded! does not relevant for the supported paths above.
 	
-	Log() << Logger::Debug << "** Request: [" << req.method_string().to_string() << "] " << "Path: [" + path + "]";
+	DEBUG_LOG( Log() ) << "** Request: [" << req.method_string().to_string() << "] " << "Path: [" + path + "]";
 	
 	try{
 		const auto q = files.find(path);
 		if(q != files.end()) // found in "files" map
 		{
-			Log() << Logger::Debug << "\t found file \"" << q->second.fileName.string() << "\", type=" << q->second.mimeType << ".\n";
+			DEBUG_LOG(Log()) << "\t found file \"" << q->second.fileName.string() << "\", type=" << q->second.mimeType << ".\n";
 			return sendFile( req, q->second.mimeType, q->second.fileName);
 		}
 		
