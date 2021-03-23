@@ -203,6 +203,7 @@ const FunctionMap functions = {
 		FP( "leave_device_group"       , new FuncPC<PEP_STATUS, In_Pep_Session> (&leave_device_group) ),
 		FP( "enable_identity_for_sync" , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&enable_identity_for_sync)),
 		FP( "disable_identity_for_sync", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&disable_identity_for_sync)),
+		FP( "disable_all_sync_channels", new Func<PEP_STATUS, In_Pep_Session> (&disable_all_sync_channels)),
 
 #ifndef JSON_ADAPTER_LIBRARY
 		FP( "startSync", new Func<void> (&pEp::mini::startSync) ),
