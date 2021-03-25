@@ -247,7 +247,7 @@ public:
 		// FIXME: Does only work with functions with type: void(PEP_SESSION, T):
 		const auto p1 = from_json< typename std::tuple_element<1, param_tuple_t>::type >(parameters[0]);
 		
-		Log << Logger::Debug << "func_name=\"" << func_name << "\", value=" << p1 << ".";
+		DEBUG_LOG(Log) << "func_name=\"" << func_name << "\", value=" << p1 << ".";
 		
 		std::function<void(PEP_SESSION)> func = std::bind(Base::fn, std::placeholders::_1, p1);
 		context->cache(func_name, func);
@@ -277,7 +277,7 @@ public:
 		Logger Log("FuncCachePasswd::call");
 		const std::string& passphrase = parameters.at(0).get_str();
 		
-		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
+		DEBUG_LOG(Log) << "func_name=\"" << func_name << "\", value is confidential. ";
 		
 		pEp::passphrase_cache.add(passphrase); // for the current PEP_SESSION
 		std::function<void(PEP_SESSION)> func = [passphrase](PEP_SESSION session)
@@ -312,7 +312,7 @@ public:
 		bool enable = parameters.at(0).get_bool();
 		const std::string& passphrase = parameters.at(1).get_str();
 		
-		Log << Logger::Debug << "func_name=\"" << func_name << "\", value is confidential. ";
+		DEBUG_LOG(Log) << "func_name=\"" << func_name << "\", value is confidential.";
 		
 		pEp::passphrase_cache.add_stored(passphrase); // for the current PEP_SESSION
 		std::function<void(PEP_SESSION)> func = [enable, passphrase](PEP_SESSION session)

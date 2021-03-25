@@ -111,7 +111,7 @@ struct JsonAdapter::Internal
 	
 	~Internal()
 	{
-		Log << Logger::Debug << "~JAI";
+		DEBUG_LOG(Log) << "~JAI";
 	}
 	
 	
@@ -138,13 +138,13 @@ struct JsonAdapter::Internal
 		const std::string request_r = js::write(request);
 		
 		Lock L(_mtx);
-		Log << Logger::Debug << "makeAndDeliverRequest: \n"
+		DEBUG_LOG(Log) << "makeAndDeliverRequest: \n"
 			"Request: " << request_r << "\n"
 			"Goes to " << eventListener.size() << " listener(s).";
 		
 		for(auto& e : eventListener)
 		{
-			Log << Logger::Debug << " ~~~ " << to_log(e.first)  << " has " << e.second.Q->size() << " old events waiting.";
+			DEBUG_LOG(Log) << " ~~~ " << to_log(e.first)  << " has " << e.second.Q->size() << " old events waiting.";
 			e.second.Q->push_back(request);
 		}
 	}
@@ -290,7 +290,7 @@ try
 	Logger L("JA:run");
 	
 	L << Logger::Info << "This is " << (void*)this << ", thread id " << std::this_thread::get_id() << ".";
-	L << Logger::Debug << "Registry:\n" << i->session_registry->to_string();
+	DEBUG_LOG(L) << "Registry:\n" << i->session_registry->to_string();
 	
 	i->running = true;
 	i->webserver->run();
@@ -307,7 +307,7 @@ void JsonAdapter::connection_close_cb()
 	Lock L{_mtx};
 	const auto tid = std::this_thread::get_id();
 	auto q = i->eventListener.find( tid );
-	i->Log << Logger::Debug << "Connection Close Callback: " << (q==i->eventListener.end() ? "NO" : "1") << " entry in eventListener map for Thread " << tid << ".";
+	DEBUG_LOG(i->Log) << "Connection Close Callback: " << (q==i->eventListener.end() ? "NO" : "1") << " entry in eventListener map for Thread " << tid << ".";
 	if(q != i->eventListener.end())
 	{
 		i->Log.debug("%d listener(s) waiting on event queue", q->second.Q->waiting());
@@ -325,10 +325,10 @@ void JsonAdapter::close_session(const std::string& session_id)
 {
 	Lock L{_mtx};
 	auto q = i->eventListener.find( session_id );
-	i->Log << Logger::Debug << "Close session \"" << session_id << "\": " << (q==i->eventListener.end() ? "NO" : "1") << " entry in eventListener map for session_id \"" << session_id << "\".";
+	DEBUG_LOG(i->Log) << "Close session \"" << session_id << "\": " << (q==i->eventListener.end() ? "NO" : "1") << " entry in eventListener map for session_id \"" << session_id << "\".";
 	if(q != i->eventListener.end())
 	{
-		i->Log.debug("%d listener(s) waiting on event queue", q->second.Q->waiting());
+		DEBUG_OUT(i->Log, "%d listener(s) waiting on event queue", q->second.Q->waiting());
 		while(q->second.Q->waiting() > 0)
 		{
 			q->second.Q->push_back(queue_close_event);
@@ -398,32 +398,32 @@ js::Array JsonAdapter::Internal::pollForEvents(const EventListenerKey& key, unsi
 	const size_t size = elQ->size();
 	if(size)
 	{
-		L << Logger::Debug << size << " events in queue for key " << to_log(key) << ":";
+		DEBUG_LOG(L) << size << " events in queue for key " << to_log(key) << ":";
 		// fetch all elements from queue
 		for(size_t i=0; i<size; ++i)
 		{
 			js::Object obj{ elQ->pop_front() };
 			const std::string obj_s = js::write( obj );
-			L << Logger::Debug << "\t#" << i << ": " << obj_s;
+			DEBUG_LOG(L) << "\t#" << i << ": " << obj_s;
 			
 			arr.emplace_back( std::move(obj) );
 		}
 	}else{
 		// block until there is at least one element or timeout
-		L << Logger::Debug << "Queue for key " << to_log(key) << " is empty. I'll block for " << timeout_seconds << " seconds.";
+		DEBUG_LOG(L) << "Queue for key " << to_log(key) << " is empty. I'll block for " << timeout_seconds << " seconds.";
 		js::Object event;
 		const bool success = elQ->try_pop_front( event, std::chrono::seconds(timeout_seconds) );
 		if(success)
 		{
 			const std::string event_s = js::write(event);
-			L << Logger::Debug << "Success! Got this event: " << event_s ;
+			DEBUG_LOG(L) << "Success! Got this event: " << event_s ;
 			arr.emplace_back( std::move(event) );
 		}else{
-			L << Logger::Debug << "Timeout. No event after " << timeout_seconds << " seconds arrived. So sad.";
+			DEBUG_LOG(L) << "Timeout. No event after " << timeout_seconds << " seconds arrived. So sad.";
 		}
 	}
 	
-	L << Logger::Debug << "Return array with " << arr.size() << " elements.";
+	DEBUG_LOG(L) << "Return array with " << arr.size() << " elements.";
 	return arr;
 }
 

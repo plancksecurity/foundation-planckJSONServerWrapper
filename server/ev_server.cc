@@ -64,6 +64,40 @@ std::string getBinaryPath()
 }
 
 
+bool has_non_pEp_user(PEP_SESSION session, const identity_list* il)
+{
+	for(; il!=nullptr; il = il->next)
+	{
+		if((il->ident->comm_type | PEP_ct_confirmed) < PEP_ct_pEp)
+			return true;
+	}
+	return false;
+}
+
+
+PEP_STATUS outgoing_message_rating_with_partner_info(PEP_SESSION session, message* msg, PEP_rating* rating, bool* only_pEp_partners)
+{
+	// Nota bene: outgoing_message_rating calls update_identity() on every recipient,
+	// but these changes in their identities are not given back to the JSON-RPC clients.
+	PEP_STATUS status = outgoing_message_rating(session, msg, rating);
+	if(*rating < PEP_rating_reliable)
+	{
+		// if mail would be sent unencrypted, we also cannot encrypt/protect the subject,
+		// so handle it the same way as if there were non-pEp recipients.
+		*only_pEp_partners = false;
+	}else{
+		if( has_non_pEp_user(session, msg->to)
+		 || has_non_pEp_user(session, msg->cc))
+		{
+			*only_pEp_partners = false;
+		}else{
+			*only_pEp_partners = true;
+		}
+	}
+	return status;
+}
+
+
 // these are the pEp functions that are callable by the client
 const FunctionMap functions = {
 
@@ -116,6 +150,7 @@ const FunctionMap functions = {
 		FP( "mark_as_comprimized", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>> ( &mark_as_compromized) ),
 		FP( "identity_rating"    , new FuncPC<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<PEP_rating>>( &identity_rating) ),
 		FP( "outgoing_message_rating", new FuncPC<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating) ),
+		FP( "outgoing_message_rating_with_partner_info", new FuncPC<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>, Out<bool>>( &outgoing_message_rating_with_partner_info) ),
 		FP( "outgoing_message_rating_preview", new FuncPC<PEP_STATUS, In_Pep_Session, In<message*>, Out<PEP_rating>>( &outgoing_message_rating_preview) ),
 		FP( "set_identity_flags"     , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &set_identity_flags) ),
 		FP( "unset_identity_flags"   , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<identity_flags_t>>( &unset_identity_flags) ),
@@ -168,6 +203,7 @@ const FunctionMap functions = {
 		FP( "leave_device_group"       , new FuncPC<PEP_STATUS, In_Pep_Session> (&leave_device_group) ),
 		FP( "enable_identity_for_sync" , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&enable_identity_for_sync)),
 		FP( "disable_identity_for_sync", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&disable_identity_for_sync)),
+		FP( "disable_all_sync_channels", new Func<PEP_STATUS, In_Pep_Session> (&disable_all_sync_channels)),
 
 #ifndef JSON_ADAPTER_LIBRARY
 		FP( "startSync", new Func<void> (&pEp::mini::startSync) ),
@@ -205,7 +241,7 @@ ev_server::ev_server(const std::string& address, unsigned short port, bool deliv
 
 pEp::Webserver::response ev_server::sendReplyString(const pEp::Webserver::request& req, const char* contentType, std::string&& outputText)
 {
-	Log() << Logger::Debug << "sendReplyString(): "
+	DEBUG_LOG(Log()) << "sendReplyString(): "
 		<< ", contentType=" << (contentType ? "«" + std::string(contentType)+ "»" : "NULL")
 		<< ", output.size()=«" << outputText.size() << "»"
 		<< ", keep_alive=" << req.keep_alive() << ".";
@@ -249,13 +285,13 @@ pEp::Webserver::response ev_server::OnOtherRequest(boost::cmatch match, const pE
 	
 	const std::string path = req.target().to_string(); // NB: is percent-encoded! does not relevant for the supported paths above.
 	
-	Log() << Logger::Debug << "** Request: [" << req.method_string().to_string() << "] " << "Path: [" + path + "]";
+	DEBUG_LOG( Log() ) << "** Request: [" << req.method_string().to_string() << "] " << "Path: [" + path + "]";
 	
 	try{
 		const auto q = files.find(path);
 		if(q != files.end()) // found in "files" map
 		{
-			Log() << Logger::Debug << "\t found file \"" << q->second.fileName.string() << "\", type=" << q->second.mimeType << ".\n";
+			DEBUG_LOG(Log()) << "\t found file \"" << q->second.fileName.string() << "\", type=" << q->second.mimeType << ".\n";
 			return sendFile( req, q->second.mimeType, q->second.fileName);
 		}
 		
