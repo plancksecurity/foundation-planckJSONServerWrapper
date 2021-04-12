@@ -4,6 +4,7 @@
 #include "json-adapter.hh"
 
 #include <pEp/pEp_string.h>
+#include <pEp/group.h>
 #include <pEp/status_to_string.hh>  // from libpEpAdapter
 
 #include <iostream> // Just to print debug stuff to std::cerr
@@ -751,6 +752,62 @@ js::Value to_json<PEP_CIPHER_SUITE>(const PEP_CIPHER_SUITE& v)
 	return js::Value( int(v) );
 }
 
+
+template<>
+pEp_member* from_json<pEp_member*>(const js::Value& v)
+{
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+
+	const js::Object& o = v.get_obj();
+	const bool   joined = from_json_object<bool, js::bool_type>(o, "joined");
+	pEp_identity* ident = from_json_object<pEp_identity*, js::obj_type>(o, "identity"), &free_identity);
+	pEp_member*  member = new_member(ident);
+	member->joined = joined;
+	return member;
+}
+
+template<>
+js::Value to_json<pEp_member*>(pEp_member* member)
+{
+	if(member == nullptr)
+	{
+		return js::Value();
+	}
+	
+	js::Object o;
+	to_json_object(o, "identity" , member->identity);
+	to_json_object(o, "joined"   , member->joined);
+    return o;
+}
+
+template<>
+member_list* from_json<member_list*>(const js::Value& v)
+{
+	if(v.is_null())
+	{
+		return nullptr;
+	}
+	
+	const js::Array& a = v.get_array();
+	if(a.empty())
+		return nullptr;
+	
+	auto element = a.begin();
+	member_list* ml = new_member_list( from_json<pEp_member*>(*element) );
+	
+	++element;
+	member_list* last_member = ml; // to make memberlist_add() below more efficient
+	
+	for(; element!=a.end(); ++element)
+	{
+		last_member = memberlist_add(last_member, from_json<pEp_member*>(*element) );
+	}
+	
+	return ml;
+}
 
 template<>
 js::Value Type2String<PEP_SESSION>::get()  { return "Session"; }
