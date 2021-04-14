@@ -757,46 +757,40 @@ template<>
 pEp_member* from_json<pEp_member*>(const js::Value& v)
 {
 	if(v.is_null())
-	{
 		return nullptr;
-	}
-
+	
 	const js::Object& o = v.get_obj();
 	const bool   joined = from_json_object<bool, js::bool_type>(o, "joined");
-	pEp_identity* ident = from_json_object<pEp_identity*, js::obj_type>(o, "identity"), &free_identity);
+	pEp_identity* ident = from_json_object<pEp_identity*, js::obj_type>(o, "ident");
 	pEp_member*  member = new_member(ident);
 	member->joined = joined;
 	return member;
 }
 
 template<>
-js::Value to_json<pEp_member*>(pEp_member* member)
+js::Value to_json<pEp_member*>(pEp_member* const& member)
 {
 	if(member == nullptr)
-	{
 		return js::Value();
-	}
 	
 	js::Object o;
-	to_json_object(o, "identity" , member->identity);
-	to_json_object(o, "joined"   , member->joined);
-    return o;
+	to_json_object(o, "ident" , member->ident);
+	to_json_object(o, "joined", member->joined);
+	return o;
 }
 
 template<>
 member_list* from_json<member_list*>(const js::Value& v)
 {
 	if(v.is_null())
-	{
 		return nullptr;
-	}
 	
 	const js::Array& a = v.get_array();
 	if(a.empty())
 		return nullptr;
 	
 	auto element = a.begin();
-	member_list* ml = new_member_list( from_json<pEp_member*>(*element) );
+	member_list* ml = new_memberlist( from_json<pEp_member*>(*element) );
 	
 	++element;
 	member_list* last_member = ml; // to make memberlist_add() below more efficient
@@ -808,6 +802,69 @@ member_list* from_json<member_list*>(const js::Value& v)
 	
 	return ml;
 }
+
+template<>
+js::Value to_json<const member_list*>(const member_list* const& oml)
+{
+	const member_list* ml = oml;
+	js::Array a;
+	
+	while(ml)
+	{
+		if(ml->member)
+		{
+			a.push_back( to_json<pEp_member*>(ml->member) );
+		}
+		ml = ml->next;
+	}
+	
+	return js::Value( std::move(a) );
+}
+
+template<>
+js::Value to_json<member_list*>(member_list* const& oml)
+{
+	return to_json( const_cast<const member_list*>(oml) );
+}
+
+
+template<>
+pEp_group* from_json<pEp_group*>(const js::Value& v)
+{
+	if(v.is_null())
+		return nullptr;
+	
+	const js::Object& o = v.get_obj();
+	auto group_identity = pEp::utility::make_c_ptr(from_json_object<pEp_identity*, js::obj_type>(o, "group_identity"), &free_identity);
+	auto manager        = pEp::utility::make_c_ptr(from_json_object<pEp_identity*, js::obj_type>(o, "manager"), &free_identity);
+	auto members        = pEp::utility::make_c_ptr(from_json_object<member_list*, js::array_type>(o, "members"), &free_memberlist);
+	
+	pEp_group* g = new_group( group_identity.get(), manager.get(), members.get());
+	if(g) // a valid pEp_group g owns the members, so release them before return:
+	{
+		group_identity.release();
+		manager.release();
+		members.release();
+		return g;
+	}
+	
+	// no valid group, cleanup is done automatically on return. :-)
+	return nullptr;
+}
+
+template<>
+js::Value to_json<pEp_group*>(pEp_group* const& group)
+{
+	if(group == nullptr)
+		return js::Value();
+	
+	js::Object o;
+	to_json_object(o, "group_identity", group->group_identity);
+	to_json_object(o, "manager"       , group->manager);
+	to_json_object(o, "members"       , group->members);
+	return o;
+}
+
 
 template<>
 js::Value Type2String<PEP_SESSION>::get()  { return "Session"; }
