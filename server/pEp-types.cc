@@ -90,6 +90,14 @@ In<const pEp_identity*>::~In()
 }
 
 template<>
+In<identity_list*>::~In()
+{
+	free_identity_list(value);
+	value=nullptr;
+}
+
+
+template<>
 Out<pEp_identity*>::~Out()
 {
 	free_identity(value);
@@ -107,6 +115,13 @@ template<>
 In<const identity_list*>::~In()
 {
 	free_identity_list(const_cast<identity_list*>(value));
+}
+
+template<>
+Out<pEp_group*>::~Out()
+{
+	free_group(value);
+	value=nullptr;
 }
 
 
@@ -910,6 +925,10 @@ js::Value Type2String<PEP_CIPHER_SUITE>::get()  { return "PEP_CIPHER_SUITE"; }
 
 template<>
 js::Value Type2String<PEP_STATUS>::get()  { return "PEP_STATUS"; }
+
+template<>
+js::Value Type2String<pEp_group*>::get() { return "Group"; }
+
 
 template<>
 js::Value Type2String<Language>::get()  { return "Language"; }

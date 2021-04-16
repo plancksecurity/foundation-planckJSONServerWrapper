@@ -17,6 +17,7 @@
 #include <pEp/openpgp_compat.h>
 #include <pEp/message_api.h> // for get_binary_path()
 #include <pEp/mime.h>
+#include <pEp/group.h>
 
 // libpEpAdapter:
 #include <pEp/Adapter.hh>
@@ -204,6 +205,9 @@ const FunctionMap functions = {
 		FP( "enable_identity_for_sync" , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&enable_identity_for_sync)),
 		FP( "disable_identity_for_sync", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&disable_identity_for_sync)),
 		FP( "disable_all_sync_channels", new Func<PEP_STATUS, In_Pep_Session> (&disable_all_sync_channels)),
+		
+		FP( "Group Encryption", new Separator ),
+		FP( "group_create"       , new FuncPC<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, In<pEp_identity*>, In<identity_list*>, Out<pEp_group*>> (&group_create) ),
 
 #ifndef JSON_ADAPTER_LIBRARY
 		FP( "startSync", new Func<void> (&pEp::mini::startSync) ),
