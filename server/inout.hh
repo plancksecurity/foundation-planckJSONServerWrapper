@@ -151,7 +151,9 @@ struct Out
 	typedef T* c_type; // the according type in C function parameter
 	enum { is_output = true, need_input = !(PF & ParamFlag::NoInput) }; // if need_input=false it would no longer consume an element in the input parameter array.
 	
-	Out() = default;
+	Out()
+	: value{}
+	{}
 	
 	// JSON-160: (t) is necessary on GCC and MSVC. {t} does not work here. Whyever...
 	explicit Out(const T& t) : value(t)
