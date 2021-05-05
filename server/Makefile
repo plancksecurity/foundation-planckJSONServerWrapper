@@ -9,7 +9,7 @@ endif
 # these are source builds
 
 PEP_WEBSERVER?=../../webserver
-PEP_ADAPTER_LIBRARY=../../libpEpAdapter
+PEP_ADAPTER_LIBRARY?=../../libpEpAdapter
 PEP_ENGINE?=../../pEpEngine/src
 LIBETPAN_FDIK?=../../libetpan/src/.libs
 SEQUOIA_PGP?=../../sequoia/target/release
@@ -30,7 +30,7 @@ GMP_LIBRARY_PATH?=$(LIBRARY_PATH)
 SQLITE3_LIBRARY_PATH?=$(LIBRARY_PATH)
 LIBZ_LIBRARY_PATH?=$(LIBRARY_PATH)
 ICONV_LIBRARY_PATH?=$(LIBRARY_PATH)
-LIBEVENT_LIBRARY_PATH=$(LIBRARY_PATH)
+LIBEVENT_LIBRARY_PATH?=$(LIBRARY_PATH)
 
 AR?=ar
 CC?=cc
