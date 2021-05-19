@@ -96,7 +96,7 @@ SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
 TEST_SOURCE=$(wildcard unittest_*.cc)
 TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
 
-.PHONY all
+.PHONY: all
 all: $(TARGET)
 
 
@@ -133,9 +133,10 @@ parse_mail: parse_mail.o nfc.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
 test: unittests
 	./unittests
 
-install: $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+install: $(TARGET)
 	mkdir -p $(DESTDIR)$(PREFIX)/include/pEp
 	mkdir -p $(DESTDIR)$(PREFIX)/lib
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp -v *.hh $(DESTDIR)$(PREFIX)/include/pEp
 	cp -v lib*.a $(DESTDIR)$(PREFIX)/lib/
 	cp -v $(TARGET) $(DESTDIR)$(PREFIX)/bin/
