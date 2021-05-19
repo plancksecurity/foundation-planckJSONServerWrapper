@@ -28,7 +28,7 @@ LDLIBS+= -lpEpEngine -lpEpAdapter -lpEpwebserver -lasn1 \
 	 -lsequoia_openpgp_ffi -lhogweed -lnettle -lgmp \
 	 -lz -lsqlite3
 
-# This idiom is from the pEp Engine Makefile, but we don't sure Makefile.conf here.
+# This idiom is from the pEp Engine Makefile. Don't ask... ;-)
 BUILD_ON:=$(shell uname)
 BUILD_FOR=$(BUILD_ON)
 ifeq ($(BUILD_ON),Darwin)
@@ -96,7 +96,9 @@ SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
 TEST_SOURCE=$(wildcard unittest_*.cc)
 TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
 
-all: $(TARGET) unittests parse_mail
+.PHONY all
+all: $(TARGET)
+
 
 %.d: %.cc
 	@set -e; rm -f $@; \
@@ -126,15 +128,20 @@ unittests: $(TEST_OBJECTS) $(LIB_TARGET) $(SPIRIT_OBJECTS)
 parse_mail: parse_mail.o nfc.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-.PHONY: clean uninstall install
+.PHONY: test clean uninstall install
 
-install: $(TARGET)
-	mkdir -p $(PREFIX)/include/pEp
-	cp -v *.hh $(PREFIX)/include/pEp
-	cp -v lib*.a $(PREFIX)/lib/
+test: unittests
+	./unittests
+
+install: $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+	mkdir -p $(DESTDIR)$(PREFIX)/include/pEp
+	mkdir -p $(DESTDIR)$(PREFIX)/lib
+	cp -v *.hh $(DESTDIR)$(PREFIX)/include/pEp
+	cp -v lib*.a $(DESTDIR)$(PREFIX)/lib/
+	cp -v $(TARGET) $(DESTDIR)$(PREFIX)/bin/
 
 uninstall:
-	for i in *.hh; do rm -f $(PREFIX)/include/pEp/\$i ; done
+	rm -f $(DESTDIR)$(PREFIX)/include/pEP/$(wildcard *.hh)
 
 clean:
 	rm -vf *.a *.o */*.o *.d *.d.* $(TARGET) $(TESTS) encode_decode
