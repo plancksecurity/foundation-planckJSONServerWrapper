@@ -81,8 +81,7 @@ $(LIB_TARGET): $(LIB_OBJECTS)
 	$(AR) -cr $@ $^
 
 $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
-	$(CXX) $(LDFLAGS) -liconv \
-		-lobjc -framework Foundation -framework Security \
+	$(CXX) $(LDFLAGS) -lobjc -framework Foundation -framework Security \
 		$(PEP_WEBSERVER)/libpEpwebserver.a \
 		$(BOOST_LIBRARY_PATH)/libboost_filesystem$(BOOST_MT).a \
 		$(BOOST_LIBRARY_PATH)/libboost_program_options$(BOOST_MT).a \
