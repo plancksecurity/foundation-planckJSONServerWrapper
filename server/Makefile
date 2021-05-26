@@ -111,6 +111,13 @@ ifneq ($(MAKECMDGOALS),clean)
 	-include $(DEPENDS)
 endif
 
+%.o: %.cc
+	$(CXX) $(CXXFLAGS) -c -o $@ $^
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $^
+
+
 $(LIB_TARGET): $(LIB_OBJECTS)
 	$(AR) -cr $@ $^
 
@@ -119,8 +126,6 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 		$(MA_OBJECTS) $(SPIRIT_OBJECTS)  $(LIB_TARGET) \
 		-o "$@" $(LDLIBS)
 
-%.o: %.cc
-	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
 unittests: $(TEST_OBJECTS) $(LIB_TARGET) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -lgtest
