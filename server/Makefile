@@ -28,13 +28,16 @@ LDLIBS+= -lpEpEngine -lpEpAdapter -lpEpwebserver -lasn1 \
 	 -lsequoia_openpgp_ffi -lhogweed -lnettle -lgmp \
 	 -lz -lsqlite3
 
+# Boost naming postfix
+BOOST_MT="-mt"
+
 # This idiom is from the pEp Engine Makefile. Don't ask... ;-)
 BUILD_ON:=$(shell uname)
 BUILD_FOR=$(BUILD_ON)
 ifeq ($(BUILD_ON),Darwin)
     ifeq ($(BUILD_FOR),Darwin)
         LDLIBS+= -liconv -lobjc -framework Foundation -framework Security
-        LDLIBS+= -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_thread-mt -lboost_regex-mt
+        LDLIBS+= -lboost_filesystem$(BOOST_MT) -lboost_program_options$(BOOST_MT) -lboost_system$(BOOST_MT) -lboost_thread$(BOOST_MT) -lboost_regex$(BOOST_MT)
 
         # ASAN is not strictly a MacOS/clang feature, but won't work with musl.
         CXXFLAGS+= -fsanitize=address
@@ -168,6 +171,10 @@ local.conf:
 	@echo "# for a dynamically linked binary (for development) remove this." >> local.conf
 	@echo "# also add -L<path> here if .a or .so files from non-standard paths are needed." >> local.conf
 	@echo "LDFLAGS+=--static" >> local.conf
+	@echo >> local.conf
+	@echo "# Building BOOST yourself, the artefact names are not postfixed by deafult." >> local.conf
+	@echo "# Set to empty string if this is the case for you." >> local.conf
+	@echo "BOOST_MT=\"-mt\"" >> local.conf
 	@echo >> local.conf
 	@echo "# Path where pEp libraries are installed." >> local.conf
 	@echo "PEP_LIB_PATH=$(PEP_LIB_PATH)" >> local.conf
