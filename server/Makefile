@@ -6,65 +6,99 @@ endif
 
 # default config
 
-# these are source builds
+# set to 'etpan' or 'pEpMIME'
+MIME_LIB?=etpan
 
-PEP_WEBSERVER?=../../webserver
-PEP_ADAPTER_LIBRARY?=../../libpEpAdapter
-PEP_ENGINE?=../../pEpEngine/src
-LIBETPAN_FDIK?=../../libetpan/src/.libs
-SEQUOIA_PGP?=../../sequoia/target/release
-NETTLE?=../../nettle
-BOOST_INCLUDE_PATH?=../../boost_1_72_0
-BOOST_LIBRARY_PATH?=../../boost_1_72_0/stage/lib
-ASN1_PATH?=$(PEP_ENGINE)/asn.1
+PREFIX?=$(HOME)/local
 
-# path to installed libraries
-
-PREFIX?=$(HOME)
-
+# where pEp stuff is installed into:
+PEP_LIB_PATH?=$(PREFIX)/lib
 PEP_INCLUDE?=$(PREFIX)/include
 
-LIBRARY_PATH?=$(PREFIX)/lib
+# where libs from the packages systems are installed into:
+LIBRARY_PATH?=/usr/local/lib
 
-GMP_LIBRARY_PATH?=$(LIBRARY_PATH)
-SQLITE3_LIBRARY_PATH?=$(LIBRARY_PATH)
-LIBZ_LIBRARY_PATH?=$(LIBRARY_PATH)
-ICONV_LIBRARY_PATH?=$(LIBRARY_PATH)
-LIBEVENT_LIBRARY_PATH?=$(LIBRARY_PATH)
-
-AR?=ar
+AR?=/usr/bin/ar
 CC?=cc
 CXX?=c++
-CFLAGS+=-std=c14
-CXXFLAGS+=-I$(BOOST_INCLUDE_PATH) -I$(PEP_INCLUDE) -std=c++14
-LDFLAGS+=-std=c++14
+CFLAGS+=-std=c14 -fvisibility=hidden
+CXXFLAGS+= -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden
+LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(LIBRARY_PATH)
+LDLIBS+= -lpEpEngine -lpEpAdapter -lpEpwebserver -lasn1 \
+	 -lsequoia_openpgp_ffi -lhogweed -lnettle -lgmp \
+	 -lz -lsqlite3
+
+# This idiom is from the pEp Engine Makefile. Don't ask... ;-)
+BUILD_ON:=$(shell uname)
+BUILD_FOR=$(BUILD_ON)
+ifeq ($(BUILD_ON),Darwin)
+    ifeq ($(BUILD_FOR),Darwin)
+        LDLIBS+= -liconv -lobjc -framework Foundation -framework Security
+        LDLIBS+= -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_thread-mt -lboost_regex-mt
+
+        # ASAN is not strictly a MacOS/clang feature, but won't work with musl.
+        CXXFLAGS+= -fsanitize=address
+        LDFLAGS+=  -fsanitize=address
+    else
+        $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
+    endif
+else ifeq ($(BUILD_ON),Linux)
+    ifeq ($(BUILD_FOR),Linux)
+        LDLIBS+= -luuid \
+         -lboost_filesystem -lboost_program_options -lboost_system -lboost_thread -lboost_regex
+
+    else
+        $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
+    endif
+else
+    $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
+endif
+
 
 ifdef NDEBUG
-	CFLAGS+=-O3 -DNDEBUG -fvisibility=hidden -fno-stack-check
-	CXXFLAGS+=-O3 -DNDEBUG -fvisibility=hidden -fno-stack-check
+	CFLAGS+=-O3 -DNDEBUG  
+	CXXFLAGS+=-O3 -DNDEBUG
 else
-	CFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden -fno-stack-check
-	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED -fvisibility=hidden -fno-stack-check
+	CFLAGS+=-O0 -g -DDEBUG_ENABLED
+	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED
 endif
 
 TARGET=pEp-mini-json-adapter
 LIB_TARGET=libjson-adapter.a
 
-ALL_SOURCE=$(filter-out unittest_%.cc,$(wildcard *.cc))
-LIB_SOURCE=$(filter-out miniadapter-%.cc,$(ALL_SOURCE))
-MA_SOURCE=$(wildcard miniadapter-*.cc)
+ifeq ($(MIME_LIB),etpan)
+    LDLIBS+=-letpan
+    OMIT_NFC_SOURCE=
+else ifeq ($(MIME_LIB),pEpMIME)
+    LDLIBS+=-lpEpMIME
+    
+    # is already in libpEpMIME:
+    OMIT_NFC_SOURCE=nfc.cc nfc_sets.cc
+else
+    $(error "You must set MIME_LIB to 'etpan' or 'pEpMIME'!" )
+endif
+
+
+ALL_SOURCE=$(filter-out parse_mail.cc unittest_%.cc, $(wildcard *.cc))
+MA_SOURCE=$(wildcard mini-adapter-*.cc)
+
+LIB_SOURCE=$(filter-out $(MA_SOURCE) $(OMIT_NFC_SOURCE), $(ALL_SOURCE))
+
 DEPENDS=$(subst .cc,.d,$(ALL_SOURCE))
+
 ALL_OBJECTS=$(subst .d,.o,$(DEPENDS))
 LIB_OBJECTS=$(subst .cc,.o,$(LIB_SOURCE))
 MA_OBJECTS=$(subst .cc,.o,$(MA_SOURCE))
+
 SPIRIT_SOURCE=$(wildcard json_spirit/*.cpp)
 SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
 
-# Filename of the unittest binary
-TARGET_GTEST=unittests
+TEST_SOURCE=$(wildcard unittest_*.cc)
+TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
 
-
+.PHONY: all
 all: $(TARGET)
+
 
 %.d: %.cc
 	@set -e; rm -f $@; \
@@ -77,115 +111,72 @@ ifneq ($(MAKECMDGOALS),clean)
 	-include $(DEPENDS)
 endif
 
+%.o: %.cc
+	$(CXX) $(CXXFLAGS) -c -o $@ $^
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $^
+
+
 $(LIB_TARGET): $(LIB_OBJECTS)
 	$(AR) -cr $@ $^
 
 $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
-	$(CXX) $(LDFLAGS) -liconv \
-		-lobjc -framework Foundation -framework Security \
-		$(PEP_WEBSERVER)/libpEpwebserver.a \
-		$(BOOST_LIBRARY_PATH)/libboost_filesystem$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_program_options$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_system$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_thread$(BOOST_MT).a \
-		$(BOOST_LIBRARY_PATH)/libboost_regex$(BOOST_MT).a \
-		$(ICONV_LIBRARY_PATH)/libiconv.a \
-		$(LIBZ_LIBRARY_PATH)/libz.a \
-		$(SQLITE3_LIBRARY_PATH)/libsqlite3.a \
-		$(GMP_LIBRARY_PATH)/libgmp.a \
-		$(NETTLE)/libnettle.a $(NETTLE)/libhogweed.a \
-		$(SEQUOIA_PGP)/libsequoia_ffi.a \
-		$(SEQUOIA_PGP)/libsequoia_openpgp_ffi.a \
-		$(LIBETPAN_FDIK)/libetpan.a \
-		$(PEP_ENGINE)/libpEpEngine.a \
-		$(ASN1_PATH)/libasn1.a \
-		$(PEP_ADAPTER_LIBRARY)/libpEpAdapter.a \
-		$(MA_OBJECTS) $(SPIRIT_OBJECTS) $(LIB_TARGET) -o "$@"
-
-%.o: %.cc
-	$(CXX) $(CXXFLAGS) -c -o $@ $^
-
-gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
-	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -o $@ -c $<
-
-gtest_main.o: $(GTEST_DIR)/src/gtest_main.cc
-	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -o $@ -c $<
-
-$(TARGET_GTEST): unittest_json.o unittest_nfc.o unittest_decompose.o unittest_rpc.o \
-    unittest_logger.o unittest_pEp.o unittest_string.o \
-    gtest-all.o gtest_main.o libjson-adapter.a
-	$(CXX) $(CPPFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
+	$(CXX) $(LDFLAGS) \
+		$(MA_OBJECTS) $(SPIRIT_OBJECTS)  $(LIB_TARGET) \
+		-o "$@" $(LDLIBS)
 
 
-.PHONY: clean uninstall install
+unittests: $(TEST_OBJECTS) $(LIB_TARGET) $(SPIRIT_OBJECTS)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -lgtest
+
+parse_mail: parse_mail.o nfc.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+.PHONY: test clean uninstall install
+
+test: unittests
+	./unittests
 
 install: $(TARGET)
-	mkdir -p $(PREFIX)/include/pEp
-	cp -v *.hh $(PREFIX)/include/pEp
-	cp -v lib*.a $(PREFIX)/lib/
+	mkdir -p $(DESTDIR)$(PREFIX)/include/pEp
+	mkdir -p $(DESTDIR)$(PREFIX)/lib
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	cp -v *.hh $(DESTDIR)$(PREFIX)/include/pEp
+	cp -v lib*.a $(DESTDIR)$(PREFIX)/lib/
+	cp -v $(TARGET) $(DESTDIR)$(PREFIX)/bin/
 
 uninstall:
-	for i in *.hh; do rm -f $(PREFIX)/include/pEp/\$i ; done
+	rm -f $(DESTDIR)$(PREFIX)/include/pEP/$(wildcard *.hh)
 
 clean:
-	rm -vf *.o *.d *.d.* $(TARGET) $(TESTS)
+	rm -vf *.a *.o */*.o *.d *.d.* $(TARGET) $(TESTS) encode_decode
 
 local.conf:
-	@echo "# the following are directories with the source build" >> local.conf
-	@echo "# ---------------------------------------------------" >> local.conf
-	@echo >> local.conf
-	@echo "# path to pEp webserver" >> local.conf
-	@echo >> local.conf
-	@echo "PEP_WEBSERVER=$(PEP_WEBSERVER)" >> local.conf
-	@echo >> local.conf
-	@echo "# path to pEp adapter library" >> local.conf
-	@echo >> local.conf
-	@echo "PEP_ADAPTER_LIBRARY=$(PEP_ADAPTER_LIBRARY)" >> local.conf
-	@echo >> local.conf
-	@echo "# path to pEp engine" >> local.conf
-	@echo >> local.conf
-	@echo "PEP_ENGINE=$(PEP_ENGINE)" >> local.conf
-	@echo >> local.conf
-	@echo "# path to fdik fork of libetpan" >> local.conf
-	@echo >> local.conf
-	@echo "LIBETPAN_FDIK=$(LIBETPAN_FDIK)" >> local.conf
-	@echo >> local.conf
-	@echo "# path to Sequoia PGP" >> local.conf
-	@echo >> local.conf
-	@echo "SEQUOIA_PGP=$(SEQUOIA_PGP)" >> local.conf
-	@echo >> local.conf
-	@echo "# path to nettle and hogweed crypto libraries" >> local.conf
-	@echo >> local.conf
-	@echo "NETTLE=$(NETTLE)" >> local.conf
-	@echo >> local.conf
-	@echo "# path where to find boost" >> local.conf
-	@echo >> local.conf
-	@echo "BOOST_INCLUDE_PATH=$(BOOST_INCLUDE_PATH)" >> local.conf
-	@echo "BOOST_LIBRARY_PATH=$(BOOST_LIBRARY_PATH)" >> local.conf
-	@echo >> local.conf
-	@echo >> local.conf
 	@echo "# these are installation directories" >> local.conf
 	@echo "# ----------------------------------" >> local.conf
 	@echo >> local.conf
 	@echo "# pEp installation header file directory" >> local.conf
-	@echo >> local.conf
 	@echo "PEP_INCLUDE=$(PEP_INCLUDE)" >> local.conf
 	@echo >> local.conf
-	@echo "# path where to find GMP" >> local.conf
+	@echo "# installation destination for make install" >> local.conf
+	@echo "PREFIX?=$(PREFIX)" >> local.conf
 	@echo >> local.conf
-	@echo "GMP_LIBRARY_PATH=$(GMP_LIBRARY_PATH)" >> local.conf
+	@echo "# Additional options" >> local.conf
+	@echo "# ------------------" >> local.conf
 	@echo >> local.conf
-	@echo "# path where to find SQLite3" >> local.conf
+	@echo "# for a dynamically linked binary (for development) remove this." >> local.conf
+	@echo "# also add -L<path> here if .a or .so files from non-standard paths are needed." >> local.conf
+	@echo "LDFLAGS+=--static" >> local.conf
 	@echo >> local.conf
-	@echo "SQLITE3_LIBRARY_PATH=$(SQLITE3_LIBRARY_PATH)" >> local.conf
+	@echo "# Path where pEp libraries are installed." >> local.conf
+	@echo "PEP_LIB_PATH=$(PEP_LIB_PATH)" >> local.conf
 	@echo >> local.conf
-	@echo "# path where to find libz" >> local.conf
+	@echo "# Path where system libraries are installed." >> local.conf
+	@echo "LIBRARY_PATH=$(LIBRARY_PATH)" >> local.conf
 	@echo >> local.conf
-	@echo "LIBZ_LIBRARY_PATH=$(LIBZ_LIBRARY_PATH)" >> local.conf
-	@echo >> local.conf
-	@echo "# path where to find GNU iconv" >> local.conf
-	@echo >> local.conf
-	@echo "ICONV_LIBRARY_PATH=$(ICONV_LIBRARY_PATH)" >> local.conf
+	@echo "# remove this for a debug build." >> local.conf
+	@echo "NDEBUG=yes" >> local.conf
 
 help:
 	@echo "usage:"
