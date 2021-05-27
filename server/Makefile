@@ -172,7 +172,8 @@ local.conf:
 	@echo "# also add -L<path> here if .a or .so files from non-standard paths are needed." >> local.conf
 	@echo "LDFLAGS+=--static" >> local.conf
 	@echo >> local.conf
-	@echo "# Building BOOST yourself, the artefact names are not postfixed by deafult." >> local.conf
+	@echo "# Building BOOST yourself, the artefact names are not postfixed by deafult" >> local.conf
+	@echo "# E.g. lib is named \"libboost_regex.a\", not \"libboost_regex-mt.a\"." >> local.conf
 	@echo "# Set to empty string if this is the case for you." >> local.conf
 	@echo "BOOST_MT=\"-mt\"" >> local.conf
 	@echo >> local.conf
