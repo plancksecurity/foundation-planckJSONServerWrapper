@@ -29,7 +29,7 @@ LDLIBS+= -lpEpEngine -lpEpAdapter -lpEpwebserver -lasn1 \
 	 -lz -lsqlite3
 
 # Boost naming postfix
-BOOST_MT="-mt"
+BOOST_MT?="-mt"
 
 # This idiom is from the pEp Engine Makefile. Don't ask... ;-)
 BUILD_ON:=$(shell uname)
