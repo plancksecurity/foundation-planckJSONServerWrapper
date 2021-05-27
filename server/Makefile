@@ -170,6 +170,7 @@ local.conf:
 	@echo >> local.conf
 	@echo "# for a dynamically linked binary (for development) remove this." >> local.conf
 	@echo "# also add -L<path> here if .a or .so files from non-standard paths are needed." >> local.conf
+	@echo "# If you are using clang, it's \"-static\", but that will fail if you did not compile a static version of libcrt0 and libc[++] yourself." >> local.conf
 	@echo "LDFLAGS+=--static" >> local.conf
 	@echo >> local.conf
 	@echo "# Building BOOST yourself, the artefact names are not postfixed by deafult" >> local.conf
