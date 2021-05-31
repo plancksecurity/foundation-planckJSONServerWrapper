@@ -1,0 +1,21 @@
+# This is an Example build config file (local.conf)
+# you might not need this file, but if the defaults dont work for you
+# You can override them here.
+# Tweak the values to your needs and rename it to local.conf
+
+######### C++ Compiler #########
+# Should work with clang and g++
+# CXX=g++
+
+# You might use /usr/bin/ar on MacOS explicitly if you have GNU ar installed via HomeBrew,
+# because it is installed in /usr/local/bin and therefore used by default.
+# AR=ar
+
+# DEBUG=1       # DEBUG Build (Default)
+# DEBUG=0       # RELEASE Build
+
+############# DIRS #############
+# PREFIX=$(HOME)/local
+
+# where the other pEp-specific includes (e.g. pEpEngine, libpEpAdapter) are installed
+# PEP_INCLUDE=$(PREFIX)/include
