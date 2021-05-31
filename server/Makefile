@@ -51,14 +51,16 @@ else
     $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
 endif
 
-
-ifdef NDEBUG
+# DEBUG=0 -> release build
+# DEBUG=1 or undefined -> debug build
+ifeq ($(DEBUG),0)
 	CFLAGS+=-O3 -DNDEBUG  
 	CXXFLAGS+=-O3 -DNDEBUG
 else
 	CFLAGS+=-O0 -g -DDEBUG_ENABLED
 	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED
 endif
+
 
 TARGET=pEp-mini-json-adapter
 LIB_TARGET=libjson-adapter.a
