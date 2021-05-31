@@ -89,8 +89,8 @@ ALL_OBJECTS=$(subst .d,.o,$(DEPENDS))
 LIB_OBJECTS=$(subst .cc,.o,$(LIB_SOURCE))
 MA_OBJECTS=$(subst .cc,.o,$(MA_SOURCE))
 
-SPIRIT_SOURCE=$(wildcard json_spirit/*.cpp)
-SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
+SPIRIT_SOURCE=$(wildcard json_spirit/*.cc)
+SPIRIT_OBJECTS=$(subst .cc,.o,$(SPIRIT_SOURCE))
 
 TEST_SOURCE=$(wildcard unittest_*.cc)
 TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
@@ -111,9 +111,6 @@ ifneq ($(MAKECMDGOALS),clean)
 endif
 
 %.o: %.cc
-	$(CXX) $(CXXFLAGS) -c -o $@ $^
-
-%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
 
