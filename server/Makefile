@@ -18,9 +18,6 @@ PEP_INCLUDE?=$(PREFIX)/include
 # where libs from the packages systems are installed into:
 LIBRARY_PATH?=/usr/local/lib
 
-AR?=/usr/bin/ar
-CC?=cc
-CXX?=c++
 CFLAGS+=-std=c14 -fvisibility=hidden
 CXXFLAGS+= -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(LIBRARY_PATH)
@@ -128,7 +125,7 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 
 
 unittests: $(TEST_OBJECTS) $(LIB_TARGET) $(SPIRIT_OBJECTS)
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -lgtest
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 parse_mail: parse_mail.o nfc.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
