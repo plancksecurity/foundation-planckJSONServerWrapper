@@ -110,9 +110,10 @@ namespace LoggerS  // namespace containing all data for the Logger singleton. HA
 	{
 		~LogfileCloser()
 		{
+			Lock LCK(LoggerS::mut);
 			if(LoggerS::logfile)
 			{
-				LoggerS::log(Logger::Debug, "Shutdown.");
+//				LoggerS::log(Logger::Debug, "Shutdown.");
 				fputs("---<shutdown>---\n", LoggerS::logfile);
 				fclose(LoggerS::logfile);
 				LoggerS::logfile = nullptr;

@@ -78,7 +78,7 @@ else
 endif
 
 
-ALL_SOURCE=$(filter-out parse_mail.cc unittest_%.cc, $(wildcard *.cc))
+ALL_SOURCE=$(filter-out parse_mail.cc unittest_%.cc servertest.cc, $(wildcard *.cc))
 MA_SOURCE=$(wildcard mini-adapter-*.cc)
 
 LIB_SOURCE=$(filter-out $(MA_SOURCE) $(OMIT_NFC_SOURCE), $(ALL_SOURCE))
@@ -124,7 +124,7 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 
 
 unittests: $(TEST_OBJECTS) $(LIB_TARGET) $(SPIRIT_OBJECTS)
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -lgtest -lgtest_main
 
 parse_mail: parse_mail.o nfc.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
