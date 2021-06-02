@@ -118,7 +118,8 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,21,1);  // wrap _all_ Engine functions with passphrase_cache.api(), except config_*() functions.
 //static const ServerVersion sv(0,21,2); // JSON-165 the msg param of re_evaluate_message_rating() is now "inout" and not "in" any more
 //static const ServerVersion sv(0,22,0); // JSON-183 "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
-static const ServerVersion sv(0,22,1); // ENGINE-890: add disable_all_sync_channels()
+//static const ServerVersion sv(0,22,1); // ENGINE-890: add disable_all_sync_channels()
+static const ServerVersion sv(0,22,2);   // JSON-194: add set_comm_partner_key()
 	return sv;
 }
 
