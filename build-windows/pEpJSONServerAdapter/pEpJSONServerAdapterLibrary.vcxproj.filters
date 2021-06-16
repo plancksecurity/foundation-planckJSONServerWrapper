@@ -161,13 +161,13 @@
     <ClCompile Include="..\..\server\base64.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\server\json_spirit\json_spirit_reader.cpp">
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_reader.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\server\json_spirit\json_spirit_value.cpp">
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_value.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\server\json_spirit\json_spirit_writer.cpp">
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_writer.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\server\prefix-config.cc">

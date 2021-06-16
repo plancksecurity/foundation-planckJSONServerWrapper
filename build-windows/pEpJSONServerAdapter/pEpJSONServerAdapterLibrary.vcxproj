@@ -133,9 +133,9 @@
     <ClCompile Include="..\..\server\inout.cc" />
     <ClCompile Include="..\..\server\json-adapter.cc" />
     <ClCompile Include="..\..\server\json_rpc.cc" />
-    <ClCompile Include="..\..\server\json_spirit\json_spirit_reader.cpp" />
-    <ClCompile Include="..\..\server\json_spirit\json_spirit_value.cpp" />
-    <ClCompile Include="..\..\server\json_spirit\json_spirit_writer.cpp" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_reader.cc" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_value.cc" />
+    <ClCompile Include="..\..\server\json_spirit\json_spirit_writer.cc" />
     <ClCompile Include="..\..\server\logger.cc" />
     <ClCompile Include="..\..\server\nfc.cc" />
     <ClCompile Include="..\..\server\nfc_sets.cc" />

@@ -18,9 +18,6 @@ PEP_INCLUDE?=$(PREFIX)/include
 # where libs from the packages systems are installed into:
 LIBRARY_PATH?=/usr/local/lib
 
-AR?=/usr/bin/ar
-CC?=cc
-CXX?=c++
 CFLAGS+=-std=c14 -fvisibility=hidden
 CXXFLAGS+= -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(LIBRARY_PATH)
@@ -57,14 +54,16 @@ else
     $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
 endif
 
-
-ifdef NDEBUG
+# DEBUG=0 -> release build
+# DEBUG=1 or undefined -> debug build
+ifeq ($(DEBUG),0)
 	CFLAGS+=-O3 -DNDEBUG  
 	CXXFLAGS+=-O3 -DNDEBUG
 else
 	CFLAGS+=-O0 -g -DDEBUG_ENABLED
 	CXXFLAGS+=-O0 -g -DDEBUG_ENABLED
 endif
+
 
 TARGET=pEp-mini-json-adapter
 LIB_TARGET=libjson-adapter.a
@@ -82,7 +81,7 @@ else
 endif
 
 
-ALL_SOURCE=$(filter-out parse_mail.cc unittest_%.cc, $(wildcard *.cc))
+ALL_SOURCE=$(filter-out parse_mail.cc unittest_%.cc servertest.cc, $(wildcard *.cc))
 MA_SOURCE=$(wildcard mini-adapter-*.cc)
 
 LIB_SOURCE=$(filter-out $(MA_SOURCE) $(OMIT_NFC_SOURCE), $(ALL_SOURCE))
@@ -93,8 +92,8 @@ ALL_OBJECTS=$(subst .d,.o,$(DEPENDS))
 LIB_OBJECTS=$(subst .cc,.o,$(LIB_SOURCE))
 MA_OBJECTS=$(subst .cc,.o,$(MA_SOURCE))
 
-SPIRIT_SOURCE=$(wildcard json_spirit/*.cpp)
-SPIRIT_OBJECTS=$(subst .cpp,.o,$(SPIRIT_SOURCE))
+SPIRIT_SOURCE=$(wildcard json_spirit/*.cc)
+SPIRIT_OBJECTS=$(subst .cc,.o,$(SPIRIT_SOURCE))
 
 TEST_SOURCE=$(wildcard unittest_*.cc)
 TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
@@ -117,9 +116,6 @@ endif
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $^
-
 
 $(LIB_TARGET): $(LIB_OBJECTS)
 	$(AR) -cr $@ $^
@@ -131,7 +127,7 @@ $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
 
 
 unittests: $(TEST_OBJECTS) $(LIB_TARGET) $(SPIRIT_OBJECTS)
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -lgtest
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -lgtest -lgtest_main
 
 parse_mail: parse_mail.o nfc.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)

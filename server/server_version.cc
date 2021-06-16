@@ -79,8 +79,9 @@ static const std::string VersionName =
 //	"(45) Kreuz Erfurt"; // fix of context-saved function parameters that would cause trouble when >1 request is processed in parallel.
 //	"(46) Erfurt-West";  // JSON-156: delete client cached values after timeout.
 //	"(47a) Erfurt-Ost";  // JSON-160, JSON-172, JSON-179.
-    "(47b) Erfurt-Vieselbach"; // JSON-183: "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
-
+//	"(47b) Erfurt-Vieselbach"; // JSON-183: "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
+	"(48) Nohra"; // FPMAIL-412, P4TB-400: add import_key_with_fpr_return()
+	
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
 
@@ -118,7 +119,9 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,21,1);  // wrap _all_ Engine functions with passphrase_cache.api(), except config_*() functions.
 //static const ServerVersion sv(0,21,2); // JSON-165 the msg param of re_evaluate_message_rating() is now "inout" and not "in" any more
 //static const ServerVersion sv(0,22,0); // JSON-183 "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
-static const ServerVersion sv(0,22,1); // ENGINE-890: add disable_all_sync_channels()
+//static const ServerVersion sv(0,22,1); // ENGINE-890: add disable_all_sync_channels()
+//static const ServerVersion sv(0,22,2);   // JSON-194: add set_comm_partner_key()
+static const ServerVersion sv(0,22,3);   // FPMAIL-412, P4TB-400: add import_key_with_fpr_return()
 	return sv;
 }
 

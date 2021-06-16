@@ -26,6 +26,8 @@ build-windows/libevent/Release/*
 build-windows/libevent/Debug/*
 build-windows/pEpJSONServerAdapter/Release/*
 build-windows/pEpJSONServerAdapter/Debug/*
+build-windows/pEp/libpEpwebserver/Release/*
+build-windows/pEp/libpEpwebserver/Debug/*
 
 server/pEp-mini-json-adapter
 

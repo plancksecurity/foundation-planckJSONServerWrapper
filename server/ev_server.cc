@@ -143,6 +143,7 @@ const FunctionMap functions = {
 		FP( "config_cipher_suite", new FuncCache<void, In_Pep_Session, In<PEP_CIPHER_SUITE>>( "config_cipher_suite", &config_cipher_suite) ),
 		FP( "config_passphrase",   new FuncCachePassphrase<void, In_Pep_Session, In<c_string>>( "config_passphrase" ) ),
 		FP( "config_passphrase_for_new_keys",   new FuncCachePassphrase4NewKeys<void, In_Pep_Session, In<bool>, In<c_string>>( "config_passphrase4nk" ) ),
+		FP( "set_comm_partner_key", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, In<c_string>>( &set_comm_partner_key ) ),
 		
 		FP( "Identity Management API", new Separator),
 		FP( "get_identity"       , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<pEp_identity*>>( &get_identity) ),
@@ -159,6 +160,7 @@ const FunctionMap functions = {
 		FP( "generate_keypair", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &generate_keypair) ),
 		FP( "delete_keypair", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>> ( &delete_keypair) ),
 		FP( "import_key"    , new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<identity_list*>> ( &import_key) ),
+		FP( "import_key_with_fpr_return", new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<identity_list*>, Out<stringlist_t*>, Out<uint64_t>> ( &import_key_with_fpr_return) ),
 		FP( "export_key"    , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<char*>, Out<std::size_t>> ( &export_key) ),
 		FP( "find_keys"     , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &get_trust) ),

@@ -49,7 +49,7 @@ class EncodeDecodeTest : public ::testing::Test
 protected:
 	void SetUp() override
 	{
-		init(&session, &dummy_send, &dummy_inject);
+		init(&session, &dummy_send, &dummy_inject, &dummy_ensure_passphrase);
 		
 		random_name = gen_random_name();
 		const std::string address = "encode-decode-test." + random_name + "@peptest.ch";
@@ -83,7 +83,10 @@ protected:
 	
 	static
 	PEP_STATUS dummy_send(struct _message*) { return PEP_STATUS_OK; }
-
+	
+	static
+	PEP_STATUS dummy_ensure_passphrase(PEP_SESSION, const char* /* fpr */) { return PEP_STATUS_OK; }
+	
 	PEP_SESSION session = nullptr;
 	std::string random_name;
 	pEp_identity* my_identity = nullptr;
