@@ -32,24 +32,14 @@ BOOST_MT?=-mt
 BUILD_ON:=$(shell uname)
 BUILD_FOR=$(BUILD_ON)
 ifeq ($(BUILD_ON),Darwin)
-    ifeq ($(BUILD_FOR),Darwin)
-        LDLIBS+= -liconv -lobjc -framework Foundation -framework Security
-        LDLIBS+= -lboost_filesystem$(BOOST_MT) -lboost_program_options$(BOOST_MT) -lboost_system$(BOOST_MT) -lboost_thread$(BOOST_MT) -lboost_regex$(BOOST_MT)
+	LDLIBS+= -liconv -lobjc -framework Foundation -framework Security
+	LDLIBS+= -lboost_filesystem$(BOOST_MT) -lboost_program_options$(BOOST_MT) -lboost_system$(BOOST_MT) -lboost_thread$(BOOST_MT) -lboost_regex$(BOOST_MT)
 
-        # ASAN is not strictly a MacOS/clang feature, but won't work with musl.
-        CXXFLAGS+= -fsanitize=address
-        LDFLAGS+=  -fsanitize=address
-    else
-        $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
-    endif
+	# ASAN is not strictly a MacOS/clang feature, but won't work with musl.
+	CXXFLAGS+= -fsanitize=address
+	LDFLAGS+=  -fsanitize=address
 else ifeq ($(BUILD_ON),Linux)
-    ifeq ($(BUILD_FOR),Linux)
-        LDLIBS+= -luuid \
-         -lboost_filesystem -lboost_program_options -lboost_system -lboost_thread -lboost_regex -lpthread -ldl
-
-    else
-        $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
-    endif
+	LDLIBS+= -luuid -lboost_filesystem -lboost_program_options -lboost_system -lboost_thread -lboost_regex -lpthread -ldl
 else
     $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
 endif
