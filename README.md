@@ -18,6 +18,7 @@ supported, Windows is about to follow.  Newer versions should also work
 * libboost-program-options-dev 
 * libboost-filesystem-dev
 * [p≡p Engine](https://gitea.pep.foundation/pEp.foundation/pEpEngine/)
+  p≡p Engine Version Release_3.1
   (which needs sequoia, a patched libetpan, libboost-system-dev)
 * [libpEpAdapter](https://gitea.pep.foundation/pEp.foundation/libpEpAdapter/)
 * [webserver](https://gitea.pep.foundation/fdik/webserver)
