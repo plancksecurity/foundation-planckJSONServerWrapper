@@ -23,6 +23,7 @@
 #include <pEp/status_to_string.hh>
 #include <pEp/slurp.hh>
 #include <pEp/message_cache.hh>
+#include <pEp/group_manager_api.h> // Yes, .h because it is a C API in libpEpAdapter!
 
 #include <boost/filesystem.hpp>
 #include "json_spirit/json_spirit_reader.h"
@@ -185,11 +186,7 @@ const FunctionMap functions = {
 		FP( "revoke"        , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>> ( &revoke_key) ),
 		FP( "key_expired"   , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, In<time_t>, Out<bool>> ( &key_expired) ),
 		
-		FP( "from blacklist.h & OpenPGP_compat.h", new Separator),
-		FP( "blacklist_add"   , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>> ( &blacklist_add) ),
-		FP( "blacklist_delete", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>> ( &blacklist_delete) ),
-		FP( "blacklist_is_listed", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<bool>> ( &blacklist_is_listed) ),
-		FP( "blacklist_retrieve" , new FuncPC<PEP_STATUS, In_Pep_Session, Out<stringlist_t*>> ( &blacklist_retrieve) ),
+		FP( "from openpgp_compat.h", new Separator),
 		FP( "OpenPGP_list_keyinfo", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<stringpair_list_t*>> ( &OpenPGP_list_keyinfo) ),
 		
 		FP( "Event Listener & Results", new Separator ),
@@ -206,6 +203,16 @@ const FunctionMap functions = {
 		FP( "enable_identity_for_sync" , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&enable_identity_for_sync)),
 		FP( "disable_identity_for_sync", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> (&disable_identity_for_sync)),
 		FP( "disable_all_sync_channels", new Func<PEP_STATUS, In_Pep_Session> (&disable_all_sync_channels)),
+		
+		FP( "Group Manager API", new Separator),
+		FP( "adapter_group_create"       , new Func<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>, InOut<pEp_identity*>, InOut<identity_list*>> (&adapter_group_create)),
+		FP( "adapter_group_dissolve"     , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, In<pEp_identity*>> (&adapter_group_dissolve)),
+		FP( "adapter_group_invite_member", new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, In<pEp_identity*>> (&adapter_group_invite_member)),
+		FP( "adapter_group_remove_member", new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, In<pEp_identity*>> (&adapter_group_remove_member)),
+		FP( "adapter_group_join"         , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, In<pEp_identity*>> (&adapter_group_join)),
+		FP( "adapter_group_query_groups" , new Func<PEP_STATUS, In_Pep_Session, Out<identity_list*>> (&adapter_group_query_groups)),
+		FP( "adapter_group_query_manager", new Func<PEP_STATUS, In_Pep_Session, In<const pEp_identity*>, Out<pEp_identity*>> (&adapter_group_query_manager)),
+		FP( "adapter_group_query_members", new Func<PEP_STATUS, In_Pep_Session, In<const pEp_identity*>, Out<identity_list*>> (&adapter_group_query_members)),
 
 #ifndef JSON_ADAPTER_LIBRARY
 		FP( "startSync", new Func<void> (&pEp::mini::startSync) ),

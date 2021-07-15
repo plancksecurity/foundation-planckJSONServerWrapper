@@ -80,7 +80,13 @@ static const std::string VersionName =
 //	"(46) Erfurt-West";  // JSON-156: delete client cached values after timeout.
 //	"(47a) Erfurt-Ost";  // JSON-160, JSON-172, JSON-179.
 //	"(47b) Erfurt-Vieselbach"; // JSON-183: "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
-	"(48) Nohra"; // FPMAIL-412, P4TB-400: add import_key_with_fpr_return()
+//	"(48) Nohra"; // FPMAIL-412, P4TB-400: add import_key_with_fpr_return()
+
+//////////////////////
+// 49...55 are skipped for futher Releases of the 2.1 branch, if necessary.
+//////////////////////
+
+	"(56a) Hermsdorfer Kreuz"; // JSON-197: Group Encryption, Engine 3.1 branch.
 	
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
@@ -121,7 +127,13 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,22,0); // JSON-183 "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
 //static const ServerVersion sv(0,22,1); // ENGINE-890: add disable_all_sync_channels()
 //static const ServerVersion sv(0,22,2);   // JSON-194: add set_comm_partner_key()
-static const ServerVersion sv(0,22,3);   // FPMAIL-412, P4TB-400: add import_key_with_fpr_return()
+//static const ServerVersion sv(0,22,3);   // FPMAIL-412, P4TB-400: add import_key_with_fpr_return()
+
+////////////////////////
+// Intentional big jump, because Group Encryption is a major step, worth starting with >0 SemVer versions, I think.
+////////////////////////
+
+	static const ServerVersion sv(3,1,0);  // JSON-197: Group Encryption. 3.1 branch of Engine & JSON Adapter
 	return sv;
 }
 
