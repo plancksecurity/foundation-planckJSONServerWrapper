@@ -12,7 +12,6 @@
 #include "server_version.hh"
 
 #include <pEp/message_api.h>
-#include <pEp/blacklist.h>
 #include <pEp/key_reset.h>
 #include <pEp/openpgp_compat.h>
 #include <pEp/message_api.h> // for get_binary_path()
