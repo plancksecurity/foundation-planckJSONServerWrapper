@@ -217,8 +217,8 @@ const FunctionMap functions = {
 		FP( "startSync", new Func<void> (&pEp::mini::startSync) ),
 		FP( "stopSync" , new Func<void> (&pEp::mini::stopSync) ),
 #else
-		FP( "startSync", new Func<void> (&pEp::CallbackDispatcher::start_sync) ),
-		FP( "stopSync" , new Func<void> (&pEp::CallbackDispatcher::stop_sync) ),
+		FP( "startSync", new Func<void> (&pEp::Adapter::start_sync) ),
+		FP( "stopSync" , new Func<void> (&pEp::Adapter::stop_sync) ),
 #endif
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
