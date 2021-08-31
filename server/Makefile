@@ -45,7 +45,7 @@ ifeq ($(BUILD_ON),Darwin)
 else ifeq ($(BUILD_ON),Linux)
     ifeq ($(BUILD_FOR),Linux)
         LDLIBS+= -luuid \
-         -lboost_filesystem -lboost_program_options -lboost_system -lboost_thread -lboost_regex
+         -lboost_filesystem -lboost_program_options -lboost_system -lboost_thread -lboost_regex -lpthread -ldl
 
     else
         $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
