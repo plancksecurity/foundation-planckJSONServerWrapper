@@ -142,7 +142,7 @@ install: $(TARGET)
 	cp -v $(TARGET) $(DESTDIR)$(PREFIX)/bin/
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/include/pEP/$(wildcard *.hh)
+	rm -f $(addprefix $(DESTDIR)$(PREFIX)/include/pEp/,$(wildcard *.hh))
 
 clean:
 	rm -vf *.a *.o */*.o *.d *.d.* $(TARGET) $(TESTS) encode_decode
