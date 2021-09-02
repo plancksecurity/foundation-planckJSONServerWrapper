@@ -114,12 +114,6 @@ Start Key Synchronization for the current session.
 ##### stopKeySync()
 Stop Key Synchronization for the current session.
 
-##### startKeyserverLookup()
-Start a global thread for Keyserver Lookup. This thread handles all keyserver communication for all sessions.
-
-##### stopKeyserverLookup()
-Stop the global thread for Keyserver Lookup.
-
 
 ##### encrypt_message(Message src, StringList extra_keys, Message⇑ dst, PEP_enc_format enc_format, Integer flags)
 encrypt message in memory
@@ -748,13 +742,6 @@ JSON Adapter version etc.
 
 ##### version()
 Returns a codename for the current JSON Server Adapter's version.
-
-
-##### getGpgEnvironment()
-Returns a struct holding 3 members
-* gnupg_path
-* gnupg_home environment variable, if set
-* gpg_agent_info environment variable, if set.
 
 ##### shutdown()
 shutdown the JSON Adapter
