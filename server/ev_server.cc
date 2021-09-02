@@ -12,7 +12,6 @@
 #include "server_version.hh"
 
 #include <pEp/message_api.h>
-#include <pEp/blacklist.h>
 #include <pEp/key_reset.h>
 #include <pEp/openpgp_compat.h>
 #include <pEp/message_api.h> // for get_binary_path()
@@ -186,10 +185,6 @@ const FunctionMap functions = {
 		FP( "key_expired"   , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, In<time_t>, Out<bool>> ( &key_expired) ),
 		
 		FP( "from blacklist.h & OpenPGP_compat.h", new Separator),
-		FP( "blacklist_add"   , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>> ( &blacklist_add) ),
-		FP( "blacklist_delete", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>> ( &blacklist_delete) ),
-		FP( "blacklist_is_listed", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<bool>> ( &blacklist_is_listed) ),
-		FP( "blacklist_retrieve" , new FuncPC<PEP_STATUS, In_Pep_Session, Out<stringlist_t*>> ( &blacklist_retrieve) ),
 		FP( "OpenPGP_list_keyinfo", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<stringpair_list_t*>> ( &OpenPGP_list_keyinfo) ),
 		
 		FP( "Event Listener & Results", new Separator ),
