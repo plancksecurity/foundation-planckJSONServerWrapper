@@ -80,7 +80,8 @@ static const std::string VersionName =
 //	"(46) Erfurt-West";  // JSON-156: delete client cached values after timeout.
 //	"(47a) Erfurt-Ost";  // JSON-160, JSON-172, JSON-179.
 //	"(47b) Erfurt-Vieselbach"; // JSON-183: "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
-	"(48) Nohra"; // FPMAIL-412, P4TB-400: add import_key_with_fpr_return()
+//	"(48) Nohra"; // FPMAIL-412, P4TB-400: add import_key_with_fpr_return()
+	"(49) Weimar"; // ENGINE-959: remove rating out parameter from message_decrypt()
 	
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////

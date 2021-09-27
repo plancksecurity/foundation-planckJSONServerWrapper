@@ -131,7 +131,7 @@ TEST_F( EncodeDecodeTest, Msg )
 	PEP_rating rating{};
 	PEP_decrypt_flags_t flags{}; // FIXME: which flags do you use on input?
 	
-	PEP_STATUS status_dec = decrypt_message(session, msg2.get(), &msg3_raw, &keylist, &rating, &flags);
+	PEP_STATUS status_dec = decrypt_message(session, msg2.get(), &msg3_raw, &keylist, &flags);
 	EXPECT_EQ( status_dec, PEP_STATUS_OK);
 	ASSERT_NE( msg3_raw , nullptr);
 	auto msg3 = pEp::utility::make_c_ptr( msg3_raw, &free_message);

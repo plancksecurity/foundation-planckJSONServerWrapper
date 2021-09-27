@@ -112,8 +112,8 @@ const FunctionMap functions = {
 		FP( "cache_encrypt_message_for_self", new FuncPC<PEP_STATUS, In_Pep_Session,
 			In<pEp_identity*>, In<message*>, In<stringlist_t*>, Out<message*>, In<PEP_enc_format>, In<PEP_encrypt_flags_t>>( &pEp::MessageCache::cache_encrypt_message_for_self) ),
 
-		FP( "decrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
-		FP( "cache_decrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &pEp::MessageCache::cache_decrypt_message) ),
+		FP( "decrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, InOutP<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
+		FP( "cache_decrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, InOutP<PEP_decrypt_flags_t>>(  &pEp::MessageCache::cache_decrypt_message) ),
 		FP( "get_key_rating_for_user", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<PEP_rating>>( &get_key_rating_for_user) ),
 		
 		// from mime.h
