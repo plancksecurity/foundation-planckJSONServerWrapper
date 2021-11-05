@@ -11,13 +11,14 @@ namespace mini {
 
 void startSync()
 {
-    pEp::callback_dispatcher.start_sync();
+	pEp::Adapter::start_sync();
+
 }
 
 
 void stopSync()
 {
-	pEp::callback_dispatcher.stop_sync();
+	pEp::Adapter::stop_sync ();
 }
 
 
