@@ -414,5 +414,5 @@ void ev_server::thread_init()
 void ev_server::thread_done()
 {
 	JsonAdapter::getInstance().connection_close_cb();
-	pEp::Adapter::session(pEp::Adapter::release);
+	pEp::Adapter::session.release();
 }
