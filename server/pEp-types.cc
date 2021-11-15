@@ -252,6 +252,8 @@ message* from_json<message*>(const js::Value& v)
 	msg->comments = from_json_object<char*, js::str_type>(o, "comments");
 	msg->opt_fields = from_json_object<stringpair_list_t*, js::array_type>(o, "opt_fields");
 	msg->enc_format = from_json_object<PEP_enc_format, js::int_type>(o, "enc_format");
+	// Serialise to a JSON scalar, not to PEP_rating which is an enum.
+	msg->rating = PEP_rating(from_json_object<int, js::int_type>(o, "rating"));
 	
 	return msg.release();
 }
@@ -345,6 +347,7 @@ js::Value to_json<message const*>(message const* const& msg)
 	to_json_object(o, "comments", msg->comments);
 	to_json_object(o, "opt_fields", msg->opt_fields);
 	to_json_object(o, "enc_format", msg->enc_format);
+	to_json_object(o, "rating", int(msg->rating)); // We want a JSON scalar.
 	
 	return js::Value( std::move(o) );
 }
