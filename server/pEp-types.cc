@@ -248,7 +248,7 @@ message* from_json<message*>(const js::Value& v)
 	msg->references = from_json_object<stringlist_t*, js::array_type>(o, "references");
 	// TODO: refered_by
 	
-	msg->keywords = from_json_object<stringlist_t*, js::int_type>(o, "keywords");
+	msg->keywords = from_json_object<stringlist_t*, js::array_type>(o, "keywords");
 	msg->comments = from_json_object<char*, js::str_type>(o, "comments");
 	msg->opt_fields = from_json_object<stringpair_list_t*, js::array_type>(o, "opt_fields");
 	msg->enc_format = from_json_object<PEP_enc_format, js::int_type>(o, "enc_format");
