@@ -123,7 +123,15 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(0,22,1); // ENGINE-890: add disable_all_sync_channels()
 //static const ServerVersion sv(0,22,2);   // JSON-194: add set_comm_partner_key()
 //static const ServerVersion sv(0,22,3);   // FPMAIL-412, P4TB-400: add import_key_with_fpr_return()
-static const ServerVersion sv(0,22,4);   // (forthcoming) P4TB-414: new decrypt_message arg, new message field rating
+
+// Starting from november 2021 the primary API version number will be "3" for
+// releases or snapshots of the JSON adapter using the engine v3, and "2" for
+// releases or snapshots of the JSON adapter using the engine v2.
+// This will make it possible, in applications, to require a specific minimum
+// version using a specific series (2.x or 3.x) while both series evolve in
+// parallel, even in incompatible ways.
+
+  static const ServerVersion sv(3,22,4);   // (forthcoming) P4TB-414: new decrypt_message arg, new message field rating
 	return sv;
 }
 
