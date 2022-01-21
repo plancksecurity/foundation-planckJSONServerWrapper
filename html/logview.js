@@ -89,4 +89,37 @@ function handleFileSelect(evt)
 }
 
 
+// stolen from Stackoverflow
+// https://stackoverflow.com/questions/9153718/change-the-style-of-an-entire-css-class-using-javascript
+
+function cssrules() {
+    var rules = {};
+    for (var i=0; i<document.styleSheets.length; ++i) {
+        var cssRules = document.styleSheets[i].cssRules;
+        for (var j=0; j<cssRules.length; ++j)
+            rules[cssRules[j].selectorText] = cssRules[j];
+    }
+    return rules;
+}
+
+function css_getclass(name) {
+    var rules = cssrules();
+    if (!rules.hasOwnProperty(name))
+        throw 'TODO: deal_with_notfound_case: name="' + name + '"';
+    return rules[name];
+}
+
+// end of stackoverflow.
+
+function toggle(name)
+{
+	var ts = css_getclass('.' + name);
+	if(ts.style.display=='none')
+	{
+		ts.style.display='table-row';
+	}else{
+		ts.style.display='none';
+	}
+}
+
 document.getElementById('files').addEventListener('change', handleFileSelect, false);
