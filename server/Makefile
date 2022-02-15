@@ -22,7 +22,7 @@ CFLAGS+=-std=c14 -fvisibility=hidden
 CXXFLAGS+= -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(LIBRARY_PATH)
 LDLIBS+= -lpEpEngine -lpEpAdapter -lpEpwebserver -lasn1 \
-	 -lsequoia_openpgp_ffi -lhogweed -lnettle -lgmp \
+	 -lsequoia_openpgp_ffi -ldl -lhogweed -lnettle -lgmp \
 	 -lz -lsqlite3
 
 # Boost naming postfix
