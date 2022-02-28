@@ -23,7 +23,7 @@ CXXFLAGS+= -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(LIBRARY_PATH)
 LDLIBS+= -lpEpEngine -lpEpAdapter -lpEpwebserver -lasn1 \
 	 -lsequoia_openpgp_ffi -ldl -lhogweed -lnettle -lgmp \
-	 -lz -lsqlite3
+	 -lz
 
 # Boost naming postfix
 BOOST_MT?=-mt
@@ -41,7 +41,7 @@ ifeq ($(BUILD_ON),Darwin)
 else ifeq ($(BUILD_ON),Linux)
     ifeq ($(BUILD_FOR),Linux)
         LDLIBS+= -luuid \
-         -lboost_filesystem -lboost_program_options -lboost_system -lboost_thread -lboost_regex
+         -lboost_filesystem -lboost_program_options -lboost_system -lboost_thread -lboost_regex -lsqlite3
 
     else
         $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
