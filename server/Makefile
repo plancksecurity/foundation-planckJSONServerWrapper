@@ -22,7 +22,7 @@ CFLAGS+=-std=c14 -fvisibility=hidden
 CXXFLAGS+= -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(LIBRARY_PATH)
 LDLIBS+= -lpEpEngine -lpEpAdapter -lpEpwebserver -lasn1 \
-	 -lpep_engine_sequoia_backend -lhogweed -lnettle -lgmp \
+	 -lsequoia_openpgp_ffi -lhogweed -lnettle -lgmp \
 	 -lz -lsqlite3
 
 # Boost naming postfix
@@ -69,7 +69,7 @@ TARGET=pEp-mini-json-adapter
 LIB_TARGET=libjson-adapter.a
 
 ifeq ($(MIME_LIB),etpan)
-    LDLIBS+=-letpan
+    LDLIBS+=-letpan -lz
     OMIT_NFC_SOURCE=
 else ifeq ($(MIME_LIB),pEpMIME)
     LDLIBS+=-lpEpMIME
