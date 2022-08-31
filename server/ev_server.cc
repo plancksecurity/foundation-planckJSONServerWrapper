@@ -20,7 +20,7 @@
 // libpEpAdapter:
 #include <pEp/Adapter.hh>
 #include <pEp/status_to_string.hh>
-#include <pEp/slurp.hh>
+#include <pEp/std_utils.hh>
 #include <pEp/message_cache.hh>
 
 #include <boost/filesystem.hpp>
@@ -258,7 +258,7 @@ pEp::Webserver::response ev_server::sendReplyString(const pEp::Webserver::reques
 pEp::Webserver::response ev_server::sendFile(const pEp::Webserver::request& req, const char* mimeType, const fs::path& fileName)
 {
 	// not the best for big files, but this server does not send big files. :-)
-	std::string fileContent = pEp::slurp(fileName.string());
+	std::string fileContent = pEp::Utils::file_read(fileName.string());
 	return sendReplyString(req, mimeType, std::move(fileContent));
 }
 

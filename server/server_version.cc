@@ -8,7 +8,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include "json_spirit/json_spirit_reader.h"
 
-#include <pEp/slurp.hh>
+#include <pEp/std_utils.hh>
 
 namespace js = json_spirit;
 
@@ -150,7 +150,7 @@ ServerVersion::ServerVersion(unsigned maj, unsigned min, unsigned p)
 			
 			const std::string file_content =
 				boost::algorithm::trim_copy(
-					pEp::slurp("PackageVersion")
+					pEp::Utils::file_read("PackageVersion")
 				);
 			
 			try{

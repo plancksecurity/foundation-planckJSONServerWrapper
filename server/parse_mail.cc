@@ -2,7 +2,7 @@
 
 #include <pEp/mime.h>
 #include <pEp/status_to_string.hh>
-#include <pEp/slurp.hh>
+#include <pEp/std_utils.hh>
 #include "pEp-types.hh"
 #include <string>
 #include <iostream>
