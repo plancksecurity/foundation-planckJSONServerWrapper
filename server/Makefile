@@ -69,7 +69,7 @@ TARGET=pEp-mini-json-adapter
 LIB_TARGET=libjson-adapter.a
 
 ifeq ($(MIME_LIB),etpan)
-    LDLIBS+=-letpan
+    LDLIBS+=-letpan -lz
     OMIT_NFC_SOURCE=
 else ifeq ($(MIME_LIB),pEpMIME)
     LDLIBS+=-lpEpMIME
