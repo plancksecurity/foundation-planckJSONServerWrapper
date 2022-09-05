@@ -12,14 +12,22 @@ supported, Windows is about to follow.  Newer versions should also work
 (file a bug report if not) but are not in our main focus, yet.
 
 ## Dependencies
-* C++ compiler: tested with g++ 4.8, 4.9, 8.3 and clang++ 2.8. Newer versions should work, too.
+* C++ compiler: tested with g++ 4.8, 4.9, 8.3, 11, 12 and clang++ 2.8. Newer
+  versions should work, too.
 * GNU make
 * libboost-thread-dev (tested with 1.58, 1.62, 1.67, 1.70 and 1.74)
 * libboost-program-options-dev 
 * libboost-filesystem-dev
 * [p≡p Engine](https://gitea.pep.foundation/pEp.foundation/pEpEngine/)
-  p≡p Engine Version Release_3.1
-  (which needs sequoia, a patched libetpan, libboost-system-dev)
+  a p≡p Engine in the 3.x series, not released yet as of 2022-09; at the
+  time of writing this is the Engine master branch
+  (with its own dependencies, in particular:
+    * libpEpTransport
+    * libpepcxx11
+    * pEpEngineSequoiaBackend
+    * a patched libetpan
+    * libboost-system-dev
+  )
 * [libpEpAdapter](https://gitea.pep.foundation/pEp.foundation/libpEpAdapter/)
 * [webserver](https://gitea.pep.foundation/fdik/webserver)
 * OSSP libuuid
