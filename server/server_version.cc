@@ -81,8 +81,14 @@ static const std::string VersionName =
 //	"(47a) Erfurt-Ost";  // JSON-160, JSON-172, JSON-179.
 //	"(47b) Erfurt-Vieselbach"; // JSON-183: "Provide an API for pEp4Tb to communicate whether the message subject should be hidden (replaced with pEp)"
 //	"(48) Nohra"; // FPMAIL-412, P4TB-400: add import_key_with_fpr_return()
-	"(49) Weimar"; // (forthcoming) P4TB-414: new decrypt_message arg, new message field rating
-	
+//	"(49) Weimar"; // (forthcoming) P4TB-414: new decrypt_message arg, new message field rating
+
+//////////////////////
+// 49...55 are skipped for futher Releases of the 2.1 branch, if necessary.
+//////////////////////
+
+	"(56a) Hermsdorfer Kreuz"; // JSON-197: Group Encryption, Engine 3.1 branch.
+
 } // end of anonymous namespace
 ////////////////////////////////////////////////////////////////////////////
 
@@ -131,7 +137,10 @@ const ServerVersion& server_version()
 // version using a specific series (2.x or 3.x) while both series evolve in
 // parallel, even in incompatible ways.
 
-  static const ServerVersion sv(3,22,4);   // (forthcoming) P4TB-414: new decrypt_message arg, new message field rating
+//static const ServerVersion sv(3,1,0);  // JSON-197: Group Encryption. 3.1 branch of Engine & JSON Adapter
+//static const ServerVersion sv(3,22,4); // (forthcoming) P4TB-414: new decrypt_message arg, new message field rating
+static const ServerVersion sv(3,22,5);   // cherry-picking JSON changes from Release_3.1 before retiring the branch
+
 	return sv;
 }
 

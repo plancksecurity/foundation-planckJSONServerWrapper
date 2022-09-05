@@ -103,6 +103,12 @@ Out<identity_list*>::~Out()
 }
 
 template<>
+In<identity_list*>::~In()
+{
+	free_identity_list(value);
+}
+
+template<>
 In<const identity_list*>::~In()
 {
 	free_identity_list(const_cast<identity_list*>(value));
