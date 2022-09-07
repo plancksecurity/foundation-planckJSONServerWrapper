@@ -93,7 +93,14 @@
   (But now this nice interface at least is usable.)
 </p>
 <p>
-  positron, 2022-09
+  To circumvent errors such as
+  <pre>Access to XMLHttpRequest at 'http://127.0.0.1:4223/ja/0.1/callFunction' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.</pre>
+  I run a separate instance of my web browser, like this:
+  <pre>
+    [luca@moore ~]$ cd ~/pep-src/pEpJSONServerAdapter; chromium --no-remote --disable-web-security --user-data-dir=$HOME/.config/chromium/Default html/index.html</pre>
+</p>
+<p>
+  --positron, 2022-09
 </p>
 
 
