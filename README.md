@@ -7,9 +7,8 @@ any client.
 
 ## Requirements
 In order to use the p≡p JSON Server Adapter, you need to build and run it.
-Currently, Linux (Debian 9, Ubuntu 16.04) and MacOS (10.11, 10.12) are
-supported, Windows is about to follow.  Newer versions should also work
-(file a bug report if not) but are not in our main focus, yet.
+Currently, Linux (Debian 10, Ubuntu 18.04.6 LTS) and MacOS (10.11, 10.12) are
+supported. The build for windows is in `build-windows`
 
 ## Dependencies
 * C++ compiler: tested with g++ 4.8, 4.9, 8.3, 11, 12 and clang++ 2.8. Newer
@@ -74,61 +73,10 @@ cd ~/code/json-ad/server
 
 | :warning: FIXME: The following instructions refer to the old Makefile system that built a dynamically linked binary. This old Makefile was replaced by a hack to create a static binary. Unfortunately the config flexibility of the old Makefile system was removed in this change. |
 | ------ |
-| There is now also an ad-hoc created `Makefile.Linux`, which also can only be configured directly by editing the file. :-( |
-| ------ |
-| TODO: Re-create a more flexible build system with a `Makefile` (which is under revision control) and a `local.conf` (which is not, but contains your local-only config settings) |
-| ------ |
 
 
-Edit the build configuration to your needs in `./Makefile.conf`, or create a
-`./local.conf` that sets any of the make variables documented in
-`./Makefile.conf`.
-
-If a dependency is not found in your system's default include or library
-paths, you will have to specify the according paths in a make variable. 
-Typically, this has to be done at least for the pEp Engine, libetpan and
-libevent.
-
-Below are two sample `./local.conf` files, for orientation.
-
-
-macOS 10.12, 10.13:
-
-~~~~~
-PREFIX=$(HOME)/code/json-ad/build
-HTML_DIRECTORY=$(PREFIX)/share/pEp/json-adapter/html
-GTEST_DIR=$(HOME)/code/gtest/googletest
-
-BOOST_INC=-I$(HOME)/Cellar/boost/1.65.1/include
-BOOST_LIB=-L$(HOME)/Cellar/boost/1.65.1/lib
-
-ENGINE_INC=-I$(HOME)/code/engine/build/include
-ENGINE_LIB=-L$(HOME)/code/engine/build/lib
-
-ETPAN_INC=-I$(HOME)/code/libetpan/build/include
-ETPAN_LIB=-L$(HOME)/code/libetpan/build/lib
-
-GPGME_INC=-I$(HOME)/Cellar/gpgme/1.9.0_1/include
-GPGME_LIB=-L$(HOME)/Cellar/gpgme/1.9.0_1/lib
-
-UUID_INC=-I$(HOME)/Cellar/ossp-uuid/1.6.2_2/include
-UUID_LIB=-L$(HOME)/Cellar/ossp-uuid/1.6.2_2/lib
-~~~~~
-
-Debian 9/10:
-
-~~~~~
-PREFIX=$(HOME)/code/json-ad/build
-HTML_DIRECTORY=$(PREFIX)/share/pEp/json-adapter/html
-GTEST_DIR=/usr/src/googletest/googletest/
-
-ENGINE_INC=-I$(HOME)/code/engine/build/include
-ENGINE_LIB=-L$(HOME)/code/engine/build/lib
-
-ETPAN_INC=-I$(HOME)/code/libetpan/build/include
-ETPAN_LIB=-L$(HOME)/code/libetpan/build/lib
-
-~~~~~
+Make copy of the `local.conf.example` and call it `local.conf`
+Adjust the values in `local.conf` to your needs. Most likely, at least the PREFIX option.
 
 Now, build and install the server:
 
@@ -137,9 +85,9 @@ make all
 make install
 ~~~~~
 
+TODO: verify this
 If you only want to build the JsonAdapter library, run `make lib` and you'll get
 a libjson-adapter.a
-
 
 With `make test` you can execute the server's tests.
 
