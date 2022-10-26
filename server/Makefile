@@ -88,7 +88,9 @@ SPIRIT_OBJECTS=$(subst .cc,.o,$(SPIRIT_SOURCE))
 TEST_SOURCE=$(wildcard unittest_*.cc)
 TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
 
-.PHONY: all
+
+.PHONY: all test clean uninstall install
+
 all: $(TARGET)
 
 
@@ -121,8 +123,6 @@ unittests: $(TEST_OBJECTS) $(LIB_TARGET) $(SPIRIT_OBJECTS)
 
 parse_mail: parse_mail.o nfc.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-
-.PHONY: test clean uninstall install
 
 test: unittests
 	./unittests
