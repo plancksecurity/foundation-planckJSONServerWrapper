@@ -8,7 +8,6 @@ endif
 
 # set to 'etpan' or 'pEpMIME'
 MIME_LIB?=etpan
-
 PREFIX?=$(HOME)/local
 
 # where pEp stuff is installed into:
@@ -93,7 +92,6 @@ TEST_OBJECTS=$(subst .cc,.o,$(TEST_SOURCE))
 
 all: $(TARGET)
 
-
 %.d: %.cc
 	@set -e; rm -f $@; \
 	$(CC) -MM $(CPPFLAGS) $(CFLAGS) $< > $@.$$$$; \
@@ -113,10 +111,7 @@ $(LIB_TARGET): $(LIB_OBJECTS)
 	$(AR) -cr $@ $^
 
 $(TARGET): $(LIB_TARGET) $(MA_OBJECTS) $(SPIRIT_OBJECTS)
-	$(CXX) $(LDFLAGS) \
-		$(MA_OBJECTS) $(SPIRIT_OBJECTS)  $(LIB_TARGET) \
-		-o "$@" $(LDLIBS)
-
+	$(CXX) $(LDFLAGS) $(MA_OBJECTS) $(SPIRIT_OBJECTS)  $(LIB_TARGET) -o "$@" $(LDLIBS)
 
 unittests: $(TEST_OBJECTS) $(LIB_TARGET) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -lgtest -lgtest_main
