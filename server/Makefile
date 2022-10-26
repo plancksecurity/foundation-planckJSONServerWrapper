@@ -10,19 +10,18 @@ endif
 MIME_LIB?=etpan
 PREFIX?=$(HOME)/local
 
-# where pEp stuff is installed into:
+# pEp Dependencies
+PEP_INC_PATH?=$(PREFIX)/include
 PEP_LIB_PATH?=$(PREFIX)/lib
-PEP_INCLUDE?=$(PREFIX)/include
 
-# where libs from the packages systems are installed into:
-LIBRARY_PATH?=/usr/local/lib
+# System Dependencies
+SYS_INC_PATH?=/usr/local/include
+SYS_LIB_PATH?=/usr/local/lib
 
 CFLAGS+=-std=c14 -fvisibility=hidden
-CXXFLAGS+= -I$(PEP_INCLUDE) -std=c++14 -fvisibility=hidden
-LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(LIBRARY_PATH)
-LDLIBS+= -lpEpEngine -lpEpAdapter -lpEpwebserver -lasn1 \
-	 -lpep_engine_sequoia_backend -lhogweed -lnettle -lgmp \
-	 -lz -lsqlite3 -lpEpCxx11
+CXXFLAGS+=-I$(SYS_INC_PATH) -I$(PEP_INC_PATH) -std=c++14 -fvisibility=hidden
+LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(SYS_LIB_PATH)
+LDLIBS+= -lpEpEngine -lpEpAdapter -lpEpwebserver -lhogweed -lnettle -lgmp -lz -lsqlite3 -lpEpCxx11
 
 # Boost naming postfix
 BOOST_MT?=-mt

@@ -1,21 +1,41 @@
 # This is an Example build config file (local.conf)
-# you might not need this file, but if the defaults dont work for you
-# You can override them here.
-# Tweak the values to your needs and rename it to local.conf
+# The example values reflect the defaults.
+# Rename this file to local.conf and tweak the values to your needs,
+# if you need to override anything. (Most likely PREFIX)
 
-######### C++ Compiler #########
-# Should work with clang and g++
-# CXX=g++
+# Toolchain
+# ---------
+# Should work with `g++` and `clang`
+# CXX=
 
 # You might use /usr/bin/ar on MacOS explicitly if you have GNU ar installed via HomeBrew,
 # because it is installed in /usr/local/bin and therefore used by default.
 # AR=ar
 
+# DIRS
+# ----
+# PREFIX=$(HOME)/local
+
+# pEp Dependencies
+# PEP_INC_PATH=$(PREFIX)/include
+# PEP_LIB_PATH=$(PREFIX)/lib
+
+# System Dependencies
+# SYS_INC_PATH=/usr/local/include
+# SYS_LIB_PATH=/usr/local/lib
+
+# Additional Options
+# ------------------
 # DEBUG=1       # DEBUG Build (Default)
 # DEBUG=0       # RELEASE Build
 
-############# DIRS #############
-# PREFIX=$(HOME)/local
+# Static/Dynamic Linkage
+# for a dynamically linked binary (for development) leave this empty.
+# If you are using clang, use "-static", but that will fail if you did not compile a static
+# version of libcrt0 and libc[++] yourself.
+# LDFLAGS+=
 
-# where the other pEp-specific includes (e.g. pEpEngine, libpEpAdapter) are installed
-# PEP_INCLUDE=$(PREFIX)/include
+# Building BOOST yourself, the artefact names are not postfixed by default
+# E.g. lib is named "libboost_regex.a", not "libboost_regex-mt.a".
+# Set to empty string if this is the case for you.
+# BOOST_MT="-mt"
