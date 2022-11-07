@@ -119,7 +119,7 @@ parse_mail: parse_mail.o nfc.o $(LIB_TARGET) $(SPIRIT_OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 test: unittests
-	./unittests
+	HOME=.; ./unittests
 
 install: $(TARGET)
 	mkdir -p $(DESTDIR)$(PREFIX)/include/pEp
