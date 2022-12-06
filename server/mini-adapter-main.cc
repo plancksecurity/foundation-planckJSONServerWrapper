@@ -165,8 +165,8 @@ try
 		}
 		ja.shutdown(nullptr);
 		ja.Log() << "Good bye. :-)";
-		pEp::call_with_lock(&release, first_session);
-        pEp::callback_dispatcher.remove(JsonAdapter::messageToSend);
+		pEp::Adapter::session.release();
+                pEp::callback_dispatcher.remove(JsonAdapter::messageToSend);
 	}
 	catch(std::exception const& e)
 	{
