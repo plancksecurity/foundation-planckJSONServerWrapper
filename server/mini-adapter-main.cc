@@ -130,19 +130,6 @@ try
 	
     pEp::callback_dispatcher.add(JsonAdapter::messageToSend, JsonAdapter::notifyHandshake);
 
-	// create a dummy session just to see whether the Engine is functional.
-	// reason: here we still can log errors to stderr, because prepare_run() is called before daemonize().
-	PEP_STATUS status = pEp::call_with_lock(&init, &first_session, pEp::CallbackDispatcher::messageToSend, pEp::Adapter::_inject_sync_event, pEp::Adapter::_ensure_passphrase);
-	if(status != PEP_STATUS_OK || first_session==nullptr)
-	{
-		const std::string error_msg = "Cannot create first session! PEP_STATUS: " + ::pEp::status_to_string(status) + ".";
-		std::cerr << error_msg << std::endl; // Log to stderr intentionally, so Enigmail can grab that error message easily.
-		if( ! ignore_missing_session)
-		{
-			throw std::runtime_error(error_msg);
-		}
-	}
-	
 	JsonAdapter& ja = pEp::mini::Adapter::createInstance();
 	ja.ignore_session_errors( ignore_missing_session)
 	  .deliver_html( !no_html )
