@@ -127,8 +127,9 @@ try
 	
 	if( debug_mode == false && !foreground )
 		daemonize (!debug_mode, (const uintptr_t) status_handle);
-	
-    pEp::callback_dispatcher.add(JsonAdapter::messageToSend, JsonAdapter::notifyHandshake);
+
+        pEp::Adapter::session.initialize();
+        pEp::callback_dispatcher.add(JsonAdapter::messageToSend, JsonAdapter::notifyHandshake);
 
 	JsonAdapter& ja = pEp::mini::Adapter::createInstance();
 	ja.ignore_session_errors( ignore_missing_session)
