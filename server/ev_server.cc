@@ -418,7 +418,7 @@ void ev_server::addSharks()
 
 void ev_server::thread_init()
 {
-	// nothing to do, yet.
+        pEp::Adapter::session.initialize();
 }
 
 
