@@ -21,7 +21,7 @@ SYS_LIB_PATH?=/usr/local/lib
 CFLAGS+=-std=c14 -fvisibility=hidden
 CXXFLAGS+=-I$(SYS_INC_PATH) -I$(PEP_INC_PATH) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(SYS_LIB_PATH)
-LDLIBS+= -lpEpEngine -lpEpAdapter -lpEpwebserver -lhogweed -lnettle -lgmp -lz -lsqlite3 -lpEpCxx11
+LDLIBS+= -lpEpEngine -lpEpAdapter -lpEpwebserver -lhogweed -lnettle -lgmp -lz -lsqlite3 -lpEpCxx11 -lstdc++
 
 # Boost naming postfix
 BOOST_MT?=-mt
