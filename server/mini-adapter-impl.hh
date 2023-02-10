@@ -20,7 +20,7 @@ namespace mini {
 	protected:
 		virtual inject_sync_event_t getInjectSyncEvent() const override
 		{
-			return &::pEp::Adapter::_inject_sync_event;
+			return &::pEp::Adapter::_cb_inject_sync_event_enqueue_sync_event;
 		}
 	};
 
