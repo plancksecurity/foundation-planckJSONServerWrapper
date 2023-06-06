@@ -149,7 +149,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\pEpEngine\build-windows\pEpEngine.vcxproj">
+    <ProjectReference Include="..\..\..\..\PlanckCoreV3\build-windows\pEpEngine.vcxproj">
       <Project>{146e69f8-e1da-456a-b048-6dd29d9acf6b}</Project>
     </ProjectReference>
   </ItemGroup>
