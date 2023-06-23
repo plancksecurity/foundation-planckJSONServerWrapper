@@ -258,6 +258,7 @@ pEp::Webserver::response ev_server::sendReplyString(const pEp::Webserver::reques
 	
 	pEp::Webserver::response res{pEp::http::status::ok, req.version()};
 	res.set(pEp::http::field::content_type, contentType);
+  res.set("Access-Control-Allow-Origin", "*");
 	res.keep_alive(req.keep_alive());
 	res.content_length(outputText.size());
 	res.body() = std::move(outputText);
