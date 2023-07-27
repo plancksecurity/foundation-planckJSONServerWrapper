@@ -57,7 +57,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>JSON_ADAPTER_LIBRARY;DEBUG_ENABLED;WIN32;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)pEpJSONServerAdapter\build-windows\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)planckJSONServerWrapper\build-windows\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <AdditionalOptions>-D__PRETTY_FUNCTION__=__FUNCSIG__ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -77,7 +77,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>JSON_ADAPTER_LIBRARY;WIN32;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)pEpJSONServerAdapter\build-windows\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)planckJSONServerWrapper\build-windows\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <AdditionalOptions>-D__PRETTY_FUNCTION__=__FUNCSIG__ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -148,7 +148,7 @@
     <ClCompile Include="..\..\server\session_registry.cc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\libpEpAdapter\build-windows\libpEpAdapter.vcxproj">
+    <ProjectReference Include="..\..\..\libPlanckWrapper\build-windows\libpEpAdapter.vcxproj">
       <Project>{ec44fec9-2f3a-4a0c-b60e-0f22aa43ef58}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\PlanckCoreV3\build-windows\pEpEngine.vcxproj">

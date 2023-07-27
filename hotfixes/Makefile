@@ -1,7 +1,7 @@
 
 
-ENGINE_INC = ../../pEpEngine/src
-ENGINE_SRC = ../../pEpEngine/src
+ENGINE_INC = ../../planckCoreV3/src
+ENGINE_SRC = ../../planckCoreV3/src
 
 all: pep-hotfix
 
