@@ -20,11 +20,23 @@ PEP_SESSION SessionRegistry::get(std::thread::id tid, const std::string& client_
 	}
 	
 	PEP_SESSION session = nullptr;
+
 	PEP_STATUS status = pEp::call_with_lock(&init, &session, mts, ise, pEp::Adapter::_ensure_passphrase);
 	if(status != PEP_STATUS_OK)
 	{
 		throw std::runtime_error("init() fails: " + pEp::status_to_string(status) );
 	}
+
+
+	{
+		std::lock_guard<std::mutex> L(pEp::call_with_lock_mutex);
+		status = register_sync_callbacks(session, nullptr, nhs, nullptr);
+	}
+	if(status != PEP_STATUS_OK)
+	{
+		throw std::runtime_error("register_sync_callbacks() fails: " + pEp::status_to_string(status) );
+	}
+
 	m[tid] = session;
 	
 	const auto& cache_for_client = cache[client_id];
