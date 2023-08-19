@@ -7,12 +7,13 @@
 #include <thread>
 #include <functional>
 #include <pEp/pEpEngine.h>
+#include <pEp/sync_api.h>
 #include "logger.hh"
 
 class SessionRegistry
 {
 public:
-	SessionRegistry(messageToSend_t _mts, inject_sync_event_t _ise, int _client_timeout)
+	SessionRegistry(messageToSend_t _mts, notifyHandshake_t _nhs, inject_sync_event_t _ise, int _client_timeout)
 	: mts{_mts}
 	, ise{_ise}
 	, Log{"SR"}
