@@ -7,13 +7,15 @@
 #include <thread>
 #include <functional>
 #include <pEp/pEpEngine.h>
+#include <pEp/sync_api.h>
 #include "logger.hh"
 
 class SessionRegistry
 {
 public:
-	SessionRegistry(messageToSend_t _mts, inject_sync_event_t _ise, int _client_timeout)
+	SessionRegistry(messageToSend_t _mts, notifyHandshake_t _nhs, inject_sync_event_t _ise, int _client_timeout)
 	: mts{_mts}
+	, nhs{_nhs}
 	, ise{_ise}
 	, Log{"SR"}
 	, client_timeout{_client_timeout} // in seconds
@@ -37,6 +39,7 @@ public:
 private:
 	std::map<std::thread::id, PEP_SESSION> m;
 	messageToSend_t      mts;
+	notifyHandshake_t nhs;
 	inject_sync_event_t  ise;
 	Logger               Log;
 	int       client_timeout; // in seconds
