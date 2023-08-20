@@ -4,6 +4,7 @@
 #include <pEp/status_to_string.hh>
 #include <pEp/Adapter.hh>
 
+// 19.08.2023/DZ - Make sure notifyHandshake is registered for every session.
 
 // creates a PEP_SESSION if none yet exists for the given thread
 PEP_SESSION SessionRegistry::get(std::thread::id tid, const std::string& client_id)

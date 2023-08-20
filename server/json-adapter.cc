@@ -35,6 +35,7 @@
 #include "json_spirit/json_spirit_reader.h"
 #include "json_spirit/json_spirit_utils.h"
 
+// 19.08.2023/DZ - Pass the notifyHandshake listener on to the session registry.
 
 #if (__cplusplus >= 201606)  // std::variant is C++17.
 #   include <variant>

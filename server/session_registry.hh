@@ -10,6 +10,8 @@
 #include <pEp/sync_api.h>
 #include "logger.hh"
 
+// 19.08.2023/DZ - Add a mandatory `notifyHandshake_t` member.
+
 class SessionRegistry
 {
 public:
