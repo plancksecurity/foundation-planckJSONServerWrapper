@@ -27,11 +27,7 @@ PEP_SESSION SessionRegistry::get(std::thread::id tid, const std::string& client_
 		throw std::runtime_error("init() fails: " + pEp::status_to_string(status) );
 	}
 
-
-	{
-		std::lock_guard<std::mutex> L(pEp::call_with_lock_mutex);
-		status = register_sync_callbacks(session, nullptr, nhs, nullptr);
-	}
+	status = register_sync_callbacks(session, nullptr, nhs, nullptr);
 	if(status != PEP_STATUS_OK)
 	{
 		throw std::runtime_error("register_sync_callbacks() fails: " + pEp::status_to_string(status) );
