@@ -35,6 +35,7 @@
 #include "json_spirit/json_spirit_reader.h"
 #include "json_spirit/json_spirit_utils.h"
 
+// 19.08.2023/DZ - Pass the notifyHandshake listener on to the session registry.
 
 #if (__cplusplus >= 201606)  // std::variant is C++17.
 #   include <variant>
@@ -258,7 +259,7 @@ void JsonAdapter::prepare_run(const std::string& address, unsigned start_port, u
 {
 	check_guard();
 	// delayed after constructor, so virtual functions are working:
-	i->session_registry.reset(new SessionRegistry(messageToSend ? messageToSend : this->getMessageToSend(), this->getInjectSyncEvent(), i->client_session_timeout));
+	i->session_registry.reset(new SessionRegistry(messageToSend ? messageToSend : this->getMessageToSend(), notifyHandshake, this->getInjectSyncEvent(), i->client_session_timeout));
 	
 	for(unsigned short port = start_port; port<=end_port; ++port)
 	{
