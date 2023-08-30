@@ -34,6 +34,7 @@
 #include <pEp/callback_dispatcher.hh>
 #endif
 
+// 2023-08-29/DZ Make import_extrakey_with_fpr_return callable from json clients
 
 namespace fs = boost::filesystem;
 
@@ -161,6 +162,7 @@ const FunctionMap functions = {
 		FP( "delete_keypair", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>> ( &delete_keypair) ),
 		FP( "import_key"    , new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<identity_list*>> ( &import_key) ),
 		FP( "import_key_with_fpr_return", new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<identity_list*>, Out<stringlist_t*>, Out<uint64_t>> ( &import_key_with_fpr_return) ),
+		FP( "import_extrakey_with_fpr_return", new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<identity_list*>, Out<stringlist_t*>, Out<uint64_t>> ( &import_extrakey_with_fpr_return) ),
 		FP( "export_key"    , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<char*>, Out<std::size_t>> ( &export_key) ),
 		FP( "find_keys"     , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &get_trust) ),
