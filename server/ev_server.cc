@@ -223,6 +223,7 @@ const FunctionMap functions = {
 #endif
 		FP( "Signing", new Separator ),
 		FP( "signature_for_text", new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<char*>, Out<size_t>> ( &signature_for_text) ),
+		FP( "verify_signature", new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, In<binary_string>, InLength<>> ( &verify_signature) ),
 
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
