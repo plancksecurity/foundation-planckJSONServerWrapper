@@ -16,6 +16,7 @@
 #include <pEp/openpgp_compat.h>
 #include <pEp/message_api.h> // for get_binary_path()
 #include <pEp/mime.h>
+#include <pEp/signature.h>
 
 // libpEpAdapter:
 #include <pEp/Adapter.hh>
@@ -222,6 +223,10 @@ const FunctionMap functions = {
 		FP( "startSync", new Func<void> (&pEp::Adapter::start_sync) ),
 		FP( "stopSync" , new Func<void> (&pEp::Adapter::stop_sync) ),
 #endif
+		FP( "Signing", new Separator ),
+		FP( "signature_for_text", new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<char*>, Out<size_t>> ( &signature_for_text) ),
+		FP( "verify_signature", new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, In<binary_string>, InLength<>> ( &verify_signature) ),
+
 		// my own example function that does something useful. :-)
 		FP( "Other", new Separator ),
 		FP( "serverVersion", new Func<ServerVersion>( &server_version ) ),
