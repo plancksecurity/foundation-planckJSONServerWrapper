@@ -212,9 +212,9 @@ const FunctionMap functions = {
 		FP( "adapter_group_invite_member", new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, In<pEp_identity*>> (&adapter_group_invite_member)),
 		FP( "adapter_group_remove_member", new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, In<pEp_identity*>> (&adapter_group_remove_member)),
 		FP( "adapter_group_join"         , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, In<pEp_identity*>, In<pEp_identity*>> (&adapter_group_join)),
-		FP( "adapter_group_query_groups" , new Func<PEP_STATUS, In_Pep_Session, Out<identity_list*>> (&adapter_group_query_groups)),
-		FP( "adapter_group_query_manager", new Func<PEP_STATUS, In_Pep_Session, In<const pEp_identity*>, Out<pEp_identity*>> (&adapter_group_query_manager)),
-		FP( "adapter_group_query_members", new Func<PEP_STATUS, In_Pep_Session, In<const pEp_identity*>, Out<identity_list*>> (&adapter_group_query_members)),
+		FP( "adapter_group_query_groups" , new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<identity_list*>> (&adapter_group_query_groups)),
+		FP( "adapter_group_query_manager", new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<pEp_identity*>> (&adapter_group_query_manager)),
+		FP( "adapter_group_query_members", new Func<PEP_STATUS, In_Pep_Session, In<pEp_identity*>, Out<identity_list*>> (&adapter_group_query_members)),
 
 #ifndef JSON_ADAPTER_LIBRARY
 		FP( "startSync", new Func<void> (&pEp::mini::startSync) ),
