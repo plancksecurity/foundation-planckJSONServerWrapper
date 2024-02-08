@@ -568,6 +568,7 @@ template const Logger::Stream& operator<<(const Logger::Stream&, const int&);
 template const Logger::Stream& operator<<(const Logger::Stream&, const long&);
 template const Logger::Stream& operator<<(const Logger::Stream&, const unsigned&);
 template const Logger::Stream& operator<<(const Logger::Stream&, const unsigned long&);
+template const Logger::Stream& operator<<(const Logger::Stream&, const unsigned __int64&);
 
 template const Logger::Stream& operator<<(const Logger::Stream&, const std::string&);
 template const Logger::Stream& operator<<(const Logger::Stream&, const double&);
