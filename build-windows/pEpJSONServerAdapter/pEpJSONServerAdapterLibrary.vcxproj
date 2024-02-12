@@ -55,9 +55,9 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>JSON_ADAPTER_LIBRARY;DEBUG_ENABLED;WIN32;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>JSON_ADAPTER_LIBRARY;_WIN32_WINNT=0x0A00;DEBUG_ENABLED;WIN32;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\include;$(SolutionDir)planckJSONServerWrapper\build-windows\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\vcpkg\installed\x64-windows-static-md\include;$(SolutionDir)\include;$(SolutionDir)planckJSONServerWrapper\build-windows\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <AdditionalOptions>-D__PRETTY_FUNCTION__=__FUNCSIG__ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -75,9 +75,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>JSON_ADAPTER_LIBRARY;WIN32;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>JSON_ADAPTER_LIBRARY;_WIN32_WINNT=0x0A00;WIN32;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\include;$(SolutionDir)planckJSONServerWrapper\build-windows\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\vcpkg\installed\x64-windows-static-md\include;$(SolutionDir)\include;$(SolutionDir)planckJSONServerWrapper\build-windows\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <AdditionalOptions>-D__PRETTY_FUNCTION__=__FUNCSIG__ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -158,29 +158,5 @@
       <Project>{0d25734e-a71b-4536-8dc4-60e945382fc5}</Project>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\..\packages\boost.1.77.0.0\build\boost.targets" Condition="Exists('..\..\..\packages\boost.1.77.0.0\build\boost.targets')" />
-    <Import Project="..\..\..\packages\boost_chrono-vc142.1.77.0.0\build\boost_chrono-vc142.targets" Condition="Exists('..\..\..\packages\boost_chrono-vc142.1.77.0.0\build\boost_chrono-vc142.targets')" />
-    <Import Project="..\..\..\packages\boost_date_time-vc142.1.77.0.0\build\boost_date_time-vc142.targets" Condition="Exists('..\..\..\packages\boost_date_time-vc142.1.77.0.0\build\boost_date_time-vc142.targets')" />
-    <Import Project="..\..\..\packages\boost_filesystem-vc142.1.77.0.0\build\boost_filesystem-vc142.targets" Condition="Exists('..\..\..\packages\boost_filesystem-vc142.1.77.0.0\build\boost_filesystem-vc142.targets')" />
-    <Import Project="..\..\..\packages\boost_program_options-vc142.1.77.0.0\build\boost_program_options-vc142.targets" Condition="Exists('..\..\..\packages\boost_program_options-vc142.1.77.0.0\build\boost_program_options-vc142.targets')" />
-    <Import Project="..\..\..\packages\boost_thread-vc142.1.77.0.0\build\boost_thread-vc142.targets" Condition="Exists('..\..\..\packages\boost_thread-vc142.1.77.0.0\build\boost_thread-vc142.targets')" />
-    <Import Project="..\..\..\packages\boost_regex-vc142.1.77.0.0\build\boost_regex-vc142.targets" Condition="Exists('..\..\..\packages\boost_regex-vc142.1.77.0.0\build\boost_regex-vc142.targets')" />
-  </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\..\..\packages\boost.1.77.0.0\build\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost.1.77.0.0\build\boost.targets'))" />
-    <Error Condition="!Exists('..\..\..\packages\boost_chrono-vc142.1.77.0.0\build\boost_chrono-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost_chrono-vc142.1.77.0.0\build\boost_chrono-vc142.targets'))" />
-    <Error Condition="!Exists('..\..\..\packages\boost_date_time-vc142.1.77.0.0\build\boost_date_time-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost_date_time-vc142.1.77.0.0\build\boost_date_time-vc142.targets'))" />
-    <Error Condition="!Exists('..\..\..\packages\boost_filesystem-vc142.1.77.0.0\build\boost_filesystem-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost_filesystem-vc142.1.77.0.0\build\boost_filesystem-vc142.targets'))" />
-    <Error Condition="!Exists('..\..\..\packages\boost_program_options-vc142.1.77.0.0\build\boost_program_options-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost_program_options-vc142.1.77.0.0\build\boost_program_options-vc142.targets'))" />
-    <Error Condition="!Exists('..\..\..\packages\boost_thread-vc142.1.77.0.0\build\boost_thread-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost_thread-vc142.1.77.0.0\build\boost_thread-vc142.targets'))" />
-    <Error Condition="!Exists('..\..\..\packages\boost_regex-vc142.1.77.0.0\build\boost_regex-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\packages\boost_regex-vc142.1.77.0.0\build\boost_regex-vc142.targets'))" />
-  </Target>
 </Project>

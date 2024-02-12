@@ -37,7 +37,7 @@ namespace
 
 // platform dependent:
 #ifdef _WIN32
-
+#include <fstream>
 fs::path get_token_filename()
 {
 	// Get the directory from the pEp Engine.
@@ -49,7 +49,8 @@ void write_security_file(const std::string& content)
 	const fs::path filename = get_token_filename();
 	const fs::path parent = filename.parent_path();
 	fs::create_directories(parent);
-	fs::ofstream secfile(filename);
+	std::string secfn = (fs::canonical(parent)/filename).string();
+	std::ofstream secfile(secfn);
 	secfile << content;
 	secfile.close();
 }
