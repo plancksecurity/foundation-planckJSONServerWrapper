@@ -165,6 +165,7 @@ const FunctionMap functions = {
 		FP( "import_key_with_fpr_return", new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<identity_list*>, Out<identity_list*>, Out<stringlist_t*>, Out<uint64_t>> ( &import_key_with_fpr_return) ),
 		FP( "import_extrakey_with_fpr_return", new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<identity_list*>, Out<stringlist_t*>, Out<uint64_t>> ( &import_extrakey_with_fpr_return) ),
 		FP( "export_key"    , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<char*>, Out<std::size_t>> ( &export_key) ),
+		FP("export_secret_key", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<char *>, Out<std::size_t>>(&export_secret_key)),
 		FP( "find_keys"     , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &get_trust) ),
 		FP( "own_key_is_listed", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<bool>> ( &own_key_is_listed) ),
