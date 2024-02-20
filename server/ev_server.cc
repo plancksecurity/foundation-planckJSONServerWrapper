@@ -300,9 +300,11 @@ pEp::Webserver::response ev_server::OnOtherRequest(boost::cmatch match, const pE
 			{ "/favicon.ico"     , {"image/vnd.microsoft.icon", path_to_html / "json-test.ico"} },
 		};
 	
-	const std::string path = req.target().to_string(); // NB: is percent-encoded! does not relevant for the supported paths above.
+	const boost::string_view target = req.target();
+	const std::string path = target.to_string(); // NB: is percent-encoded! does not relevant for the supported paths above.
 	
-	DEBUG_LOG( Log() ) << "** Request: [" << req.method_string().to_string() << "] " << "Path: [" + path + "]";
+	const boost::string_view method = req.method_string();
+	DEBUG_LOG( Log() ) << "** Request: [" << method.to_string() << "] " << "Path: [" + path + "]";
 	
 	try{
 		const auto q = files.find(path);
