@@ -21,7 +21,7 @@ SYS_LIB_PATH?=/usr/local/lib
 CFLAGS+=-std=c14 -fvisibility=hidden
 CXXFLAGS+=-I$(SYS_INC_PATH) -I$(PEP_INC_PATH) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(SYS_LIB_PATH)
-LDLIBS+= -lpEpEngine -lpep_engine_sequoia_backend -lbotan-2 -lpEpAdapter -lpEpwebserver -lz -lpEpCxx11 -lstdc++
+LDLIBS+= -lasn1 -lpEpEngine -lpep_engine_sequoia_backend -lbotan-2 -lpEpAdapter -lpEpwebserver -lz -lpEpCxx11 -lstdc++
 
 # Boost naming postfix
 BOOST_MT?=-mt
@@ -30,7 +30,8 @@ BOOST_MT?=-mt
 BUILD_ON:=$(shell uname)
 BUILD_FOR=$(BUILD_ON)
 ifeq ($(BUILD_ON),Darwin)
-	LDLIBS+= -liconv -lobjc -framework Foundation -framework Security
+	LDLIBS+= -lobjc -framework Foundation -framework Security
+	LDLIBS+= /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libiconv.tbd
 	LDLIBS+= -lboost_filesystem$(BOOST_MT) -lboost_program_options$(BOOST_MT) -lboost_system$(BOOST_MT) -lboost_thread$(BOOST_MT) -lboost_regex$(BOOST_MT)
 
 	# ASAN is not strictly a MacOS/clang feature, but won't work with musl.
