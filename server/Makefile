@@ -32,8 +32,12 @@ BUILD_FOR=$(BUILD_ON)
 ifeq ($(BUILD_ON),Darwin)
 	LDLIBS+= -lobjc -framework Foundation -framework Security
 	LDLIBS+= /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libiconv.tbd
-	LDLIBS+= -lboost_filesystem$(BOOST_MT) -lboost_program_options$(BOOST_MT) -lboost_system$(BOOST_MT) -lboost_thread$(BOOST_MT) -lboost_regex$(BOOST_MT)
     LDLIBS+= /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libz.tbd
+	LDLIBS+= /opt/homebrew/lib/libboost_filesystem-mt.a
+	LDLIBS+= /opt/homebrew/lib/libboost_program_options-mt.a
+	LDLIBS+= /opt/homebrew/lib/libboost_system-mt.a
+	LDLIBS+= /opt/homebrew/lib/libboost_thread-mt.a
+	LDLIBS+= /opt/homebrew/lib/libboost_regex-mt.a
 
 	# ASAN is not strictly a MacOS/clang feature, but won't work with musl.
 	CXXFLAGS+= -fsanitize=address
