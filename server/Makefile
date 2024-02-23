@@ -38,10 +38,6 @@ ifeq ($(BUILD_ON),Darwin)
 	LDLIBS+= /opt/homebrew/lib/libboost_system-mt.a
 	LDLIBS+= /opt/homebrew/lib/libboost_thread-mt.a
 	LDLIBS+= /opt/homebrew/lib/libboost_regex-mt.a
-
-	# ASAN is not strictly a MacOS/clang feature, but won't work with musl.
-	CXXFLAGS+= -fsanitize=address
-	LDFLAGS+=  -fsanitize=address
 else ifeq ($(BUILD_ON),Linux)
 	LDLIBS+= -luuid -lboost_filesystem -lboost_program_options -lboost_system -lboost_thread -lboost_regex -lpthread -ldl
 	LDLIBS+= -lz
