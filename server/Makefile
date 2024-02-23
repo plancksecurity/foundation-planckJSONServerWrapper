@@ -32,7 +32,7 @@ BUILD_FOR=$(BUILD_ON)
 ifeq ($(BUILD_ON),Darwin)
 	LDLIBS+= -lobjc -framework Foundation -framework Security
 	LDLIBS+= /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libiconv.tbd
-    LDLIBS+= /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libz.tbd
+	LDLIBS+= /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libz.tbd
 	LDLIBS+= /opt/homebrew/lib/libboost_filesystem-mt.a
 	LDLIBS+= /opt/homebrew/lib/libboost_program_options-mt.a
 	LDLIBS+= /opt/homebrew/lib/libboost_system-mt.a
