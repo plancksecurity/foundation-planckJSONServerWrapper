@@ -165,6 +165,7 @@ const FunctionMap functions = {
 		FP( "import_key_with_fpr_return", new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<identity_list*>, Out<identity_list*>, Out<stringlist_t*>, Out<uint64_t>> ( &import_key_with_fpr_return) ),
 		FP( "import_extrakey_with_fpr_return", new FuncPC<PEP_STATUS, In_Pep_Session, In<binary_string>, InLength<>, Out<identity_list*>, Out<stringlist_t*>, Out<uint64_t>> ( &import_extrakey_with_fpr_return) ),
 		FP( "export_key"    , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<char*>, Out<std::size_t>> ( &export_key) ),
+		FP("export_secret_key", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<char *>, Out<std::size_t>>(&export_secret_key)),
 		FP( "find_keys"     , new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<stringlist_t*>> ( &find_keys) ),
 		FP( "get_trust"     , new FuncPC<PEP_STATUS, In_Pep_Session, InOut<pEp_identity*>> ( &get_trust) ),
 		FP( "own_key_is_listed", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, Out<bool>> ( &own_key_is_listed) ),
@@ -299,10 +300,12 @@ pEp::Webserver::response ev_server::OnOtherRequest(boost::cmatch match, const pE
 			{ "/favicon.ico"     , {"image/vnd.microsoft.icon", path_to_html / "json-test.ico"} },
 		};
 	
-	const std::string path = std::string(req.target()); // NB: is percent-encoded! does not relevant for the supported paths above.
+	const boost::string_view target = req.target();
+	const std::string path = target.to_string(); // NB: is percent-encoded! does not relevant for the supported paths above.
 	
-	DEBUG_LOG( Log() ) << "** Request: [" << std::string(req.method_string()) << "] " << "Path: [" + path + "]";
-	
+	const boost::string_view method = req.method_string();
+	DEBUG_LOG( Log() ) << "** Request: [" << method.to_string() << "] " << "Path: [" + path + "]";
+
 	try{
 		const auto q = files.find(path);
 		if(q != files.end()) // found in "files" map

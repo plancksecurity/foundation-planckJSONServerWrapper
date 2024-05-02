@@ -10,6 +10,11 @@
 
 #include <pEp/std_utils.hh>
 
+// Changelog
+//
+// 18.04.2024/DZ - bump version to 3.3.26
+// 25.04.2024/DZ - bump version to 3.3.27
+
 namespace js = json_spirit;
 
 namespace {
@@ -139,7 +144,8 @@ const ServerVersion& server_version()
 
 //static const ServerVersion sv(3,1,0);  // JSON-197: Group Encryption. 3.1 branch of Engine & JSON Adapter
 //static const ServerVersion sv(3,22,4); // (forthcoming) P4TB-414: new decrypt_message arg, new message field rating
-static const ServerVersion sv(3,22,5);   // cherry-picking JSON changes from Release_3.1 before retiring the branch
+//static const ServerVersion sv(3,22,5);   // cherry-picking JSON changes from Release_3.1 before retiring the branch
+static const ServerVersion sv(3,3,27);   // same version as core
 
 	return sv;
 }
