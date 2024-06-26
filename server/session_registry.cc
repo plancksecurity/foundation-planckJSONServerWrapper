@@ -35,12 +35,6 @@ PEP_SESSION SessionRegistry::get(std::thread::id tid, const std::string& client_
 		throw std::runtime_error("register_sync_callbacks() fails: " + pEp::status_to_string(status) );
 	}
 
-	// TODO: Testing. Remove.
-	::config_passphrase_for_new_keys(session, true, "uiae2");
-	pEp::passphrase_cache.add("uiae1");
-	pEp::passphrase_cache.add("deckard@planck.dev", "uiae2");
-	pEp::passphrase_cache.add("not_there@planck.dev", "uiae3");
-
 	pEp::passphrase_cache.configure_session(session);
 
 	m[tid] = session;
