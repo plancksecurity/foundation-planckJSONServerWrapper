@@ -40,6 +40,8 @@ PEP_SESSION SessionRegistry::get(std::thread::id tid, const std::string& client_
 	pEp::passphrase_cache.add("deckard@planck.dev", "uiae2");
 	pEp::passphrase_cache.add("not_there@planck.dev", "uiae3");
 
+	pEp::passphrase_cache.configure_session(session);
+
 	m[tid] = session;
 	
 	const auto& cache_for_client = cache[client_id];
