@@ -3,6 +3,7 @@
 #include <pEp/call_with_lock.hh>
 #include <pEp/status_to_string.hh>
 #include <pEp/Adapter.hh>
+#include <pEp/passphrase_cache.hh>
 
 // 19.08.2023/DZ - Make sure notifyHandshake is registered for every session.
 
@@ -33,6 +34,8 @@ PEP_SESSION SessionRegistry::get(std::thread::id tid, const std::string& client_
 	{
 		throw std::runtime_error("register_sync_callbacks() fails: " + pEp::status_to_string(status) );
 	}
+
+	pEp::passphrase_cache.configure_session(session);
 
 	m[tid] = session;
 	
