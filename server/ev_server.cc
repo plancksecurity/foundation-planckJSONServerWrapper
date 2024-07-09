@@ -117,6 +117,7 @@ const FunctionMap functions = {
 
 		FP( "decrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &decrypt_message ) ),
 		FP( "cache_decrypt_message", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &pEp::MessageCache::cache_decrypt_message) ),
+		FP( "cache_decrypt_message_with_full_output", new FuncPC<PEP_STATUS, In_Pep_Session, InOut<message*>, Out<message*>, InOutP<stringlist_t*>, Out<PEP_rating>, InOutP<PEP_decrypt_flags_t>>(  &pEp::MessageCache::cache_decrypt_message_with_full_output) ),
 		FP( "get_key_rating_for_user", new FuncPC<PEP_STATUS, In_Pep_Session, In<c_string>, In<c_string>, Out<PEP_rating>>( &get_key_rating_for_user) ),
 		
 		// from mime.h
