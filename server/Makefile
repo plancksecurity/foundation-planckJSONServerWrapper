@@ -21,7 +21,7 @@ SYS_LIB_PATH?=/usr/local/lib
 CFLAGS+=-std=c14 -fvisibility=hidden
 CXXFLAGS+=-I$(SYS_INC_PATH) -I$(PEP_INC_PATH) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(SYS_LIB_PATH)
-LDLIBS+= -lasn1 -lpEpEngine -lpep_engine_sequoia_backend -lbotan-2 -lpEpAdapter -lpEpwebserver -lpEpCxx11 -lstdc++
+LDLIBS+= -lasn1 -lpEpEngine -lpep_engine_sequoia_backend -lbotan-2 -lpEpAdapter -lpEpwebserver -lpEpCxx11
 
 # Boost naming postfix
 BOOST_MT?=-mt
@@ -33,6 +33,7 @@ ifeq ($(BUILD_ON),Darwin)
 	LDLIBS+= -lobjc -framework Foundation -framework Security
 	LDLIBS+= `xcrun --show-sdk-path`/usr/lib/libiconv.tbd
 	LDLIBS+= `xcrun --show-sdk-path`/usr/lib/libz.tbd
+	LDLIBS+= -lc++
 	ifeq ($(MACOS_STATIC_HOMEBREW), 1)
 		LDLIBS+= /opt/homebrew/lib/libboost_filesystem-mt.a
 		LDLIBS+= /opt/homebrew/lib/libboost_program_options-mt.a
@@ -46,6 +47,7 @@ ifeq ($(BUILD_ON),Darwin)
 else ifeq ($(BUILD_ON),Linux)
 	LDLIBS+= -luuid -lboost_filesystem -lboost_program_options -lboost_system -lboost_thread -lboost_regex -lpthread -ldl
 	LDLIBS+= -lz
+	LDLIBS+= -lstdc++
 else
     $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
 endif
