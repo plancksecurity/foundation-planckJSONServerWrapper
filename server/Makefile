@@ -52,9 +52,7 @@ else
     $(error I do not know how to make for $(BUILD_FOR) on $(BUILD_ON))
 endif
 
-# DEBUG=0 -> release build
-# DEBUG=1 or undefined -> debug build
-ifeq ($(DEBUG),0)
+ifeq ($(DEBUG),release)
 	CFLAGS+=-O3 -DNDEBUG  
 	CXXFLAGS+=-O3 -DNDEBUG
 else
