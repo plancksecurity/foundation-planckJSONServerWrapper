@@ -37,12 +37,11 @@ ifeq ($(BUILD_ON),Darwin)
 	ifeq ($(MACOS_STATIC_HOMEBREW), 1)
 		LDLIBS+= /opt/homebrew/lib/libboost_filesystem-mt.a
 		LDLIBS+= /opt/homebrew/lib/libboost_program_options-mt.a
-		LDLIBS+= /opt/homebrew/lib/libboost_system-mt.a
 		LDLIBS+= /opt/homebrew/lib/libboost_thread-mt.a
 		LDLIBS+= /opt/homebrew/lib/libboost_regex-mt.a
 	else
 		LDLIBS+= -lboost_filesystem$(BOOST_MT) -lboost_program_options$(BOOST_MT)
-		LDLIBS+= -lboost_system$(BOOST_MT) -lboost_thread$(BOOST_MT) -lboost_regex$(BOOST_MT)
+		LDLIBS+= -lboost_thread$(BOOST_MT) -lboost_regex$(BOOST_MT)
 	endif
 else ifeq ($(BUILD_ON),Linux)
 	LDLIBS+= -luuid -lboost_filesystem -lboost_program_options -lboost_system -lboost_thread -lboost_regex -lpthread -ldl
