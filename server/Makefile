@@ -17,9 +17,10 @@ PEP_LIB_PATH?=$(PREFIX)/lib
 # System Dependencies
 SYS_INC_PATH?=/usr/local/include
 SYS_LIB_PATH?=/usr/local/lib
+BOOST_INCLUDE?=$(SYS_INC_PATH)
 
 CFLAGS+=-std=c14 -fvisibility=hidden
-CXXFLAGS+=-I$(SYS_INC_PATH) -I$(PEP_INC_PATH) -std=c++14 -fvisibility=hidden
+CXXFLAGS+=-I$(SYS_INC_PATH) -I$(BOOST_INCLUDE) -I$(PEP_INC_PATH) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(SYS_LIB_PATH)
 LDLIBS+= -lasn1 -lpEpEngine -lpep_engine_sequoia_backend -lbotan-2 -lpEpAdapter -lpEpwebserver -lpEpCxx11
 
