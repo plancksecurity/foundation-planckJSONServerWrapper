@@ -35,10 +35,10 @@ ifeq ($(BUILD_ON),Darwin)
 	LDLIBS+= `xcrun --show-sdk-path`/usr/lib/libz.tbd
 	LDLIBS+= -lc++
 	ifeq ($(MACOS_STATIC), 1)
-		LDLIBS+= /opt/homebrew/lib/libboost_filesystem-mt.a
-		LDLIBS+= /opt/homebrew/lib/libboost_program_options-mt.a
-		LDLIBS+= /opt/homebrew/lib/libboost_thread-mt.a
-		LDLIBS+= /opt/homebrew/lib/libboost_regex-mt.a
+		LDLIBS+= $(BOOST_LIB)/libboost_filesystem-mt.a
+		LDLIBS+= $(BOOST_LIB)/libboost_program_options-mt.a
+		LDLIBS+= $(BOOST_LIB)/libboost_thread-mt.a
+		LDLIBS+= $(BOOST_LIB)/libboost_regex-mt.a
 	else
 		LDLIBS+= -lboost_filesystem$(BOOST_MT) -lboost_program_options$(BOOST_MT)
 		LDLIBS+= -lboost_thread$(BOOST_MT) -lboost_regex$(BOOST_MT)
