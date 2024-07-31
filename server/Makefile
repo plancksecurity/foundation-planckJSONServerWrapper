@@ -34,7 +34,7 @@ ifeq ($(BUILD_ON),Darwin)
 	LDLIBS+= `xcrun --show-sdk-path`/usr/lib/libiconv.tbd
 	LDLIBS+= `xcrun --show-sdk-path`/usr/lib/libz.tbd
 	LDLIBS+= -lc++
-	ifeq ($(MACOS_STATIC_HOMEBREW), 1)
+	ifeq ($(MACOS_STATIC), 1)
 		LDLIBS+= /opt/homebrew/lib/libboost_filesystem-mt.a
 		LDLIBS+= /opt/homebrew/lib/libboost_program_options-mt.a
 		LDLIBS+= /opt/homebrew/lib/libboost_thread-mt.a
