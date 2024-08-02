@@ -35,11 +35,11 @@ ifeq ($(BUILD_ON),Darwin)
 	LDLIBS+= `xcrun --show-sdk-path`/usr/lib/libiconv.tbd
 	LDLIBS+= `xcrun --show-sdk-path`/usr/lib/libz.tbd
 	LDLIBS+= -lc++
-    # static boost on macOS always
-    LDLIBS+= $(BOOST_LIB)/libboost_filesystem-mt.a
-    LDLIBS+= $(BOOST_LIB)/libboost_program_options-mt.a
-    LDLIBS+= $(BOOST_LIB)/libboost_thread-mt.a
-    LDLIBS+= $(BOOST_LIB)/libboost_regex-mt.a
+    # static, self-built boost on macOS always
+    LDLIBS+= $(BOOST_LIB)/libboost_filesystem.a
+    LDLIBS+= $(BOOST_LIB)/libboost_program_options.a
+    LDLIBS+= $(BOOST_LIB)/libboost_thread.a
+    LDLIBS+= $(BOOST_LIB)/libboost_regex.a
 else ifeq ($(BUILD_ON),Linux)
 	LDLIBS+= -luuid -lboost_filesystem -lboost_program_options -lboost_system -lboost_thread -lboost_regex -lpthread -ldl
 	LDLIBS+= -lz
