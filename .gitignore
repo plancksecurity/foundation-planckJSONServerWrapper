@@ -31,6 +31,8 @@ build-windows/pEp/libpEpwebserver/Debug/*
 build-windows/pEp/libpEpwebserver/.vs/
 build-windows/pEp/libpEpwebserver/x64/
 build-windows/pEpJSONServerAdapter/x64/
+build-windows/pEp/libpEpwebserver/ARM64/
+build-windows/pEpJSONServerAdapter/ARM64/
 
 server/pEp-mini-json-adapter
 
