@@ -20,7 +20,7 @@ SYS_LIB_PATH?=/usr/local/lib
 
 CFLAGS+=-std=c14 -fvisibility=hidden
 CXXFLAGS+=-I$(SYS_INC_PATH) -I$(PEP_INC_PATH) -std=c++14 -fvisibility=hidden
-LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(SYS_LIB_PATH)
+LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(SYS_LIB_PATH) -L${BOOST_LIB}
 LDLIBS+= -lpEpEngine -lpep_engine_sequoia_backend -lbotan-2 -lpEpAdapter -lpEpwebserver -lz -lpEpCxx11 -lstdc++
 
 # Boost naming postfix
