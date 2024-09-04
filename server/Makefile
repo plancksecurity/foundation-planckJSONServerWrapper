@@ -21,7 +21,7 @@ BOOST_INCLUDE?=$(SYS_INC_PATH)
 
 CXXFLAGS+=-I$(SYS_INC_PATH) -I$(PEP_INC_PATH) -I$(BOOST_INCLUDE) -std=c++14 -fvisibility=hidden
 LDFLAGS+=-std=c++14 -L$(PEP_LIB_PATH) -L$(SYS_LIB_PATH) -L${BOOST_LIB}
-LDLIBS+= -lasn1 -lpEpEngine -lpep_engine_sequoia_backend -l jitterentropy -lbotan-2 -lpEpAdapter -lpEpwebserver -lz -lpEpCxx11 -lstdc++
+LDLIBS+= -lasn1 -lpEpEngine -lpep_engine_sequoia_backend -l jitterentropy -lbotan-2 -lpEpAdapter -lpEpwebserver -lpEpCxx11
 
 # Boost naming postfix
 BOOST_MT?=-mt
