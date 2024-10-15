@@ -24,6 +24,7 @@
 // 19.07.2024/DZ - bump version to 3.3.35
 // 16.08.2024/DZ - bump version to 3.3.36
 // 02.09.2024/DZ - bump version to 3.3.37
+// 19.09.2024/DZ - bump version to 3.3.38
 
 namespace js = json_spirit;
 
@@ -155,7 +156,7 @@ const ServerVersion& server_version()
 //static const ServerVersion sv(3,1,0);  // JSON-197: Group Encryption. 3.1 branch of Engine & JSON Adapter
 //static const ServerVersion sv(3,22,4); // (forthcoming) P4TB-414: new decrypt_message arg, new message field rating
 //static const ServerVersion sv(3,22,5);   // cherry-picking JSON changes from Release_3.1 before retiring the branch
-static const ServerVersion sv(3,3,37);   // same version as core
+static const ServerVersion sv(3,3,38);   // same version as core
 
 	return sv;
 }
