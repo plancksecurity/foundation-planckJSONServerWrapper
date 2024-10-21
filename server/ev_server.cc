@@ -310,7 +310,7 @@ pEp::Webserver::response ev_server::OnOtherRequest(boost::cmatch match, const pE
 	
 	const boost::string_view method = req.method_string();
 	DEBUG_LOG( Log() ) << "** Request: [" << method.to_string() << "] " << "Path: [" + path + "]";
-	
+
 	try{
 		const auto q = files.find(path);
 		if(q != files.end()) // found in "files" map
